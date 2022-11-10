@@ -1,0 +1,6 @@
+[package]
+name = 'aptos_names_transfer'
+version = '1.0.0'
+
+[dependencies.aptos_names]
+local = "../core"

@@ -1,0 +1,11 @@
+[package]
+name = 'aptos_names_distribute'
+version = '1.0.0'
+
+[dependencies.aptos_names]
+local = "../core"
+
+[dependencies.AptosToken]
+git = 'https://github.com/aptos-labs/aptos-core.git'
+rev = 'main'
+subdir = 'aptos-move/framework/aptos-token'

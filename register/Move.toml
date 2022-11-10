@@ -1,0 +1,9 @@
+[package]
+name = 'aptos_names_register'
+version = '1.0.0'
+
+[addresses]
+repository = "0xb27f7d329f6d2c8867e5472958c3cfabc781300ca9649f244e267e1d6b966c94"
+
+[dependencies.aptos_names]
+local = "../core"
