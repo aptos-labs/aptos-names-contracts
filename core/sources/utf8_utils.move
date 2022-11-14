@@ -16,6 +16,8 @@ module aptos_names::utf8_utils {
     /// Hyphens are not allowed at the beginning or end of a string
     /// Returns whether it is allowed, and the number of characters in the utf8 string
     fun bytes_are_allowed(bytes: &vector<u8>): (bool, u64) {
+        use std::debug;
+
         let u64_characters = utf8_to_vec_u64_fast(bytes);
         let i = 0;
         let len = vector::length(&u64_characters);
@@ -23,6 +25,8 @@ module aptos_names::utf8_utils {
 
         while (i < len) {
             let c = *vector::borrow(&u64_characters, i);
+
+            debug::print<u64>(&c);
 
             // latin hyphen
             if (c == 45) {
@@ -35,6 +39,10 @@ module aptos_names::utf8_utils {
             // latin numbers 0-9
             else if (c >= 48 && c <= 57) {
                 // these are valid
+            }
+            // cjk unified ideographs (code points 4E00-9FFF)
+            else if (c >= 14989440 && c <= 15318975) {
+                // chinese characters
             }
             // latin lowercase letters a-z
             else if (c >= 97 && c <= 122) {
@@ -63,8 +71,8 @@ module aptos_names::utf8_utils {
     ///     - an unexpected continuation byte
     ///     - a non-continuation byte before the end of the character
     ///     - the string ending before the end of the character (which can happen in simple string truncation)
-    /// an overlong encoding
-    /// a sequence that decodes to an invalid code point
+    ///     - an overlong encoding
+    ///     - a sequence that decodes to an invalid code point
     /// For more information on the estructure of UTF8: https://en.wikipedia.org/wiki/UTF-8#Encoding
     public fun utf8_to_vec_u64_fast(bytes: &vector<u8>): vector<u64> {
         let len = vector::length(bytes);
@@ -166,6 +174,46 @@ module aptos_names::utf8_utils {
             assert!(length == example.length, i);
             i = i + 1;
         };
+    }
+
+    #[test]
+    fun test_chinese_digits() {
+        let allowed_tests: vector<Example> = vector[
+            Example { text: vector [0xe4, 0xb8, 0x81], length: 1, },
+        ];
+        // Reverse it so the errors are in order
+        vector::reverse(&mut allowed_tests);
+        let i = 0;
+        let len = vector::length(&allowed_tests);
+        while (i < len) {
+            let example = vector::pop_back(&mut allowed_tests);
+            let (was_allowed, length) = bytes_are_allowed(&example.text);
+            assert!(was_allowed, i);
+            assert!(length == example.length, i);
+            i = i + 1;
+        };
+
+        // // The char_counts here should only count up to the first invalid character
+        // let not_allowed: vector<Example> = vector[
+        //     Example { text: b"a_a", length: 3, },
+        //     Example { text: b"-aaa", length: 4, },
+        //     Example { text: b"aaa_", length: 4, },
+        //     Example { text: b"-", length: 1, },
+        //     Example { text: b"_", length: 1, },
+        //     Example { text: b"a!b", length: 3, },
+        //     Example { text: b"A", length: 1, },
+        // ];
+        // // Reverse it so the errors are in order
+        // vector::reverse(&mut not_allowed);
+        // let i = 0;
+        // let len = vector::length(&not_allowed);
+        // while (i < len) {
+        //     let example = vector::pop_back(&mut not_allowed);
+        //     let (was_allowed, length) = bytes_are_allowed(&example.text);
+        //     assert!(!was_allowed, i);
+        //     assert!(length == example.length, i);
+        //     i = i + 1;
+        // };
     }
 
     #[test]
