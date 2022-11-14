@@ -1,0 +1,16 @@
+name: "Move Tests"
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - testnet
+      - mainnet
+
+jobs:
+  move-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Downloads aptos cli and runs move tests.
+        run: ./sh_scripts/move_tests.sh
