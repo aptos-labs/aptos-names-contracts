@@ -16,7 +16,7 @@ else
 fi
 
 echo "##### Info #####"
-aptos info
+./aptos info
 
 echo "##### Running tests #####"
-aptos move test --package-dir core
+./aptos move test --package-dir core
