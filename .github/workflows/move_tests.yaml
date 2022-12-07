@@ -12,5 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Downloads aptos cli and runs move tests.
+      - name: Install dev dependencies.
+        run: ./sh_scripts/dev_setup.sh
+      - name: Runs move tests.
         run: ./sh_scripts/move_tests.sh
