@@ -66,6 +66,7 @@ module aptos_names::test_helper {
         let user_balance_before = coin::balance<AptosCoin>(user_addr);
         let register_name_event_v1_event_count_before = domains::get_register_name_event_v1_count();
         let set_name_address_event_v1_event_count_before = domains::get_set_name_address_event_v1_count();
+        let user_reverse_lookup_before = domains::get_reverse_lookup(user_addr);
 
         let years = (time_helper::seconds_to_years(registration_duration_secs) as u8);
         if (option::is_none(&subdomain_name)) {
@@ -113,8 +114,13 @@ module aptos_names::test_helper {
         assert!(time_helper::seconds_to_days(expiration_time_sec - timestamp::now_seconds()) == 365, 10);
 
         if (is_subdomain) {
-            // We haven't set a target address yet!
-            assert!(target_address == option::none(), 11);
+            if (option::is_none(&user_reverse_lookup_before)) {
+                // Should automatically point to the users address
+                assert!(target_address == option::some(user_addr), 11);
+            } else {
+                // We haven't set a target address yet!
+                assert!(target_address == option::none(), 11);
+            }
         } else {
             // Should automatically point to the users address
             assert!(target_address == option::some(user_addr), 11);
@@ -139,9 +145,15 @@ module aptos_names::test_helper {
         assert!(register_name_event_v1_num_emitted == 1, register_name_event_v1_num_emitted);
 
         if (is_subdomain) {
-            // We haven't set a target address yet!
-            test_utils::print_actual_expected(b"set_name_address_event_v1_num_emitted: ", set_name_address_event_v1_num_emitted, 0, false);
-            assert!(set_name_address_event_v1_num_emitted == 0, set_name_address_event_v1_num_emitted);
+            if (option::is_none(&user_reverse_lookup_before)) {
+                // Should automatically point to the users address
+                test_utils::print_actual_expected(b"set_name_address_event_v1_num_emitted: ", set_name_address_event_v1_num_emitted, 1, false);
+                assert!(set_name_address_event_v1_num_emitted == 1, set_name_address_event_v1_num_emitted);
+            } else {
+                // We haven't set a target address yet!
+                test_utils::print_actual_expected(b"set_name_address_event_v1_num_emitted: ", set_name_address_event_v1_num_emitted, 0, false);
+                assert!(set_name_address_event_v1_num_emitted == 0, set_name_address_event_v1_num_emitted);
+            }
         } else {
             // Should automatically point to the users address
             test_utils::print_actual_expected(b"set_name_address_event_v1_num_emitted: ", set_name_address_event_v1_num_emitted, 1, false);

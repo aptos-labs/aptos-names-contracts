@@ -146,6 +146,14 @@ module aptos_names::domains {
         token_helper::initialize(account);
     }
 
+    public fun init_reverse_lookup_registry_v1(account: &signer) {
+        assert!(signer::address_of(account) == @aptos_names, ENOT_AUTHORIZED);
+
+        move_to(account, ReverseLookupRegistryV1 {
+            registry: table::new()
+        });
+    }
+
     fun register_domain_generic(sign: &signer, domain_name: String, num_years: u8) acquires NameRegistryV1, RegisterNameEventsV1, ReverseLookupRegistryV1, SetNameAddressEventsV1 {
         assert!(config::is_enabled(), error::unavailable(ENOT_ENABLED));
         assert!(num_years > 0 && num_years <= config::max_number_of_years_registered(), error::out_of_range(EINVALID_NUMBER_YEARS));
@@ -244,11 +252,11 @@ module aptos_names::domains {
         let account_addr = signer::address_of(sign);
         let reverse_lookup_result = get_reverse_lookup(account_addr);
         if (option::is_none(&reverse_lookup_result)) {
-            // If the user has no reverse lookup set, set the user's reverse lookup. This also points the address to the sender.
-            set_reverse_lookup(sign, &NameRecordKeyV1 { subdomain_name: option::none(), domain_name });
-        } else {
+            // If the user has no reverse lookup set, set the user's reverse lookup.
+            set_reverse_lookup(sign, &NameRecordKeyV1 { subdomain_name, domain_name });
+        } else if (option::is_none(&subdomain_name)) {
             // Automatically set the name to point to the sender's address
-            set_name_address_internal(subdomain_name, domain_name, account_addr);
+            set_name_address_internal(subdomain_name, domain_name, signer::address_of(sign));
         };
 
         event::emit_event<RegisterNameEventV1>(
@@ -474,14 +482,10 @@ module aptos_names::domains {
     }
 
     public fun set_reverse_lookup(account: &signer, key: &NameRecordKeyV1) acquires NameRegistryV1, ReverseLookupRegistryV1, SetNameAddressEventsV1 {
+        set_reverse_lookup_internal(account, key);
+
         let account_addr = signer::address_of(account);
         let (maybe_subdomain_name, domain_name) = get_name_record_key_v1_props(key);
-        let (is_owner, _) = is_owner_of_name(account_addr, maybe_subdomain_name, domain_name);
-        assert!(is_owner, ENOT_AUTHORIZED);
-
-        let registry = &mut borrow_global_mut<ReverseLookupRegistryV1>(@aptos_names).registry;
-        table::upsert(registry, account_addr, *key);
-
         set_name_address(account, maybe_subdomain_name, domain_name, account_addr);
     }
 
@@ -492,6 +496,16 @@ module aptos_names::domains {
         } else {
             option::none()
         }
+    }
+
+    fun set_reverse_lookup_internal(account: &signer, key: &NameRecordKeyV1) acquires ReverseLookupRegistryV1 {
+        let account_addr = signer::address_of(account);
+        let (maybe_subdomain_name, domain_name) = get_name_record_key_v1_props(key);
+        let (is_owner, _) = is_owner_of_name(account_addr, maybe_subdomain_name, domain_name);
+        assert!(is_owner, ENOT_AUTHORIZED);
+
+        let registry = &mut borrow_global_mut<ReverseLookupRegistryV1>(@aptos_names).registry;
+        table::upsert(registry, account_addr, *key);
     }
 
     fun emit_set_name_address_event_v1(subdomain_name: Option<String>, domain_name: String, property_version: u64, expiration_time_secs: u64, new_address: Option<address>) acquires SetNameAddressEventsV1 {
@@ -555,6 +569,7 @@ module aptos_names::domains {
     #[test_only]
     public fun init_module_for_test(account: &signer) {
         init_module(account);
+        init_reverse_lookup_registry_v1(account);
     }
 
     #[test_only]
