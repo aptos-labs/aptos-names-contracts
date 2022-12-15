@@ -608,6 +608,11 @@ module aptos_names::domains {
         event::counter(&borrow_global<RegisterNameEventsV1>(@aptos_names).register_name_events)
     }
 
+    #[test_only]
+    public fun get_set_reverse_lookup_event_v1_count(): u64 acquires SetReverseLookupEventsV1 {
+        event::counter(&borrow_global<SetReverseLookupEventsV1>(@aptos_names).set_reverse_lookup_events)
+    }
+
     #[test(aptos = @0x1)]
     fun test_time_is_expired(aptos: &signer) {
         timestamp::set_time_has_started_for_testing(aptos);

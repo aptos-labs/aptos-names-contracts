@@ -64,9 +64,10 @@ module aptos_names::test_helper {
         let is_subdomain = option::is_some(&subdomain_name);
 
         let user_balance_before = coin::balance<AptosCoin>(user_addr);
+        let user_reverse_lookup_before = domains::get_reverse_lookup(user_addr);
         let register_name_event_v1_event_count_before = domains::get_register_name_event_v1_count();
         let set_name_address_event_v1_event_count_before = domains::get_set_name_address_event_v1_count();
-        let user_reverse_lookup_before = domains::get_reverse_lookup(user_addr);
+        let set_reverse_lookup_event_v1_event_count_before = domains::get_set_reverse_lookup_event_v1_count();
 
         let years = (time_helper::seconds_to_years(registration_duration_secs) as u8);
         if (option::is_none(&subdomain_name)) {
@@ -140,9 +141,17 @@ module aptos_names::test_helper {
         // Assert events have been correctly emmitted
         let register_name_event_v1_num_emitted = domains::get_register_name_event_v1_count() - register_name_event_v1_event_count_before;
         let set_name_address_event_v1_num_emitted = domains::get_set_name_address_event_v1_count() - set_name_address_event_v1_event_count_before;
+        let set_reverse_lookup_event_v1_num_emitted = domains::get_set_reverse_lookup_event_v1_count() - set_reverse_lookup_event_v1_event_count_before;
 
         test_utils::print_actual_expected(b"register_name_event_v1_num_emitted: ", register_name_event_v1_num_emitted, 1, false);
         assert!(register_name_event_v1_num_emitted == 1, register_name_event_v1_num_emitted);
+
+        // Reverse lookup should be set if user did not have one before
+        if (option::is_none(&user_reverse_lookup_before)) {
+            assert!(set_reverse_lookup_event_v1_num_emitted == 1, set_reverse_lookup_event_v1_num_emitted);
+        } else {
+            assert!(set_reverse_lookup_event_v1_num_emitted == 0, set_reverse_lookup_event_v1_num_emitted);
+        };
 
         if (is_subdomain) {
             if (option::is_none(&user_reverse_lookup_before)) {
