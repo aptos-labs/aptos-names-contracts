@@ -101,7 +101,7 @@ module aptos_names::test_helper {
         if (is_subdomain) {
             // If it's a subdomain, we only charge a nomincal fee
             expected_user_balance_after = user_balance_before - price_model::price_for_subdomain_v1(registration_duration_secs);
-        }else {
+        } else {
             let domain_price = price_model::price_for_domain_v1(string::length(&domain_name), years);
             assert!(domain_price / config::octas() == 40, domain_price / config::octas());
             expected_user_balance_after = user_balance_before - domain_price;
@@ -172,23 +172,42 @@ module aptos_names::test_helper {
 
     /// Set the domain address, and verify the address was set correctly
     public fun set_name_address(user: &signer, subdomain_name: Option<String>, domain_name: String, expected_target_address: address) {
+        let user_addr = signer::address_of(user);
+
         let register_name_event_v1_event_count_before = domains::get_register_name_event_v1_count();
         let set_name_address_event_v1_event_count_before = domains::get_set_name_address_event_v1_count();
+        let set_reverse_lookup_event_v1_event_count_before = domains::get_set_reverse_lookup_event_v1_count();
+        let maybe_reverse_lookup_before = domains::get_reverse_lookup(user_addr);
 
         domains::set_name_address(user, subdomain_name, domain_name, expected_target_address);
         let (_property_version, _expiration_time_sec, target_address) = domains::get_name_record_v1_props_for_name(subdomain_name, domain_name);
         test_utils::print_actual_expected(b"set_domain_address: ", target_address, option::some(expected_target_address), false);
         assert!(target_address == option::some(expected_target_address), 33);
 
+        // When setting the target address to an address that is *not* the owner's, the reverse lookup should also be cleared
+        if (signer::address_of(user) != expected_target_address) {
+            let maybe_reverse_lookup = domains::get_reverse_lookup(user_addr);
+            assert!(option::is_none(&maybe_reverse_lookup), 33);
+        };
+
         // Assert events have been correctly emmitted
         let register_name_event_v1_num_emitted = domains::get_register_name_event_v1_count() - register_name_event_v1_event_count_before;
         let set_name_address_event_v1_num_emitted = domains::get_set_name_address_event_v1_count() - set_name_address_event_v1_event_count_before;
+        let set_reverse_lookup_event_v1_num_emitted = domains::get_set_reverse_lookup_event_v1_count() - set_reverse_lookup_event_v1_event_count_before;
 
         test_utils::print_actual_expected(b"register_name_event_v1_num_emitted: ", register_name_event_v1_num_emitted, 0, false);
         assert!(register_name_event_v1_num_emitted == 0, register_name_event_v1_num_emitted);
 
         test_utils::print_actual_expected(b"set_name_address_event_v1_num_emitted: ", set_name_address_event_v1_num_emitted, 1, false);
         assert!(set_name_address_event_v1_num_emitted == 1, set_name_address_event_v1_num_emitted);
+
+        // If the signer had a reverse lookup before, and set his reverse lookup name to a different address, it should be cleared
+        if (option::is_some(&maybe_reverse_lookup_before)) {
+            let (maybe_reverse_subdomain, reverse_domain) = domains::get_name_record_key_v1_props(option::borrow(&maybe_reverse_lookup_before));
+            if (maybe_reverse_subdomain == subdomain_name && reverse_domain == domain_name && signer::address_of(user) != expected_target_address) {
+                assert!(set_reverse_lookup_event_v1_num_emitted == 1, set_reverse_lookup_event_v1_num_emitted);
+            };
+        };
     }
 
     /// Clear the domain address, and verify the address was cleared

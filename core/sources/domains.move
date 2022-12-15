@@ -92,7 +92,7 @@ module aptos_names::domains {
     struct SetReverseLookupEventV1 has drop, store {
         subdomain_name: Option<String>,
         domain_name: String,
-        target_address: address,
+        target_address: Option<address>,
     }
 
     /// A name (potentially subdomain) has had it's address changed
@@ -395,16 +395,16 @@ module aptos_names::domains {
         }
     }
 
-    public entry fun set_domain_address(sign: &signer, domain_name: String, new_address: address) acquires NameRegistryV1, ReverseLookupRegistryV1, SetNameAddressEventsV1 {
+    public entry fun set_domain_address(sign: &signer, domain_name: String, new_address: address) acquires NameRegistryV1, ReverseLookupRegistryV1, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
         set_name_address(sign, option::none(), domain_name, new_address);
     }
 
 
-    public entry fun set_subdomain_address(sign: &signer, subdomain_name: String, domain_name: String, new_address: address) acquires NameRegistryV1, ReverseLookupRegistryV1, SetNameAddressEventsV1 {
+    public entry fun set_subdomain_address(sign: &signer, subdomain_name: String, domain_name: String, new_address: address) acquires NameRegistryV1, ReverseLookupRegistryV1, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
         set_name_address(sign, option::some(subdomain_name), domain_name, new_address);
     }
 
-    public fun set_name_address(sign: &signer, subdomain_name: Option<String>, domain_name: String, new_address: address) acquires NameRegistryV1, ReverseLookupRegistryV1, SetNameAddressEventsV1 {
+    public fun set_name_address(sign: &signer, subdomain_name: Option<String>, domain_name: String, new_address: address) acquires NameRegistryV1, ReverseLookupRegistryV1, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
         let signer_addr = signer::address_of(sign);
         let (is_owner, token_id) = is_owner_of_name(signer_addr, subdomain_name, domain_name);
         assert!(is_owner, error::permission_denied(ENOT_OWNER_OF_NAME));
@@ -428,6 +428,11 @@ module aptos_names::domains {
         if (*current_reverse_lookup == key && signer_addr != new_address) {
             let registry = &mut borrow_global_mut<ReverseLookupRegistryV1>(@aptos_names).registry;
             table::remove<address, NameRecordKeyV1>(registry, signer_addr);
+            emit_set_reverse_lookup_event_v1(
+                subdomain_name,
+                domain_name,
+                option::none()
+            );
         };
     }
 
@@ -517,7 +522,7 @@ module aptos_names::domains {
         emit_set_reverse_lookup_event_v1(
             maybe_subdomain_name,
             domain_name,
-            account_addr
+            option::some(account_addr)
         );
     }
 
@@ -536,7 +541,7 @@ module aptos_names::domains {
         );
     }
 
-    fun emit_set_reverse_lookup_event_v1(subdomain_name: Option<String>, domain_name: String, target_address: address) acquires SetReverseLookupEventsV1 {
+    fun emit_set_reverse_lookup_event_v1(subdomain_name: Option<String>, domain_name: String, target_address: Option<address>) acquires SetReverseLookupEventsV1 {
         let event = SetReverseLookupEventV1 {
             subdomain_name,
             domain_name,
