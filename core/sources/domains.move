@@ -17,7 +17,7 @@ module aptos_names::domains {
     use std::error;
     use std::option::{Self, Option};
     use std::signer;
-    use std::string::String;
+    use std::string::{Self, String};
 
     /// The Naming Service contract is not enabled
     const ENOT_ENABLED: u64 = 1;
@@ -150,7 +150,7 @@ module aptos_names::domains {
     }
 
     public fun init_reverse_lookup_registry_v1(account: &signer) {
-        assert!(signer::address_of(account) == @aptos_names, ENOT_AUTHORIZED);
+        assert!(signer::address_of(account) == @aptos_names, error::permission_denied(ENOT_AUTHORIZED));
 
         move_to(account, ReverseLookupRegistryV1 {
             registry: table::new()
@@ -493,6 +493,21 @@ module aptos_names::domains {
         };
     }
 
+    /// Entry function for |set_reverse_lookup|.
+    public entry fun set_reverse_lookup_entry(account: &signer, subdomain_name: String, domain_name: String) acquires NameRegistryV1, ReverseLookupRegistryV1, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
+        let key = NameRecordKeyV1 {
+            subdomain_name: if (string::length(&subdomain_name) > 0) {
+                option::some(subdomain_name)
+            } else {
+                option::none()
+            },
+            domain_name
+        };
+        set_reverse_lookup(account, &key);
+    }
+
+    /// Sets the |account|'s reverse lookup, aka "primary name". This allows a user to specify which of their Aptos Names
+    /// is their "primary", so that dapps can display the user's primary name rather than their address.
     public fun set_reverse_lookup(account: &signer, key: &NameRecordKeyV1) acquires NameRegistryV1, ReverseLookupRegistryV1, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
         set_reverse_lookup_internal(account, key);
 
@@ -514,7 +529,7 @@ module aptos_names::domains {
         let account_addr = signer::address_of(account);
         let (maybe_subdomain_name, domain_name) = get_name_record_key_v1_props(key);
         let (is_owner, _) = is_owner_of_name(account_addr, maybe_subdomain_name, domain_name);
-        assert!(is_owner, ENOT_AUTHORIZED);
+        assert!(is_owner, error::permission_denied(ENOT_AUTHORIZED));
 
         let registry = &mut borrow_global_mut<ReverseLookupRegistryV1>(@aptos_names).registry;
         table::upsert(registry, account_addr, *key);
