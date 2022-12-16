@@ -516,6 +516,7 @@ module aptos_names::domains {
         set_name_address(account, maybe_subdomain_name, domain_name, account_addr);
     }
 
+    /// Returns the reverse lookup for an address if any.
     public fun get_reverse_lookup(account_addr: address): Option<NameRecordKeyV1> acquires ReverseLookupRegistryV1 {
         let registry = &borrow_global_mut<ReverseLookupRegistryV1>(@aptos_names).registry;
         if (table::contains(registry, account_addr)) {
