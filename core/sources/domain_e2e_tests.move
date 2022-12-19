@@ -296,4 +296,19 @@ module aptos_names::domain_e2e_tests {
         // Take the domain name for much longer than users are allowed to register it for
         domains::force_create_or_seize_name(rando, option::none(), test_helper::domain_name(), test_helper::two_hundred_year_secs());
     }
+
+    #[test(myself = @aptos_names, user = @0x077, aptos = @0x1, rando = @0x266f, foundation = @0xf01d)]
+    fun clear_name_happy_path_e2e_test(myself: &signer, user: signer, aptos: signer, rando: signer, foundation: signer) {
+        let users = test_helper::e2e_test_setup(myself, user, &aptos, rando, &foundation);
+        let user = vector::borrow(&users, 0);
+        let user_addr = signer::address_of(user);
+
+        // Register the domain
+        test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>());
+
+        // Clear my reverse lookup.
+        domains::clear_reverse_lookup(user);
+
+        assert!(option::is_none(&domains::get_reverse_lookup(user_addr)), 1);
+    }
 }

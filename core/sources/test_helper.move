@@ -148,6 +148,7 @@ module aptos_names::test_helper {
 
         // Reverse lookup should be set if user did not have one before
         if (option::is_none(&user_reverse_lookup_before)) {
+            assert!(option::is_some(&domains::get_reverse_lookup(user_addr)), 36);
             assert!(set_reverse_lookup_event_v1_num_emitted == 1, set_reverse_lookup_event_v1_num_emitted);
         } else {
             assert!(set_reverse_lookup_event_v1_num_emitted == 0, set_reverse_lookup_event_v1_num_emitted);
