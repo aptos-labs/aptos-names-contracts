@@ -212,8 +212,11 @@ module aptos_names::test_helper {
 
     /// Clear the domain address, and verify the address was cleared
     public fun clear_name_address(user: &signer, subdomain_name: Option<String>, domain_name: String) {
+        let user_addr = signer::address_of(user);
         let register_name_event_v1_event_count_before = domains::get_register_name_event_v1_count();
         let set_name_address_event_v1_event_count_before = domains::get_set_name_address_event_v1_count();
+        let set_reverse_lookup_event_v1_event_count_before = domains::get_set_reverse_lookup_event_v1_count();
+        let maybe_reverse_lookup_before = domains::get_reverse_lookup(user_addr);
 
         // And also can clear if is registered address, but not owner
         if (option::is_none(&subdomain_name)) {
@@ -224,6 +227,17 @@ module aptos_names::test_helper {
         let (_property_version, _expiration_time_sec, target_address) = domains::get_name_record_v1_props_for_name(subdomain_name, domain_name);
         test_utils::print_actual_expected(b"clear_domain_address: ", target_address, option::none(), false);
         assert!(target_address == option::none(), 32);
+
+        if (option::is_some(&maybe_reverse_lookup_before)) {
+            let reverse_lookup_before = option::borrow(&maybe_reverse_lookup_before);
+            if (*reverse_lookup_before == domains::create_name_record_key_v1(subdomain_name, domain_name)) {
+                let reverse_lookup_after = domains::get_reverse_lookup(user_addr);
+                assert!(option::is_none(&reverse_lookup_after), 35);
+
+                let set_reverse_lookup_event_v1_num_emitted = domains::get_set_reverse_lookup_event_v1_count() - set_reverse_lookup_event_v1_event_count_before;
+                assert!(set_reverse_lookup_event_v1_num_emitted == 1, set_reverse_lookup_event_v1_num_emitted);
+            };
+        };
 
         // Assert events have been correctly emmitted
         let register_name_event_v1_num_emitted = domains::get_register_name_event_v1_count() - register_name_event_v1_event_count_before;

@@ -71,10 +71,15 @@ module aptos_names::domains {
         registry: Table<NameRecordKeyV1, NameRecordV1>,
     }
 
+    /// The registry for reverse lookups (aka primary names), which maps addresses to their primary name
+    /// - Users can set their primary name to a name that they own. This also forces the name to target their own address too.
+    /// - If you point your primary name to an address that isn't your own, it is no longer your primary name.
+    /// - If you mint a name while you don't have a primary name, your minted name is auto-set to be your primary name. (including minting subdomains)
     struct ReverseLookupRegistryV1 has key, store {
         registry: Table<address, NameRecordKeyV1>
     }
 
+    /// Holder for `SetReverseLookupEventV1` events
     struct SetReverseLookupEventsV1 has key, store {
         set_reverse_lookup_events: event::EventHandle<SetReverseLookupEventV1>,
     }
@@ -89,6 +94,9 @@ module aptos_names::domains {
         register_name_events: event::EventHandle<RegisterNameEventV1>,
     }
 
+    /// A name has been set as the reverse lookup for an address, or
+    /// the reverse lookup has been cleared (in which case |target_address|
+    /// will be none)
     struct SetReverseLookupEventV1 has drop, store {
         subdomain_name: Option<String>,
         domain_name: String,
@@ -223,7 +231,7 @@ module aptos_names::domains {
         register_name_internal(sign, option::some(subdomain_name), domain_name, registration_duration_secs, price);
     }
 
-    /// Register a nane. Accepts an optional subdomain name, a required domain name, and a registration duration in seconds.
+    /// Register a name. Accepts an optional subdomain name, a required domain name, and a registration duration in seconds.
     /// For domains, the registration duration is only allowed to be in increments of 1 year, for now
     /// Since the owner of the domain is the only one that can create the subdomain, we allow them to decide how long they want the underlying registration to be
     /// The maximum subdomain registration duration is limited to the duration of its parent domain registration
@@ -309,6 +317,18 @@ module aptos_names::domains {
 
     public fun force_create_or_seize_name(sign: &signer, subdomain_name: Option<String>, domain_name: String, registration_duration_secs: u64) acquires NameRegistryV1, RegisterNameEventsV1, ReverseLookupRegistryV1, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
         config::assert_signer_is_admin(sign);
+
+        // If the name is a primary name, clear it
+        let maybe_target_address = name_resolved_address(subdomain_name, domain_name);
+        if (option::is_some(&maybe_target_address)) {
+            let target_address = option::borrow(&maybe_target_address);
+            let maybe_reverse_lookup = get_reverse_lookup(*target_address);
+            if (option::is_some(&maybe_reverse_lookup) && NameRecordKeyV1 { subdomain_name, domain_name } == *option::borrow(&maybe_reverse_lookup)) {
+                clear_reverse_lookup_internal(*target_address);
+            };
+        };
+
+        // Register the name
         register_name_internal(sign, subdomain_name, domain_name, registration_duration_secs, 0);
     }
 
@@ -399,7 +419,6 @@ module aptos_names::domains {
         set_name_address(sign, option::none(), domain_name, new_address);
     }
 
-
     public entry fun set_subdomain_address(sign: &signer, subdomain_name: String, domain_name: String, new_address: address) acquires NameRegistryV1, ReverseLookupRegistryV1, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
         set_name_address(sign, option::some(subdomain_name), domain_name, new_address);
     }
@@ -426,13 +445,7 @@ module aptos_names::domains {
         let current_reverse_lookup = option::borrow(&maybe_reverse_lookup);
         let key = NameRecordKeyV1 { subdomain_name, domain_name };
         if (*current_reverse_lookup == key && signer_addr != new_address) {
-            let registry = &mut borrow_global_mut<ReverseLookupRegistryV1>(@aptos_names).registry;
-            table::remove<address, NameRecordKeyV1>(registry, signer_addr);
-            emit_set_reverse_lookup_event_v1(
-                subdomain_name,
-                domain_name,
-                option::none()
-            );
+            clear_reverse_lookup(sign);
         };
     }
 
@@ -453,20 +466,30 @@ module aptos_names::domains {
         *name_record
     }
 
-    public entry fun clear_domain_address(sign: &signer, domain_name: String) acquires NameRegistryV1, SetNameAddressEventsV1 {
+    public entry fun clear_domain_address(sign: &signer, domain_name: String) acquires NameRegistryV1, ReverseLookupRegistryV1, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
         clear_name_address(sign, option::none(), domain_name);
     }
 
-    public entry fun clear_subdomain_address(sign: &signer, subdomain_name: String, domain_name: String) acquires NameRegistryV1, SetNameAddressEventsV1 {
+    public entry fun clear_subdomain_address(sign: &signer, subdomain_name: String, domain_name: String) acquires NameRegistryV1, ReverseLookupRegistryV1, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
         clear_name_address(sign, option::some(subdomain_name), domain_name);
     }
 
     /// This is a shared entry point for clearing the address of a domain or subdomain
     /// It enforces owner permissions
-    fun clear_name_address(sign: &signer, subdomain_name: Option<String>, domain_name: String) acquires NameRegistryV1, SetNameAddressEventsV1 {
+    fun clear_name_address(sign: &signer, subdomain_name: Option<String>, domain_name: String) acquires NameRegistryV1, ReverseLookupRegistryV1, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
         assert!(name_is_registered(subdomain_name, domain_name), error::not_found(ENAME_NOT_EXIST));
 
         let signer_addr = signer::address_of(sign);
+
+        // Clear the reverse lookup if this name is the signer's reverse lookup
+        let maybe_reverse_lookup = get_reverse_lookup(signer_addr);
+        if (option::is_some(&maybe_reverse_lookup)) {
+            let reverse_lookup = option::borrow(&maybe_reverse_lookup);
+            if (NameRecordKeyV1 { subdomain_name, domain_name } == *reverse_lookup) {
+                clear_reverse_lookup_internal(signer_addr);
+            };
+        };
+
         // Only the owner or the registered address can clear the address
         let (is_owner, token_id) = is_owner_of_name(signer_addr, subdomain_name, domain_name);
         let is_name_resolved_address = name_resolved_address(subdomain_name, domain_name) == option::some<address>(signer_addr);
@@ -516,6 +539,12 @@ module aptos_names::domains {
         set_name_address(account, maybe_subdomain_name, domain_name, account_addr);
     }
 
+    /// Clears the user's reverse lookup.
+    public fun clear_reverse_lookup(account: &signer) acquires ReverseLookupRegistryV1, SetReverseLookupEventsV1 {
+        let account_addr = signer::address_of(account);
+        clear_reverse_lookup_internal(account_addr);
+    }
+
     /// Returns the reverse lookup for an address if any.
     public fun get_reverse_lookup(account_addr: address): Option<NameRecordKeyV1> acquires ReverseLookupRegistryV1 {
         let registry = &borrow_global_mut<ReverseLookupRegistryV1>(@aptos_names).registry;
@@ -539,6 +568,21 @@ module aptos_names::domains {
             maybe_subdomain_name,
             domain_name,
             option::some(account_addr)
+        );
+    }
+
+    fun clear_reverse_lookup_internal(account_addr: address) acquires ReverseLookupRegistryV1, SetReverseLookupEventsV1 {
+        let maybe_reverse_lookup = get_reverse_lookup(account_addr);
+        if (option::is_none(&maybe_reverse_lookup)) {
+            return
+        };
+        let NameRecordKeyV1 { subdomain_name, domain_name } = option::borrow(&maybe_reverse_lookup);
+        let registry = &mut borrow_global_mut<ReverseLookupRegistryV1>(@aptos_names).registry;
+        table::remove<address, NameRecordKeyV1>(registry, account_addr);
+        emit_set_reverse_lookup_event_v1(
+            *subdomain_name,
+            *domain_name,
+            option::none()
         );
     }
 
