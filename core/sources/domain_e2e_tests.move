@@ -7,6 +7,7 @@ module aptos_names::domain_e2e_tests {
     use aptos_names::time_helper;
     use aptos_names::test_helper;
     use aptos_names::test_utils;
+    use aptos_token::token;
     use std::option;
     use std::signer;
     use std::string;
@@ -347,6 +348,33 @@ module aptos_names::domain_e2e_tests {
         // Clear my reverse lookup.
         domains::clear_reverse_lookup(user);
 
+        assert!(option::is_none(&domains::get_reverse_lookup(user_addr)), 1);
+    }
+
+    #[test(myself = @aptos_names, user = @0x077, aptos = @0x1, rando = @0x266f, foundation = @0xf01d)]
+    fun set_primary_name_clears_old_primary_name_e2e_test(myself: &signer, user: signer, aptos: signer, rando: signer, foundation: signer) {
+        let users = test_helper::e2e_test_setup(myself, user, &aptos, rando, &foundation);
+        let user = vector::borrow(&users, 0);
+        let user_addr = signer::address_of(user);
+        let rando = vector::borrow(&users, 1);
+
+        // Register the domain
+        test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>());
+        let (is_owner, token_id) = domains::is_owner_of_name(user_addr, option::none(), test_helper::domain_name());
+        assert!(is_owner, 1);
+
+        // Transfer the domain to rando
+        token::direct_transfer(user, rando, token_id, 1);
+
+        // Verify primary name for |user| hasn't changed
+        assert!(option::is_some(&domains::get_reverse_lookup(user_addr)), 1);
+
+        // |rando| sets his primary name
+        let subdomain_name_str = string::utf8(b"");
+        let domain_name_str = string::utf8(b"test");
+        domains::set_reverse_lookup_entry(rando, subdomain_name_str, domain_name_str);
+
+        // |user|'s primary name should be none.
         assert!(option::is_none(&domains::get_reverse_lookup(user_addr)), 1);
     }
 }

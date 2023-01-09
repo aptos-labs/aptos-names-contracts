@@ -318,15 +318,7 @@ module aptos_names::domains {
     public fun force_create_or_seize_name(sign: &signer, subdomain_name: Option<String>, domain_name: String, registration_duration_secs: u64) acquires NameRegistryV1, RegisterNameEventsV1, ReverseLookupRegistryV1, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
         config::assert_signer_is_admin(sign);
 
-        // If the name is a primary name, clear it
-        let maybe_target_address = name_resolved_address(subdomain_name, domain_name);
-        if (option::is_some(&maybe_target_address)) {
-            let target_address = option::borrow(&maybe_target_address);
-            let maybe_reverse_lookup = get_reverse_lookup(*target_address);
-            if (option::is_some(&maybe_reverse_lookup) && NameRecordKeyV1 { subdomain_name, domain_name } == *option::borrow(&maybe_reverse_lookup)) {
-                clear_reverse_lookup_internal(*target_address);
-            };
-        };
+        clear_reverse_lookup_for_name(subdomain_name, domain_name);
 
         // Register the name
         register_name_internal(sign, subdomain_name, domain_name, registration_duration_secs, 0);
@@ -532,10 +524,11 @@ module aptos_names::domains {
     /// Sets the |account|'s reverse lookup, aka "primary name". This allows a user to specify which of their Aptos Names
     /// is their "primary", so that dapps can display the user's primary name rather than their address.
     public fun set_reverse_lookup(account: &signer, key: &NameRecordKeyV1) acquires NameRegistryV1, ReverseLookupRegistryV1, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
-        set_reverse_lookup_internal(account, key);
-
         let account_addr = signer::address_of(account);
         let (maybe_subdomain_name, domain_name) = get_name_record_key_v1_props(key);
+
+        clear_reverse_lookup_for_name(maybe_subdomain_name, domain_name);
+        set_reverse_lookup_internal(account, key);
         set_name_address(account, maybe_subdomain_name, domain_name, account_addr);
     }
 
@@ -584,6 +577,18 @@ module aptos_names::domains {
             *domain_name,
             option::none()
         );
+    }
+
+    fun clear_reverse_lookup_for_name(subdomain_name: Option<String>, domain_name: String) acquires NameRegistryV1, ReverseLookupRegistryV1, SetReverseLookupEventsV1 {
+        // If the name is a primary name, clear it
+        let maybe_target_address = name_resolved_address(subdomain_name, domain_name);
+        if (option::is_some(&maybe_target_address)) {
+            let target_address = option::borrow(&maybe_target_address);
+            let maybe_reverse_lookup = get_reverse_lookup(*target_address);
+            if (option::is_some(&maybe_reverse_lookup) && NameRecordKeyV1 { subdomain_name, domain_name } == *option::borrow(&maybe_reverse_lookup)) {
+                clear_reverse_lookup_internal(*target_address);
+            };
+        };
     }
 
     fun emit_set_name_address_event_v1(subdomain_name: Option<String>, domain_name: String, property_version: u64, expiration_time_secs: u64, new_address: Option<address>) acquires SetNameAddressEventsV1 {
