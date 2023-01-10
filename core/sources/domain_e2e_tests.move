@@ -5,10 +5,13 @@ module aptos_names::domain_e2e_tests {
     use aptos_names::config;
     use aptos_names::domains;
     use aptos_names::time_helper;
+    use aptos_names::token_helper;
     use aptos_names::test_helper;
     use aptos_names::test_utils;
+    use aptos_token::token;
     use std::option;
     use std::signer;
+    use std::string;
     use std::vector;
 
     #[test(myself = @aptos_names, user = @0x077, aptos = @0x1, rando = @0x266f, foundation = @0xf01d)]
@@ -295,5 +298,31 @@ module aptos_names::domain_e2e_tests {
 
         // Take the domain name for much longer than users are allowed to register it for
         domains::force_create_or_seize_name(rando, option::none(), test_helper::domain_name(), test_helper::two_hundred_year_secs());
+    }
+
+    #[test(myself = @aptos_names, user = @0x077, aptos = @0x1, rando = @0x266f, foundation = @0xf01d)]
+    fun mint_move_domain_name_e2e_test(myself: &signer, user: signer, aptos: signer, rando: signer, foundation: signer) {
+        let users = test_helper::e2e_test_setup(myself, user, &aptos, rando, &foundation);
+        let rando = vector::borrow(&users, 1);
+        let rando_addr = signer::address_of(rando);
+        let domain_name = string::utf8(b"test.move");
+
+        domains::register_domain(rando, domain_name, 1);
+
+        assert!(domains::name_is_registered(option::none(), domain_name), 1);
+
+        let token_data_id = token::create_token_data_id(token_helper::get_token_signer_address(), config::collection_name_v1(), domain_name);
+        let token_id = token::create_token_id(token_data_id, 1);
+        assert!(token::balance_of(rando_addr, token_id) == 1, 1);
+    }
+
+    #[test(myself = @aptos_names, user = @0x077, aptos = @0x1, rando = @0x266f, foundation = @0xf01d)]
+    #[expected_failure(abort_code = 65548)]
+    fun mint_invalid_move_domain_name_e2e_test(myself: &signer, user: signer, aptos: signer, rando: signer, foundation: signer) {
+        let users = test_helper::e2e_test_setup(myself, user, &aptos, rando, &foundation);
+        let rando = vector::borrow(&users, 1);
+        let domain_name = string::utf8(b"test.mov");
+
+        domains::register_domain(rando, domain_name, 1);
     }
 }
