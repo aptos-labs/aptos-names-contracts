@@ -12,6 +12,30 @@ module aptos_names::utf8_utils {
     const CHARACTER_SET_LATIN_LOWER_ALPHA_IDX: u64 = 0;
     const CHARACTER_SET_LATIN_DIGIT_IDX: u64 = 1;
 
+    const MOVE_SUFFIX: vector<u8> = b".move";
+
+    // Returns |true| if |str| ends with |suffix_bytes|.
+    fun ends_with(str: &vector<u64>, suffix_bytes: &vector<u8>): bool {
+        let suffix = utf8_to_vec_u64_fast(suffix_bytes);
+        let suffix_len = vector::length(&suffix);
+        let str_len = vector::length(str);
+        if (suffix_len > str_len) {
+            return false
+        };
+        let str_idx = str_len - suffix_len;
+        let suffix_idx = 0;
+        while (str_idx < str_len) {
+            let str_c = vector::borrow(str, str_idx);
+            let suffix_c = vector::borrow(&suffix, suffix_idx);
+            if (str_c != suffix_c) {
+                return false
+            };
+            str_idx = str_idx + 1;
+            suffix_idx = suffix_idx + 1;
+        };
+        return true
+    }
+
     /// Only allow latin lowercase letters, digits, and hyphens
     /// Hyphens are not allowed at the beginning or end of a string
     /// Returns whether it is allowed, and the number of characters in the utf8 string
@@ -20,6 +44,10 @@ module aptos_names::utf8_utils {
         let i = 0;
         let len = vector::length(&u64_characters);
         let allowed = true;
+
+        if (ends_with(&u64_characters, &MOVE_SUFFIX)) {
+            len = len - vector::length(&MOVE_SUFFIX);
+        };
 
         while (i < len) {
             let c = *vector::borrow(&u64_characters, i);

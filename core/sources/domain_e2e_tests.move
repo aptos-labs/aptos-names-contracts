@@ -411,5 +411,14 @@ module aptos_names::domain_e2e_tests {
         // |user|'s primary name should be none.
         assert!(option::is_none(&domains::get_reverse_lookup(user_addr)), 1);
         assert!(*option::borrow(&domains::name_resolved_address(option::none(), test_helper::domain_name())) == rando_addr, 1);
+
+    fun mint_move_domain_name_e2e_test(myself: &signer, user: signer, aptos: signer, rando: signer, foundation: signer) {
+        let users = test_helper::e2e_test_setup(myself, user, &aptos, rando, &foundation);
+        let rando = vector::borrow(&users, 1);
+        let domain_name = string::utf8(b"test.move");
+
+        domains::register_domain(rando, domain_name, 1);
+
+        assert!(domains::name_is_registered(option::none(), domain_name), 1);
     }
 }
