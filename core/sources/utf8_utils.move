@@ -12,10 +12,16 @@ module aptos_names::utf8_utils {
     const CHARACTER_SET_LATIN_LOWER_ALPHA_IDX: u64 = 0;
     const CHARACTER_SET_LATIN_DIGIT_IDX: u64 = 1;
 
-    const MOVE_SUFFIX: vector<u8> = b".move";
+    const MOVE_DOMAIN_SUFFIX: vector<u8> = b".move";
+
+    public fun ends_with_str(str: String, suffix_bytes: &vector<u8>): bool {
+        let u8_str = string::bytes(&str);
+        let u64_str = utf8_to_vec_u64_fast(u8_str);
+        ends_with(&u64_str, suffix_bytes)
+    }
 
     // Returns |true| if |str| ends with |suffix_bytes|.
-    fun ends_with(str: &vector<u64>, suffix_bytes: &vector<u8>): bool {
+    public fun ends_with(str: &vector<u64>, suffix_bytes: &vector<u8>): bool {
         let suffix = utf8_to_vec_u64_fast(suffix_bytes);
         let suffix_len = vector::length(&suffix);
         let str_len = vector::length(str);
@@ -45,8 +51,8 @@ module aptos_names::utf8_utils {
         let len = vector::length(&u64_characters);
         let allowed = true;
 
-        if (ends_with(&u64_characters, &MOVE_SUFFIX)) {
-            len = len - vector::length(&MOVE_SUFFIX);
+        if (ends_with(&u64_characters, &MOVE_DOMAIN_SUFFIX)) {
+            len = len - vector::length(&MOVE_DOMAIN_SUFFIX);
         };
 
         while (i < len) {

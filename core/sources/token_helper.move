@@ -12,6 +12,7 @@ module aptos_names::token_helper {
     use aptos_framework::account::{Self, SignerCapability};
 
     const DOMAIN_SUFFIX: vector<u8> = b".apt";
+    const MOVE_DOMAIN_SUFFIX: vector<u8> = b".move";
 
     /// The collection does not exist. This should never happen.
     const ECOLLECTION_NOT_EXISTS: u64 = 1;
@@ -60,8 +61,12 @@ module aptos_names::token_helper {
 
     public fun get_fully_qualified_domain_name(subdomain_name: Option<String>, domain_name: String): String {
         let combined = combine_sub_and_domain_str(subdomain_name, domain_name);
-        string::append_utf8(&mut combined, DOMAIN_SUFFIX);
-        combined
+        if (utf8_utils::ends_with_str(combined, &MOVE_DOMAIN_SUFFIX) && domain_name != string::utf8(b"move")) {
+            combined
+        } else {
+            string::append_utf8(&mut combined, DOMAIN_SUFFIX);
+            combined
+        }
     }
 
     public fun tokendata_exists(token_data_id: &TokenDataId): bool {
