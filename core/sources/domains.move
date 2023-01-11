@@ -236,6 +236,10 @@ module aptos_names::domains {
     /// Since the owner of the domain is the only one that can create the subdomain, we allow them to decide how long they want the underlying registration to be
     /// The maximum subdomain registration duration is limited to the duration of its parent domain registration
     fun register_name_internal(sign: &signer, subdomain_name: Option<String>, domain_name: String, registration_duration_secs: u64, price: u64) acquires NameRegistryV1, RegisterNameEventsV1, ReverseLookupRegistryV1, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
+        // If we're registering a name that exists but is expired, and the expired name is a primary name,
+        // it should get removed from being a primary name.
+        clear_reverse_lookup_for_name(subdomain_name, domain_name);
+
         let aptos_names = borrow_global_mut<NameRegistryV1>(@aptos_names);
 
         let name_expiration_time_secs = timestamp::now_seconds() + registration_duration_secs;
@@ -317,9 +321,6 @@ module aptos_names::domains {
 
     public fun force_create_or_seize_name(sign: &signer, subdomain_name: Option<String>, domain_name: String, registration_duration_secs: u64) acquires NameRegistryV1, RegisterNameEventsV1, ReverseLookupRegistryV1, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
         config::assert_signer_is_admin(sign);
-
-        clear_reverse_lookup_for_name(subdomain_name, domain_name);
-
         // Register the name
         register_name_internal(sign, subdomain_name, domain_name, registration_duration_secs, 0);
     }

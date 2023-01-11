@@ -127,6 +127,9 @@ module aptos_names::domain_e2e_tests {
         // Lets try to register it again, now that it is expired
         test_helper::register_name(rando, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 2, vector::empty<u8>());
 
+        // Reverse lookup for |user| should be none.
+        assert!(option::is_none(&domains::get_reverse_lookup(signer::address_of(user))), 85);
+
         // And again!
         let (_, expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(option::none(), test_helper::domain_name());
         timestamp::update_global_time_for_test_secs(expiration_time_sec + 5);
