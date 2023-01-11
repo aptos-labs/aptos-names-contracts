@@ -355,11 +355,12 @@ module aptos_names::domain_e2e_tests {
     }
 
     #[test(myself = @aptos_names, user = @0x077, aptos = @0x1, rando = @0x266f, foundation = @0xf01d)]
-    fun set_primary_name_clears_old_primary_name_e2e_test(myself: &signer, user: signer, aptos: signer, rando: signer, foundation: signer) {
+    fun set_primary_name_after_transfer_clears_old_primary_name_e2e_test(myself: &signer, user: signer, aptos: signer, rando: signer, foundation: signer) {
         let users = test_helper::e2e_test_setup(myself, user, &aptos, rando, &foundation);
         let user = vector::borrow(&users, 0);
         let user_addr = signer::address_of(user);
         let rando = vector::borrow(&users, 1);
+        let rando_addr = signer::address_of(rando);
 
         // Register the domain
         test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>());
@@ -371,6 +372,7 @@ module aptos_names::domain_e2e_tests {
 
         // Verify primary name for |user| hasn't changed
         assert!(option::is_some(&domains::get_reverse_lookup(user_addr)), 1);
+        assert!(*option::borrow(&domains::name_resolved_address(option::none(), test_helper::domain_name())) == user_addr, 1);
 
         // |rando| sets his primary name
         let subdomain_name_str = string::utf8(b"");
@@ -379,5 +381,35 @@ module aptos_names::domain_e2e_tests {
 
         // |user|'s primary name should be none.
         assert!(option::is_none(&domains::get_reverse_lookup(user_addr)), 1);
+        assert!(*option::borrow(&domains::name_resolved_address(option::none(), test_helper::domain_name())) == rando_addr, 1);
+    }
+
+    #[test(myself = @aptos_names, user = @0x077, aptos = @0x1, rando = @0x266f, foundation = @0xf01d)]
+    fun set_target_address_after_transfer_clears_old_primary_name_e2e_test(myself: &signer, user: signer, aptos: signer, rando: signer, foundation: signer) {
+        let users = test_helper::e2e_test_setup(myself, user, &aptos, rando, &foundation);
+        let user = vector::borrow(&users, 0);
+        let user_addr = signer::address_of(user);
+        let rando = vector::borrow(&users, 1);
+        let rando_addr = signer::address_of(rando);
+
+        // Register the domain
+        test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>());
+        let (is_owner, token_id) = domains::is_owner_of_name(user_addr, option::none(), test_helper::domain_name());
+        assert!(is_owner, 1);
+
+        // Transfer the domain to rando
+        token::direct_transfer(user, rando, token_id, 1);
+
+        // Verify primary name for |user| hasn't changed
+        assert!(option::is_some(&domains::get_reverse_lookup(user_addr)), 1);
+        assert!(*option::borrow(&domains::name_resolved_address(option::none(), test_helper::domain_name())) == user_addr, 1);
+
+        // |rando| sets target address
+        let domain_name_str = string::utf8(b"test");
+        domains::set_domain_address(rando, domain_name_str, rando_addr);
+
+        // |user|'s primary name should be none.
+        assert!(option::is_none(&domains::get_reverse_lookup(user_addr)), 1);
+        assert!(*option::borrow(&domains::name_resolved_address(option::none(), test_helper::domain_name())) == rando_addr, 1);
     }
 }

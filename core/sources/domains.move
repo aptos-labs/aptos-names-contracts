@@ -417,6 +417,9 @@ module aptos_names::domains {
     }
 
     public fun set_name_address(sign: &signer, subdomain_name: Option<String>, domain_name: String, new_address: address) acquires NameRegistryV1, ReverseLookupRegistryV1, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
+        // If the domain name is a primary name, clear it.
+        clear_reverse_lookup_for_name(subdomain_name, domain_name);
+
         let signer_addr = signer::address_of(sign);
         let (is_owner, token_id) = is_owner_of_name(signer_addr, subdomain_name, domain_name);
         assert!(is_owner, error::permission_denied(ENOT_OWNER_OF_NAME));
@@ -527,10 +530,8 @@ module aptos_names::domains {
     public fun set_reverse_lookup(account: &signer, key: &NameRecordKeyV1) acquires NameRegistryV1, ReverseLookupRegistryV1, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
         let account_addr = signer::address_of(account);
         let (maybe_subdomain_name, domain_name) = get_name_record_key_v1_props(key);
-
-        clear_reverse_lookup_for_name(maybe_subdomain_name, domain_name);
-        set_reverse_lookup_internal(account, key);
         set_name_address(account, maybe_subdomain_name, domain_name, account_addr);
+        set_reverse_lookup_internal(account, key);
     }
 
     /// Clears the user's reverse lookup.
