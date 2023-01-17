@@ -293,16 +293,18 @@ module aptos_names::domains {
     /// Forcefully set the name of a domain.
     /// This is a privileged operation, used via governance, to forcefully set a domain address
     /// This can be used, for example, to forcefully set the domain for a system address domain
-    public entry fun force_set_domain_address(sign: &signer, domain_name: String, new_owner: address) acquires NameRegistryV1, SetNameAddressEventsV1 {
+    public entry fun force_set_domain_address(sign: &signer, domain_name: String, new_owner: address) acquires NameRegistryV1, ReverseLookupRegistryV1, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
         force_set_name_address(sign, option::none(), domain_name, new_owner);
     }
 
-    public entry fun force_set_subdomain_address(sign: &signer, subdomain_name: String, domain_name: String, new_owner: address) acquires NameRegistryV1, SetNameAddressEventsV1 {
+    public entry fun force_set_subdomain_address(sign: &signer, subdomain_name: String, domain_name: String, new_owner: address) acquires NameRegistryV1, ReverseLookupRegistryV1, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
         force_set_name_address(sign, option::some(subdomain_name), domain_name, new_owner);
     }
 
-    fun force_set_name_address(sign: &signer, subdomain_name: Option<String>, domain_name: String, new_owner: address) acquires NameRegistryV1, SetNameAddressEventsV1 {
+    fun force_set_name_address(sign: &signer, subdomain_name: Option<String>, domain_name: String, new_owner: address) acquires NameRegistryV1, ReverseLookupRegistryV1, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
         config::assert_signer_is_admin(sign);
+        // If the domain name is a primary name, clear it.
+        clear_reverse_lookup_for_name(subdomain_name, domain_name);
         set_name_address_internal(subdomain_name, domain_name, new_owner);
     }
 
