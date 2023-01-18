@@ -1,0 +1,18 @@
+name: "Move Tests"
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - testnet
+      - mainnet
+
+jobs:
+  move-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install dev dependencies.
+        run: ./sh_scripts/dev_setup.sh
+      - name: Runs move tests.
+        run: ./sh_scripts/move_tests.sh
