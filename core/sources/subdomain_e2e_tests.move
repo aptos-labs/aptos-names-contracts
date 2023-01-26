@@ -111,7 +111,7 @@ module aptos_names::subdomain_e2e_tests {
     }
 
     #[test(myself = @aptos_names, user = @0x077, aptos = @0x1, rando = @0x266f, foundation = @0xf01d)]
-    #[expected_failure(abort_code = 196611)]
+    #[expected_failure(abort_code = 196611, location = aptos_names::domains)]
     fun dont_allow_double_subdomain_registrations_e2e_test(myself: &signer, user: signer, aptos: signer, rando: signer, foundation: signer) {
         let users = test_helper::e2e_test_setup(myself, user, &aptos, rando, &foundation);
         let user = vector::borrow(&users, 0);
@@ -124,7 +124,7 @@ module aptos_names::subdomain_e2e_tests {
     }
 
     #[test(myself = @aptos_names, user = @0x077, aptos = @0x1, rando = @0x266f, foundation = @0xf01d)]
-    #[expected_failure(abort_code = 327689)]
+    #[expected_failure(abort_code = 327689, location = aptos_names::domains)]
     fun dont_allow_rando_to_set_subdomain_address_e2e_test(myself: &signer, user: signer, aptos: signer, rando: signer, foundation: signer) {
         let users = test_helper::e2e_test_setup(myself, user, &aptos, rando, &foundation);
         let user = vector::borrow(&users, 0);
@@ -138,7 +138,7 @@ module aptos_names::subdomain_e2e_tests {
     }
 
     #[test(myself = @aptos_names, user = @0x077, aptos = @0x1, rando = @0x266f, foundation = @0xf01d)]
-    #[expected_failure(abort_code = 327689)]
+    #[expected_failure(abort_code = 327689, location = aptos_names::domains)]
     fun dont_allow_rando_to_clear_subdomain_address_e2e_test(myself: &signer, user: signer, aptos: signer, rando: signer, foundation: signer) {
         let users = test_helper::e2e_test_setup(myself, user, &aptos, rando, &foundation);
         let user = vector::borrow(&users, 0);
@@ -171,7 +171,7 @@ module aptos_names::subdomain_e2e_tests {
     }
 
     #[test(myself = @aptos_names, user = @0x077, aptos = @0x1, rando = @0x266f, foundation = @0xf01d)]
-    #[expected_failure(abort_code = 327681)]
+    #[expected_failure(abort_code = 327681, location = aptos_names::config)]
     fun rando_cant_force_set_subdomain_address_e2e_test(myself: &signer, user: signer, aptos: signer, rando: signer, foundation: signer) {
         let users = test_helper::e2e_test_setup(myself, user, &aptos, rando, &foundation);
         let user = vector::borrow(&users, 0);
@@ -229,7 +229,7 @@ module aptos_names::subdomain_e2e_tests {
     }
 
     #[test(myself = @aptos_names, user = @0x077, aptos = @0x1, rando = @0x266f, foundation = @0xf01d)]
-    #[expected_failure(abort_code = 131086)]
+    #[expected_failure(abort_code = 131086, location = aptos_names::domains)]
     fun admin_cant_force_create_subdomain_more_than_domain_time_e2e_test(myself: &signer, user: signer, aptos: signer, rando: signer, foundation: signer) {
         let users = test_helper::e2e_test_setup(myself, user, &aptos, rando, &foundation);
         let user = vector::borrow(&users, 0);
@@ -243,7 +243,7 @@ module aptos_names::subdomain_e2e_tests {
     }
 
     #[test(myself = @aptos_names, user = @0x077, aptos = @0x1, rando = @0x266f, foundation = @0xf01d)]
-    #[expected_failure(abort_code = 327681)]
+    #[expected_failure(abort_code = 327681, location = aptos_names::config)]
     fun rando_cant_force_seize_subdomain_name_e2e_test(myself: &signer, user: signer, aptos: signer, rando: signer, foundation: signer) {
         let users = test_helper::e2e_test_setup(myself, user, &aptos, rando, &foundation);
         let user = vector::borrow(&users, 0);
@@ -260,7 +260,7 @@ module aptos_names::subdomain_e2e_tests {
     }
 
     #[test(myself = @aptos_names, user = @0x077, aptos = @0x1, rando = @0x266f, foundation = @0xf01d)]
-    #[expected_failure(abort_code = 327681)]
+    #[expected_failure(abort_code = 327681, location = aptos_names::config)]
     fun rando_cant_force_create_subdomain_name_e2e_test(myself: &signer, user: signer, aptos: signer, rando: signer, foundation: signer) {
         let users = test_helper::e2e_test_setup(myself, user, &aptos, rando, &foundation);
         let user = vector::borrow(&users, 0);
