@@ -412,4 +412,23 @@ module aptos_names::domain_e2e_tests {
         assert!(option::is_none(&domains::get_reverse_lookup(user_addr)), 1);
         assert!(*option::borrow(&domains::name_resolved_address(option::none(), test_helper::domain_name())) == rando_addr, 1);
     }
+
+    #[test(myself = @aptos_names, user = @0x077, aptos = @0x1, rando = @0x266f, foundation = @0xf01d)]
+    fun owner_of_expired_name_is_not_owner(myself: &signer, user: signer, aptos: signer, rando: signer, foundation: signer) {
+        let users = test_helper::e2e_test_setup(myself, user, &aptos, rando, &foundation);
+        let user = vector::borrow(&users, 0);
+        let user_addr = signer::address_of(user);
+
+        // Register the domain
+        test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>());
+        let (is_owner, _token_id) = domains::is_owner_of_name(user_addr, option::none(), test_helper::domain_name());
+        assert!(is_owner, 1);
+
+        // Set the time past the domain's expiration time
+        let (_, expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(option::none(), test_helper::domain_name());
+        timestamp::update_global_time_for_test_secs(expiration_time_sec + 5);
+
+        let (is_owner, _token_id) = domains::is_owner_of_name(user_addr, option::none(), test_helper::domain_name());
+        assert!(!is_owner, 1);
+    }
 }
