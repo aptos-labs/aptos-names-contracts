@@ -59,6 +59,15 @@ module aptos_names::token_helper {
     }
 
     public fun get_fully_qualified_domain_name(subdomain_name: Option<String>, domain_name: String): String {
+        let (domain_is_allowed, _length) = utf8_utils::string_is_allowed(&domain_name);
+        assert!(domain_is_allowed, 1);
+        let subdomain_is_allowed = if (option::is_some(&subdomain_name)) {
+            let (subdomain_is_allowed, _length) = utf8_utils::string_is_allowed(option::borrow(&subdomain_name));
+            subdomain_is_allowed
+        } else {
+            true
+        };
+        assert!(subdomain_is_allowed, 2);
         let combined = combine_sub_and_domain_str(subdomain_name, domain_name);
         string::append_utf8(&mut combined, DOMAIN_SUFFIX);
         combined
@@ -188,7 +197,7 @@ module aptos_names::token_helper {
     #[test]
     fun test_get_fully_qualified_domain_name() {
         assert!(get_fully_qualified_domain_name(option::none(), string::utf8(b"test")) == string::utf8(b"test.apt"), 1);
-        assert!(get_fully_qualified_domain_name(option::none(), string::utf8(b"wow_this_is_long")) == string::utf8(b"wow_this_is_long.apt"), 2);
+        assert!(get_fully_qualified_domain_name(option::none(), string::utf8(b"wowthisislong")) == string::utf8(b"wowthisislong.apt"), 2);
         assert!(get_fully_qualified_domain_name(option::none(), string::utf8(b"123")) == string::utf8(b"123.apt"), 2);
         assert!(get_fully_qualified_domain_name(option::some(string::utf8(b"sub")), string::utf8(b"test")) == string::utf8(b"sub.test.apt"), 2);
     }
