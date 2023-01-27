@@ -390,11 +390,11 @@ module aptos_names::domains {
     }
 
     /// Check if the address is the owner of the given aptos_name
-    /// If the name does not exist, returns false
-    public fun is_owner_of_name(owner_address: address, subdomain_name: Option<String>, domain_name: String): (bool, TokenId) {
+    /// If the name does not exist or owner owns an expired name, returns false
+    public fun is_owner_of_name(owner_address: address, subdomain_name: Option<String>, domain_name: String): (bool, TokenId) acquires NameRegistryV1 {
         let token_data_id = token_helper::build_tokendata_id(token_helper::get_token_signer_address(), subdomain_name, domain_name);
         let token_id = token_helper::latest_token_id(&token_data_id);
-        (token::balance_of(owner_address, token_id) > 0, token_id)
+        (token::balance_of(owner_address, token_id) > 0 && !name_is_expired(subdomain_name, domain_name), token_id)
     }
 
     /// gets the address pointed to by a given name
@@ -553,7 +553,7 @@ module aptos_names::domains {
         }
     }
 
-    fun set_reverse_lookup_internal(account: &signer, key: &NameRecordKeyV1) acquires ReverseLookupRegistryV1, SetReverseLookupEventsV1 {
+    fun set_reverse_lookup_internal(account: &signer, key: &NameRecordKeyV1) acquires NameRegistryV1, ReverseLookupRegistryV1, SetReverseLookupEventsV1 {
         let account_addr = signer::address_of(account);
         let (maybe_subdomain_name, domain_name) = get_name_record_key_v1_props(key);
         let (is_owner, _) = is_owner_of_name(account_addr, maybe_subdomain_name, domain_name);
