@@ -537,6 +537,11 @@ module aptos_names::domains {
         set_reverse_lookup_internal(account, key);
     }
 
+    /// Entry function for clearing reverse lookup.
+    public entry fun clear_reverse_lookup_entry(account: &signer) acquires ReverseLookupRegistryV1, SetReverseLookupEventsV1 {
+        clear_reverse_lookup(account);
+    }
+
     /// Clears the user's reverse lookup.
     public fun clear_reverse_lookup(account: &signer) acquires ReverseLookupRegistryV1, SetReverseLookupEventsV1 {
         let account_addr = signer::address_of(account);
