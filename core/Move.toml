@@ -9,10 +9,10 @@ aptos_names_funds = "0x78ee3915e67ef5d19fa91d1e05e60ae08751efd12ce58e23fc1109de8
 
 [dependencies.AptosFramework]
 git = 'https://github.com/aptos-labs/aptos-core.git'
-rev = 'main'
+rev = 'framework-mainnet'
 subdir = 'aptos-move/framework/aptos-framework'
 
 [dependencies.AptosToken]
 git = 'https://github.com/aptos-labs/aptos-core.git'
-rev = 'main'
+rev = 'framework-mainnet'
 subdir = 'aptos-move/framework/aptos-token'
