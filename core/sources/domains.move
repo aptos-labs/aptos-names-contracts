@@ -157,7 +157,7 @@ module aptos_names::domains {
         token_helper::initialize(account);
     }
 
-    public fun init_reverse_lookup_registry_v1(account: &signer) {
+    public entry fun init_reverse_lookup_registry_v1(account: &signer) {
         assert!(signer::address_of(account) == @aptos_names, error::permission_denied(ENOT_AUTHORIZED));
 
         move_to(account, ReverseLookupRegistryV1 {
