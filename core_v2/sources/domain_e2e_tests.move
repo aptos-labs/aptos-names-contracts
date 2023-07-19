@@ -2,12 +2,12 @@
 module aptos_names::domain_e2e_tests {
     use aptos_framework::chain_id;
     use aptos_framework::timestamp;
+    use aptos_framework::object;
     use aptos_names::config;
     use aptos_names::domains;
     use aptos_names::time_helper;
     use aptos_names::test_helper;
     use aptos_names::test_utils;
-    use aptos_token::token;
     use std::option;
     use std::signer;
     use std::string;
@@ -116,7 +116,7 @@ module aptos_names::domain_e2e_tests {
         test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>());
 
         // Set the time past the domain's expiration time
-        let (_, expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(option::none(), test_helper::domain_name());
+        let (expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(option::none(), test_helper::domain_name());
         timestamp::update_global_time_for_test_secs(expiration_time_sec + 5);
 
         // It should now be: expired, registered, AND registerable
@@ -131,7 +131,7 @@ module aptos_names::domain_e2e_tests {
         assert!(option::is_none(&domains::get_reverse_lookup(signer::address_of(user))), 85);
 
         // And again!
-        let (_, expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(option::none(), test_helper::domain_name());
+        let (expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(option::none(), test_helper::domain_name());
         timestamp::update_global_time_for_test_secs(expiration_time_sec + 5);
 
         // It should now be: expired, registered, AND registerable
@@ -209,7 +209,7 @@ module aptos_names::domain_e2e_tests {
         test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>());
 
         domains::force_set_domain_address(myself, test_helper::domain_name(), rando_addr);
-        let (_property_version, _expiration_time_sec, target_address) = domains::get_name_record_v1_props_for_name(option::none(), test_helper::domain_name());
+        let (_expiration_time_sec, target_address) = domains::get_name_record_v1_props_for_name(option::none(), test_helper::domain_name());
         test_utils::print_actual_expected(b"set_domain_address: ", target_address, option::some(rando_addr), false);
         assert!(target_address == option::some(rando_addr), 33);
     }
@@ -239,16 +239,16 @@ module aptos_names::domain_e2e_tests {
 
         // Register the domain
         test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>());
-        let (is_owner, _token_id) = domains::is_owner_of_name(signer::address_of(user), option::none(), test_helper::domain_name());
+        let is_owner = domains::is_owner_of_name(signer::address_of(user), option::none(), test_helper::domain_name());
         assert!(is_owner, 1);
 
         // Take the domain name for much longer than users are allowed to register it for
         domains::force_create_or_seize_name(myself, option::none(), test_helper::domain_name(), test_helper::two_hundred_year_secs());
-        let (is_owner, _token_id) = domains::is_owner_of_name(signer::address_of(myself), option::none(), test_helper::domain_name());
+        let is_owner = domains::is_owner_of_name(signer::address_of(myself), option::none(), test_helper::domain_name());
         assert!(is_owner, 2);
 
         // Ensure the expiration_time_sec is set to the new far future value
-        let (_, expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(option::none(), test_helper::domain_name());
+        let (expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(option::none(), test_helper::domain_name());
         assert!(time_helper::seconds_to_years(expiration_time_sec) == 200, time_helper::seconds_to_years(expiration_time_sec));
 
         // Ensure that the user's primary name is no longer set.
@@ -264,7 +264,7 @@ module aptos_names::domain_e2e_tests {
         // Register the domain. This will be the user's reverse lookup
         {
             test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>());
-            let (is_owner, _token_id) = domains::is_owner_of_name(signer::address_of(user), option::none(), test_helper::domain_name());
+            let is_owner = domains::is_owner_of_name(signer::address_of(user), option::none(), test_helper::domain_name());
             assert!(is_owner, 1);
         };
 
@@ -272,16 +272,16 @@ module aptos_names::domain_e2e_tests {
         let domain_name = string::utf8(b"sets");
         let fq_domain_name = string::utf8(b"sets.apt");
         test_helper::register_name(user, option::none(), domain_name, test_helper::one_year_secs(), fq_domain_name, 1, vector::empty<u8>());
-        let (is_owner, _token_id) = domains::is_owner_of_name(signer::address_of(user), option::none(), domain_name);
+        let is_owner = domains::is_owner_of_name(signer::address_of(user), option::none(), domain_name);
         assert!(is_owner, 1);
 
         // Take the domain name for much longer than users are allowed to register it for
         domains::force_create_or_seize_name(myself, option::none(), domain_name, test_helper::two_hundred_year_secs());
-        let (is_owner, _token_id) = domains::is_owner_of_name(signer::address_of(myself), option::none(), domain_name);
+        let is_owner = domains::is_owner_of_name(signer::address_of(myself), option::none(), domain_name);
         assert!(is_owner, 2);
 
         // Ensure the expiration_time_sec is set to the new far future value
-        let (_, expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(option::none(), domain_name);
+        let (expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(option::none(), domain_name);
         assert!(time_helper::seconds_to_years(expiration_time_sec) == 200, time_helper::seconds_to_years(expiration_time_sec));
 
         // Ensure that the user's primary name is still set.
@@ -297,11 +297,11 @@ module aptos_names::domain_e2e_tests {
 
         // Take the domain name for much longer than users are allowed to register it for
         domains::force_create_or_seize_name(myself, option::none(), test_helper::domain_name(), test_helper::two_hundred_year_secs());
-        let (is_owner, _token_id) = domains::is_owner_of_name(signer::address_of(myself), option::none(), test_helper::domain_name());
+        let is_owner = domains::is_owner_of_name(signer::address_of(myself), option::none(), test_helper::domain_name());
         assert!(is_owner, 2);
 
         // Ensure the expiration_time_sec is set to the new far future value
-        let (_, expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(option::none(), test_helper::domain_name());
+        let (expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(option::none(), test_helper::domain_name());
         assert!(time_helper::seconds_to_years(expiration_time_sec) == 200, time_helper::seconds_to_years(expiration_time_sec));
 
         // Try to nuke the domain
@@ -319,7 +319,7 @@ module aptos_names::domain_e2e_tests {
 
         // Register the domain
         test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>());
-        let (is_owner, _token_id) = domains::is_owner_of_name(signer::address_of(user), option::none(), test_helper::domain_name());
+        let is_owner = domains::is_owner_of_name(signer::address_of(user), option::none(), test_helper::domain_name());
         assert!(is_owner, 1);
 
         // Take the domain name for much longer than users are allowed to register it for
@@ -364,11 +364,12 @@ module aptos_names::domain_e2e_tests {
 
         // Register the domain
         test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>());
-        let (is_owner, token_id) = domains::is_owner_of_name(user_addr, option::none(), test_helper::domain_name());
+        let is_owner = domains::is_owner_of_name(user_addr, option::none(), test_helper::domain_name());
         assert!(is_owner, 1);
 
         // Transfer the domain to rando
-        token::direct_transfer(user, rando, token_id, 1);
+        let record_obj = domains::get_record_obj(test_helper::domain_name(), option::none());
+        object::transfer(user, record_obj, signer::address_of(rando));
 
         // Verify primary name for |user| hasn't changed
         assert!(option::is_some(&domains::get_reverse_lookup(user_addr)), 1);
@@ -377,7 +378,7 @@ module aptos_names::domain_e2e_tests {
         // |rando| sets his primary name
         let subdomain_name_str = string::utf8(b"");
         let domain_name_str = string::utf8(b"test");
-        domains::set_reverse_lookup_entry(rando, subdomain_name_str, domain_name_str);
+        domains::set_reverse_lookup_entry(rando, option::some(subdomain_name_str), domain_name_str);
 
         // |user|'s primary name should be none.
         assert!(option::is_none(&domains::get_reverse_lookup(user_addr)), 1);
@@ -394,11 +395,12 @@ module aptos_names::domain_e2e_tests {
 
         // Register the domain
         test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>());
-        let (is_owner, token_id) = domains::is_owner_of_name(user_addr, option::none(), test_helper::domain_name());
+        let is_owner = domains::is_owner_of_name(user_addr, option::none(), test_helper::domain_name());
         assert!(is_owner, 1);
 
         // Transfer the domain to rando
-        token::direct_transfer(user, rando, token_id, 1);
+        let record_obj = domains::get_record_obj(test_helper::domain_name(), option::none());
+        object::transfer(user, record_obj, signer::address_of(rando));
 
         // Verify primary name for |user| hasn't changed
         assert!(option::is_some(&domains::get_reverse_lookup(user_addr)), 1);
@@ -421,14 +423,14 @@ module aptos_names::domain_e2e_tests {
 
         // Register the domain
         test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>());
-        let (is_owner, _token_id) = domains::is_owner_of_name(user_addr, option::none(), test_helper::domain_name());
+        let is_owner = domains::is_owner_of_name(user_addr, option::none(), test_helper::domain_name());
         assert!(is_owner, 1);
 
         // Set the time past the domain's expiration time
-        let (_, expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(option::none(), test_helper::domain_name());
+        let (expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(option::none(), test_helper::domain_name());
         timestamp::update_global_time_for_test_secs(expiration_time_sec + 5);
 
-        let (is_owner, _token_id) = domains::is_owner_of_name(user_addr, option::none(), test_helper::domain_name());
+        let is_owner = domains::is_owner_of_name(user_addr, option::none(), test_helper::domain_name());
         assert!(!is_owner, 1);
     }
 }
