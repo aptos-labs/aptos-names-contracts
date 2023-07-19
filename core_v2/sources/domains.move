@@ -553,7 +553,7 @@ module aptos_names::domains {
         subdomain_name: Option<String>,
         domain_name: String
     ): Option<address> acquires CollectionCapabilityV2, NameRecordV2 {
-        if (name_is_registered(subdomain_name, domain_name) && !name_is_expired(subdomain_name, domain_name)) {
+        if (!name_is_registered(subdomain_name, domain_name) || name_is_expired(subdomain_name, domain_name)) {
             option::none()
         } else {
             let record = get_record(domain_name, subdomain_name);
@@ -772,6 +772,8 @@ module aptos_names::domains {
         subdomain_name: Option<String>,
         domain_name: String
     ) acquires CollectionCapabilityV2, NameRecordV2, ReverseLookupRegistryV1, SetReverseLookupEventsV1 {
+        if (!name_is_registered(subdomain_name, domain_name)) return;
+
         // If the name is a primary name, clear it
         let record = get_record(domain_name, subdomain_name);
         if (option::is_none(&record.target_address)) return;
