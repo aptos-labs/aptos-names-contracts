@@ -1,0 +1,18 @@
+[package]
+name = 'aptos_names'
+version = '1.0.0'
+
+[addresses]
+aptos_names = "_"
+aptos_names_admin = "_"
+aptos_names_funds = "_"
+
+[dependencies.AptosFramework]
+git = 'https://github.com/aptos-labs/aptos-core.git'
+rev = 'framework-mainnet'
+subdir = 'aptos-move/framework/aptos-framework'
+
+[dependencies.AptosToken]
+git = 'https://github.com/aptos-labs/aptos-core.git'
+rev = 'framework-mainnet'
+subdir = 'aptos-move/framework/aptos-token'
