@@ -163,6 +163,13 @@ module aptos_names::domains {
             option::none(),
             utf8(COLLECTION_URI),
         );
+
+        move_to(account, ReverseLookupRegistryV1 {
+            registry: table::new()
+        });
+        move_to(account, SetReverseLookupEventsV1 {
+            set_reverse_lookup_events: account::new_event_handle<SetReverseLookupEventV1>(account),
+        });
     }
     
     public fun get_token_signer_address(): address acquires CollectionCapabilityV2 {
@@ -247,20 +254,6 @@ module aptos_names::domains {
         move_to(&token_signer, record);
         let record_obj = object::object_from_constructor_ref<NameRecordV2>(&constructor_ref);
         object::transfer(&get_token_signer(), record_obj, to_addr);
-    }
-
-    public entry fun init_reverse_lookup_registry_v1(account: &signer) {
-        assert!(signer::address_of(account) == @aptos_names, error::permission_denied(ENOT_AUTHORIZED));
-
-        if (!exists<ReverseLookupRegistryV1>(@aptos_names)) {
-            move_to(account, ReverseLookupRegistryV1 {
-                registry: table::new()
-            });
-
-            move_to(account, SetReverseLookupEventsV1 {
-                set_reverse_lookup_events: account::new_event_handle<SetReverseLookupEventV1>(account),
-            });
-        };
     }
 
     fun register_domain_generic(
@@ -848,7 +841,6 @@ module aptos_names::domains {
     #[test_only]
     public fun init_module_for_test(account: &signer) {
         init_module(account);
-        init_reverse_lookup_registry_v1(account);
     }
 
     #[test_only]
