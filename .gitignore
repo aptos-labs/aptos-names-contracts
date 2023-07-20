@@ -12,8 +12,8 @@ node_modules
 build
 
 # IDEs and editors
-/.idea
-/.vscode
+.idea
+.vscode
 
 # misc
 .DS_Store
