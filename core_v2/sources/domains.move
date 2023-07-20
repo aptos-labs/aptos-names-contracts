@@ -63,7 +63,7 @@ module aptos_names::domains {
     }
 
     #[resource_group_member(group = aptos_framework::object::ObjectGroup)]
-    struct NameRecordV2 has key, drop {
+    struct NameRecordV2 has key {
         domain_name: String,
         subdomain_name: Option<String>,
         expiration_time_sec: u64,
