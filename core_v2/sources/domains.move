@@ -216,44 +216,37 @@ module aptos_names::domains {
         borrow_global_mut(token_addr_inline(domain_name, subdomain_name))
     }
 
-    /// Creates or force transfers the name token to `to_addr`
-    /// NOTE: This function does not do any validation
-    fun create_or_force_transfer_token(
+    /// Creates a token for the name.
+    /// NOTE: This function performs no validation checks
+    fun create_token(
         to_addr: address,
         domain_name: String,
         subdomain_name: Option<String>,
         expiration_time_sec: u64,
-    ) acquires CollectionCapabilityV2, NameRecordV2 {
-        let token_addr = token_addr_inline(domain_name, subdomain_name);
-        if (object::is_object(token_addr)) {
-            let record = borrow_global_mut<NameRecordV2>(token_addr);
-            record.expiration_time_sec = expiration_time_sec;
-            object::transfer_with_ref(object::generate_linear_transfer_ref(&record.transfer_ref), to_addr);
-        } else {
-            let name = token_helper::get_fully_qualified_domain_name(subdomain_name, domain_name);
-            let description = config::tokendata_description();
-            let uri: string::String = config::tokendata_url_prefix();
-            string::append(&mut uri, name);
-            let constructor_ref = token::create_named_token(
-                &get_token_signer(),
-                config::collection_name_v1(),
-                description,
-                name,
-                option::none(),
-                uri,
-            );
-            let token_signer = object::generate_signer(&constructor_ref);
-            let record = NameRecordV2 {
-                domain_name,
-                subdomain_name,
-                expiration_time_sec,
-                target_address: option::none(),
-                transfer_ref: object::generate_transfer_ref(&constructor_ref),
-            };
-            move_to(&token_signer, record);
-            let record_obj = object::object_from_constructor_ref<NameRecordV2>(&constructor_ref);
-            object::transfer(&get_token_signer(), record_obj, to_addr);
+    ) acquires CollectionCapabilityV2 {
+        let name = token_helper::get_fully_qualified_domain_name(subdomain_name, domain_name);
+        let description = config::tokendata_description();
+        let uri: string::String = config::tokendata_url_prefix();
+        string::append(&mut uri, name);
+        let constructor_ref = token::create_named_token(
+            &get_token_signer(),
+            config::collection_name_v1(),
+            description,
+            name,
+            option::none(),
+            uri,
+        );
+        let token_signer = object::generate_signer(&constructor_ref);
+        let record = NameRecordV2 {
+            domain_name,
+            subdomain_name,
+            expiration_time_sec,
+            target_address: option::none(),
+            transfer_ref: object::generate_transfer_ref(&constructor_ref),
         };
+        move_to(&token_signer, record);
+        let record_obj = object::object_from_constructor_ref<NameRecordV2>(&constructor_ref);
+        object::transfer(&get_token_signer(), record_obj, to_addr);
     }
 
     public entry fun init_reverse_lookup_registry_v1(account: &signer) {
@@ -387,14 +380,23 @@ module aptos_names::domains {
             );
         };
 
-        // Create or reclaim the token, and transfer it to the user
+        // If the token already exists, transfer it to the signer
+        // Else, create a new one and transfer it to the signer
         let account_addr = signer::address_of(sign);
-        create_or_force_transfer_token(
-            account_addr,
-            domain_name,
-            subdomain_name,
-            name_expiration_time_secs,
-        );
+        let token_addr = token_addr_inline(domain_name, subdomain_name);
+        if (object::is_object(token_addr)) {
+            let record = borrow_global_mut<NameRecordV2>(token_addr);
+            record.expiration_time_sec = name_expiration_time_secs;
+            record.target_address = option::none();
+            object::transfer_with_ref(object::generate_linear_transfer_ref(&record.transfer_ref), account_addr);
+        } else {
+            create_token(
+                account_addr,
+                domain_name,
+                subdomain_name,
+                name_expiration_time_secs,
+            );
+        };
 
         let reverse_lookup_result = get_reverse_lookup(account_addr);
         if (option::is_none(&reverse_lookup_result)) {
