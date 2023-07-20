@@ -16,3 +16,8 @@ subdir = 'aptos-move/framework/aptos-framework'
 git = 'https://github.com/aptos-labs/aptos-core.git'
 rev = 'framework-mainnet'
 subdir = 'aptos-move/framework/aptos-token'
+
+[dependencies.AptosTokenObjects]
+git = 'https://github.com/aptos-labs/aptos-core.git'
+rev = 'framework-mainnet'
+subdir = 'aptos-move/framework/aptos-token-objects'
