@@ -13,6 +13,7 @@ module aptos_names::test_helper {
     use std::signer;
     use std::string::{Self, String};
     use std::vector;
+    use aptos_std::debug;
 
     // Ammount to mint to test accounts during the e2e tests
     const MINT_AMOUNT_APT: u64 = 500;
@@ -91,10 +92,10 @@ module aptos_names::test_helper {
         assert!(domains::name_is_registered(subdomain_name, domain_name), 14);
 
         let is_owner = domains::is_owner_of_name(user_addr, subdomain_name, domain_name);
+        // TODO: Re-enable / Re-write
         // let (tdi_creator, tdi_collection, tdi_name, tdi_property_version) = token::get_token_id_fields(&token_id);
 
         assert!(is_owner, 3);
-        // TODO: Re-enable / Re-write these tests
         // assert!(tdi_creator == domains::get_token_signer_address(), 4);
         // assert!(tdi_collection == config::collection_name_v1(), 5);
         // test_utils::print_actual_expected(b"tdi_name: ", tdi_name, expected_fq_domain_name, false);
@@ -133,8 +134,8 @@ module aptos_names::test_helper {
             assert!(target_address == option::some(user_addr), 11);
         };
 
+        // TODO: Re-enable / Re-write
         // Ensure the properties were set correctly
-        // TODO: Re-enable / Re-write these assertions
         // let token_data_id = token_helper::build_tokendata_id(token_helper::get_token_signer_address(), subdomain_name, domain_name);
         // let (creator, collection_name, token_name) = token::get_token_data_id_fields(&token_data_id);
         // assert!(creator == domains::get_token_signer_address(), 20);
@@ -164,6 +165,7 @@ module aptos_names::test_helper {
             if (option::is_some(&name_reverse_lookup_before) && is_expired_before) {
                 assert!(set_reverse_lookup_event_v1_num_emitted == 2, set_reverse_lookup_event_v1_num_emitted);
             } else {
+                debug::print(&set_reverse_lookup_event_v1_num_emitted);
                 assert!(set_reverse_lookup_event_v1_num_emitted == 1, set_reverse_lookup_event_v1_num_emitted);
             }
         } else {
@@ -207,9 +209,8 @@ module aptos_names::test_helper {
 
         let register_name_event_v1_event_count_before = domains::get_register_name_event_v1_count();
         let set_name_address_event_v1_event_count_before = domains::get_set_name_address_event_v1_count();
-        // TODO: Re-enable this test
-        // let set_reverse_lookup_event_v1_event_count_before = domains::get_set_reverse_lookup_event_v1_count();
-        // let maybe_reverse_lookup_before = domains::get_reverse_lookup(user_addr);
+        let set_reverse_lookup_event_v1_event_count_before = domains::get_set_reverse_lookup_event_v1_count();
+        let maybe_reverse_lookup_before = domains::get_reverse_lookup(user_addr);
 
         domains::set_name_address(user, subdomain_name, domain_name, expected_target_address);
         let (_expiration_time_sec, target_address) = domains::get_name_record_v1_props_for_name(subdomain_name, domain_name);
@@ -225,8 +226,7 @@ module aptos_names::test_helper {
         // Assert events have been correctly emmitted
         let register_name_event_v1_num_emitted = domains::get_register_name_event_v1_count() - register_name_event_v1_event_count_before;
         let set_name_address_event_v1_num_emitted = domains::get_set_name_address_event_v1_count() - set_name_address_event_v1_event_count_before;
-        // TODO: Re-enable this test
-        // let set_reverse_lookup_event_v1_num_emitted = domains::get_set_reverse_lookup_event_v1_count() - set_reverse_lookup_event_v1_event_count_before;
+        let set_reverse_lookup_event_v1_num_emitted = domains::get_set_reverse_lookup_event_v1_count() - set_reverse_lookup_event_v1_event_count_before;
 
         test_utils::print_actual_expected(b"register_name_event_v1_num_emitted: ", register_name_event_v1_num_emitted, 0, false);
         assert!(register_name_event_v1_num_emitted == 0, register_name_event_v1_num_emitted);
@@ -234,14 +234,13 @@ module aptos_names::test_helper {
         test_utils::print_actual_expected(b"set_name_address_event_v1_num_emitted: ", set_name_address_event_v1_num_emitted, 1, false);
         assert!(set_name_address_event_v1_num_emitted == 1, set_name_address_event_v1_num_emitted);
 
-        // TODO: Re-enable this test
-        // // If the signer had a reverse lookup before, and set his reverse lookup name to a different address, it should be cleared
-        // if (option::is_some(&maybe_reverse_lookup_before)) {
-        //     let (maybe_reverse_subdomain, reverse_domain) = domains::get_name_record_key_v1_props(option::borrow(&maybe_reverse_lookup_before));
-        //     if (maybe_reverse_subdomain == subdomain_name && reverse_domain == domain_name && signer::address_of(user) != expected_target_address) {
-        //         assert!(set_reverse_lookup_event_v1_num_emitted == 1, set_reverse_lookup_event_v1_num_emitted);
-        //     };
-        // };
+        // If the signer had a reverse lookup before, and set his reverse lookup name to a different address, it should be cleared
+        if (option::is_some(&maybe_reverse_lookup_before)) {
+            let (maybe_reverse_subdomain, reverse_domain) = domains::get_record_props_from_token_addr(*option::borrow(&maybe_reverse_lookup_before));
+            if (maybe_reverse_subdomain == subdomain_name && reverse_domain == domain_name && signer::address_of(user) != expected_target_address) {
+                assert!(set_reverse_lookup_event_v1_num_emitted == 1, set_reverse_lookup_event_v1_num_emitted);
+            };
+        };
     }
 
     /// Clear the domain address, and verify the address was cleared
