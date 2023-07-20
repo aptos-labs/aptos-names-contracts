@@ -217,7 +217,7 @@ module aptos_names::domains {
         borrow_global_mut(token_addr_inline(domain_name, subdomain_name))
     }
 
-    public(friend) fun create_token(
+    fun create_token(
         domain_name: String,
         subdomain_name: Option<String>,
         expiration_time_sec: u64,
