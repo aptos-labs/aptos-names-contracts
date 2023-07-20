@@ -555,7 +555,8 @@ module aptos_names::domains {
         subdomain_name: Option<String>,
         domain_name: String
     ): Option<address> acquires CollectionCapabilityV2, NameRecordV2 {
-        if (!name_is_registered(subdomain_name, domain_name) || name_is_expired(subdomain_name, domain_name)) {
+        // TODO: Why does this not check expiration?
+        if (!name_is_registered(subdomain_name, domain_name)) {
             option::none()
         } else {
             let record = get_record(domain_name, subdomain_name);

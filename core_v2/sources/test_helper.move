@@ -13,7 +13,6 @@ module aptos_names::test_helper {
     use std::signer;
     use std::string::{Self, String};
     use std::vector;
-    use aptos_std::debug;
 
     // Ammount to mint to test accounts during the e2e tests
     const MINT_AMOUNT_APT: u64 = 500;
@@ -165,7 +164,6 @@ module aptos_names::test_helper {
             if (option::is_some(&name_reverse_lookup_before) && is_expired_before) {
                 assert!(set_reverse_lookup_event_v1_num_emitted == 2, set_reverse_lookup_event_v1_num_emitted);
             } else {
-                debug::print(&set_reverse_lookup_event_v1_num_emitted);
                 assert!(set_reverse_lookup_event_v1_num_emitted == 1, set_reverse_lookup_event_v1_num_emitted);
             }
         } else {
