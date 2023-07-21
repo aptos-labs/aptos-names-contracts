@@ -1,5 +1,5 @@
 #[test_only]
-module aptos_names::test_utils {
+module aptos_names_v2::test_utils {
 
     use std::string::{Self, String};
     use aptos_std::debug;
