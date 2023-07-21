@@ -595,9 +595,9 @@ module aptos_names_v2::domains {
         if (option::is_none(&maybe_reverse_lookup)) {
             return
         };
-        let reverse_record = borrow_global<NameRecordV2>(*option::borrow(&maybe_reverse_lookup));
-        if (reverse_record.domain_name == domain_name &&
-            reverse_record.subdomain_name == subdomain_name &&
+        let reverse_name_record = borrow_global<NameRecordV2>(*option::borrow(&maybe_reverse_lookup));
+        if (reverse_name_record.domain_name == domain_name &&
+            reverse_name_record.subdomain_name == subdomain_name &&
             signer_addr != new_address
         ) {
             clear_reverse_lookup(sign);
