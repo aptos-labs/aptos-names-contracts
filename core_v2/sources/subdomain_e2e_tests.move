@@ -61,7 +61,7 @@ module aptos_names::subdomain_e2e_tests {
         test_helper::register_name(user, option::some(test_helper::subdomain_name()), test_helper::domain_name(), timestamp::now_seconds() + test_helper::one_year_secs(), test_helper::fq_subdomain_name(), 1, vector::empty<u8>());
 
         // Set the time past the domain's expiration time
-        let (_, expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(option::some(test_helper::subdomain_name()), test_helper::domain_name());
+        let (expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(option::some(test_helper::subdomain_name()), test_helper::domain_name());
         timestamp::update_global_time_for_test_secs(expiration_time_sec + 5);
 
         // The domain should now be: expired, registered, AND registerable
@@ -85,7 +85,7 @@ module aptos_names::subdomain_e2e_tests {
         test_helper::register_name(rando, option::some(test_helper::subdomain_name()), test_helper::domain_name(), timestamp::now_seconds() + test_helper::one_year_secs(), test_helper::fq_subdomain_name(), 2, vector::empty<u8>());
 
         // And again!
-        let (_, expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(option::some(test_helper::subdomain_name()), test_helper::domain_name());
+        let (expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(option::some(test_helper::subdomain_name()), test_helper::domain_name());
         timestamp::update_global_time_for_test_secs(expiration_time_sec + 5);
 
 
@@ -165,7 +165,7 @@ module aptos_names::subdomain_e2e_tests {
         test_helper::register_name(user, option::some(test_helper::subdomain_name()), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_subdomain_name(), 1, vector::empty<u8>());
 
         domains::force_set_subdomain_address(myself, test_helper::subdomain_name(), test_helper::domain_name(), rando_addr);
-        let (_property_version, _expiration_time_sec, target_address) = domains::get_name_record_v1_props_for_name(option::some(test_helper::subdomain_name()), test_helper::domain_name());
+        let (_expiration_time_sec, target_address) = domains::get_name_record_v1_props_for_name(option::some(test_helper::subdomain_name()), test_helper::domain_name());
         test_utils::print_actual_expected(b"set_subdomain_address: ", target_address, option::some(rando_addr), false);
         assert!(target_address == option::some(rando_addr), 33);
     }
@@ -196,16 +196,16 @@ module aptos_names::subdomain_e2e_tests {
         // Register the domain and subdomain
         test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>());
         test_helper::register_name(user, option::some(test_helper::subdomain_name()), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_subdomain_name(), 1, vector::empty<u8>());
-        let (is_owner, _token_id) = domains::is_owner_of_name(signer::address_of(user), option::some(test_helper::subdomain_name()), test_helper::domain_name());
+        let is_owner = domains::is_owner_of_name(signer::address_of(user), option::some(test_helper::subdomain_name()), test_helper::domain_name());
         assert!(is_owner, 1);
 
         // Take the subdomain name for much longer than users are allowed to register it for
         domains::force_create_or_seize_name(myself, option::some(test_helper::subdomain_name()), test_helper::domain_name(), test_helper::one_year_secs());
-        let (is_owner, _token_id) = domains::is_owner_of_name(signer::address_of(myself), option::some(test_helper::subdomain_name()), test_helper::domain_name());
+        let is_owner = domains::is_owner_of_name(signer::address_of(myself), option::some(test_helper::subdomain_name()), test_helper::domain_name());
         assert!(is_owner, 2);
 
         // Ensure the expiration_time_sec is set to the new far future value
-        let (_, expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(option::some(test_helper::subdomain_name()), test_helper::domain_name());
+        let (expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(option::some(test_helper::subdomain_name()), test_helper::domain_name());
         assert!(time_helper::seconds_to_years(expiration_time_sec) == 1, time_helper::seconds_to_years(expiration_time_sec));
     }
 
@@ -220,11 +220,11 @@ module aptos_names::subdomain_e2e_tests {
 
         // Take the subdomain name
         domains::force_create_or_seize_name(myself, option::some(test_helper::subdomain_name()), test_helper::domain_name(), test_helper::one_year_secs());
-        let (is_owner, _token_id) = domains::is_owner_of_name(signer::address_of(myself), option::some(test_helper::subdomain_name()), test_helper::domain_name());
+        let is_owner = domains::is_owner_of_name(signer::address_of(myself), option::some(test_helper::subdomain_name()), test_helper::domain_name());
         assert!(is_owner, 2);
 
         // Ensure the expiration_time_sec is set to the new far future value
-        let (_, expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(option::some(test_helper::subdomain_name()), test_helper::domain_name());
+        let (expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(option::some(test_helper::subdomain_name()), test_helper::domain_name());
         assert!(time_helper::seconds_to_years(expiration_time_sec) == 1, time_helper::seconds_to_years(expiration_time_sec));
     }
 
@@ -252,7 +252,7 @@ module aptos_names::subdomain_e2e_tests {
         // Register the domain and subdomain
         test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>());
         test_helper::register_name(user, option::some(test_helper::subdomain_name()), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_subdomain_name(), 1, vector::empty<u8>());
-        let (is_owner, _token_id) = domains::is_owner_of_name(signer::address_of(user), option::some(test_helper::subdomain_name()), test_helper::domain_name());
+        let is_owner = domains::is_owner_of_name(signer::address_of(user), option::some(test_helper::subdomain_name()), test_helper::domain_name());
         assert!(is_owner, 1);
 
         // Attempt (and fail) to take the subdomain name for much longer than users are allowed to register it for
