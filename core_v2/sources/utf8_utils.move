@@ -1,4 +1,4 @@
-module aptos_names::utf8_utils {
+module aptos_names_v2::utf8_utils {
 
     use std::string::{Self, String};
     use std::vector;

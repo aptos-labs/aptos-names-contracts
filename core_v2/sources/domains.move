@@ -1,4 +1,4 @@
-module aptos_names::domains {
+module aptos_names_v2::domains {
     use aptos_framework::account::{Self, SignerCapability};
     use aptos_framework::aptos_account;
     use aptos_framework::aptos_coin::AptosCoin;
@@ -6,12 +6,12 @@ module aptos_names::domains {
     use aptos_framework::event;
     use aptos_framework::object::{Self, Object, is_object};
     use aptos_framework::timestamp;
-    use aptos_names::config;
-    use aptos_names::price_model;
-    use aptos_names::time_helper;
-    use aptos_names::token_helper;
-    use aptos_names::utf8_utils;
-    use aptos_names::verify;
+    use aptos_names_v2::config;
+    use aptos_names_v2::price_model;
+    use aptos_names_v2::time_helper;
+    use aptos_names_v2::token_helper;
+    use aptos_names_v2::utf8_utils;
+    use aptos_names_v2::verify;
     use aptos_token_objects::collection;
     use aptos_token_objects::token;
     use std::bcs;
@@ -165,11 +165,11 @@ module aptos_names::domains {
     }
     
     public fun get_token_signer_address(): address acquires CollectionCapabilityV2 {
-        account::get_signer_capability_address(&borrow_global<CollectionCapabilityV2>(@aptos_names).capability)
+        account::get_signer_capability_address(&borrow_global<CollectionCapabilityV2>(@aptos_names_v2).capability)
     }
 
     fun get_token_signer(): signer acquires CollectionCapabilityV2 {
-        account::create_signer_with_capability(&borrow_global<CollectionCapabilityV2>(@aptos_names).capability)
+        account::create_signer_with_capability(&borrow_global<CollectionCapabilityV2>(@aptos_names_v2).capability)
     }
 
     inline fun token_addr_inline(
@@ -393,7 +393,7 @@ module aptos_names::domains {
         };
 
         event::emit_event<RegisterNameEventV1>(
-            &mut borrow_global_mut<RegisterNameEventsV1>(@aptos_names).register_name_events,
+            &mut borrow_global_mut<RegisterNameEventsV1>(@aptos_names_v2).register_name_events,
             RegisterNameEventV1 {
                 subdomain_name,
                 domain_name,
@@ -806,7 +806,7 @@ module aptos_names::domains {
         };
 
         event::emit_event<SetNameAddressEventV1>(
-            &mut borrow_global_mut<SetNameAddressEventsV1>(@aptos_names).set_name_events,
+            &mut borrow_global_mut<SetNameAddressEventsV1>(@aptos_names_v2).set_name_events,
             event,
         );
     }
@@ -823,7 +823,7 @@ module aptos_names::domains {
         };
 
         event::emit_event<SetReverseLookupEventV1>(
-            &mut borrow_global_mut<SetReverseLookupEventsV1>(@aptos_names).set_reverse_lookup_events,
+            &mut borrow_global_mut<SetReverseLookupEventsV1>(@aptos_names_v2).set_reverse_lookup_events,
             event,
         );
     }
@@ -855,17 +855,17 @@ module aptos_names::domains {
 
     #[test_only]
     public fun get_set_name_address_event_v1_count(): u64 acquires SetNameAddressEventsV1 {
-        event::counter(&borrow_global<SetNameAddressEventsV1>(@aptos_names).set_name_events)
+        event::counter(&borrow_global<SetNameAddressEventsV1>(@aptos_names_v2).set_name_events)
     }
 
     #[test_only]
     public fun get_register_name_event_v1_count(): u64 acquires RegisterNameEventsV1 {
-        event::counter(&borrow_global<RegisterNameEventsV1>(@aptos_names).register_name_events)
+        event::counter(&borrow_global<RegisterNameEventsV1>(@aptos_names_v2).register_name_events)
     }
 
     #[test_only]
     public fun get_set_reverse_lookup_event_v1_count(): u64 acquires SetReverseLookupEventsV1 {
-        event::counter(&borrow_global<SetReverseLookupEventsV1>(@aptos_names).set_reverse_lookup_events)
+        event::counter(&borrow_global<SetReverseLookupEventsV1>(@aptos_names_v2).set_reverse_lookup_events)
     }
 
     #[test(aptos = @0x1)]
