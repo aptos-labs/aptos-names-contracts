@@ -1,5 +1,4 @@
 module aptos_names::domains {
-    use std::bcs;
     use aptos_framework::account::{Self, SignerCapability};
     use aptos_framework::aptos_account;
     use aptos_framework::aptos_coin::AptosCoin;
@@ -15,6 +14,7 @@ module aptos_names::domains {
     use aptos_names::verify;
     use aptos_token_objects::collection;
     use aptos_token_objects::token;
+    use std::bcs;
     use std::error;
     use std::option::{Self, Option};
     use std::signer;
