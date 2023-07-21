@@ -1,7 +1,7 @@
-module aptos_names::token_helper {
-    friend aptos_names::domains;
+module aptos_names_v2::token_helper {
+    friend aptos_names_v2::domains;
 
-    use aptos_names::utf8_utils;
+    use aptos_names_v2::utf8_utils;
     use std::option::{Self, Option};
     use std::string::{Self, String};
 

@@ -1,5 +1,5 @@
-module aptos_names::price_model {
-    use aptos_names::config;
+module aptos_names_v2::price_model {
+    use aptos_names_v2::config;
     use aptos_std::math64;
     use std::error;
 
@@ -35,9 +35,9 @@ module aptos_names::price_model {
         config::subdomain_price()
     }
 
-    #[test(myself = @aptos_names, framework = @0x1)]
+    #[test(myself = @aptos_names_v2, framework = @0x1)]
     fun test_price_for_domain_v1(myself: &signer, framework: &signer) {
-        use aptos_names::config;
+        use aptos_names_v2::config;
         use aptos_framework::aptos_coin::AptosCoin;
         use aptos_framework::coin;
         use aptos_framework::account;
@@ -48,7 +48,7 @@ module aptos_names::price_model {
 
         config::initialize_aptoscoin_for(framework);
         coin::register<AptosCoin>(myself);
-        config::initialize_v1(myself, @aptos_names, @aptos_names);
+        config::initialize_v1(myself, @aptos_names_v2, @aptos_names_v2);
 
         config::set_subdomain_price(myself, config::octas() / 5);
         config::set_domain_price_for_length(myself, (100 * config::octas()), 2);
@@ -88,7 +88,7 @@ module aptos_names::price_model {
         expected_price: u64,
     }
 
-    #[test(myself = @aptos_names, framework = @0x1)]
+    #[test(myself = @aptos_names_v2, framework = @0x1)]
     fun test_scale_price_for_years(myself: &signer, framework: &signer) {
         use aptos_framework::account;
         use std::signer;

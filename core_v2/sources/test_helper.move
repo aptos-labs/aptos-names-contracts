@@ -1,14 +1,14 @@
 #[test_only]
-module aptos_names::test_helper {
+module aptos_names_v2::test_helper {
     use aptos_framework::account;
     use aptos_framework::aptos_coin::AptosCoin;
     use aptos_framework::coin;
     use aptos_framework::timestamp;
-    use aptos_names::config;
-    use aptos_names::domains;
-    use aptos_names::price_model;
-    use aptos_names::test_utils;
-    use aptos_names::time_helper;
+    use aptos_names_v2::config;
+    use aptos_names_v2::domains;
+    use aptos_names_v2::price_model;
+    use aptos_names_v2::test_utils;
+    use aptos_names_v2::time_helper;
     use std::option::{Self, Option};
     use std::signer;
     use std::string::{Self, String};
@@ -47,7 +47,7 @@ module aptos_names::test_helper {
     }
 
     public fun e2e_test_setup(myself: &signer, user: signer, aptos: &signer, rando: signer, foundation: &signer): vector<signer> {
-        account::create_account_for_test(@aptos_names);
+        account::create_account_for_test(@aptos_names_v2);
         let new_accounts = setup_and_fund_accounts(aptos, foundation, vector[user, rando]);
         timestamp::set_time_has_started_for_testing(aptos);
         domains::init_module_for_test(myself);

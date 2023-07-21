@@ -1,11 +1,11 @@
-module aptos_names::verify {
+module aptos_names_v2::verify {
     use std::string;
     use aptos_framework::account;
     use aptos_framework::chain_id;
     use aptos_std::ed25519;
-    use aptos_names::config;
+    use aptos_names_v2::config;
 
-    friend aptos_names::domains;
+    friend aptos_names_v2::domains;
 
     struct RegisterDomainProofChallenge has drop {
         sequence_number: u64,
