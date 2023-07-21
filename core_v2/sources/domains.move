@@ -20,6 +20,7 @@ module aptos_names_v2::domains {
     use std::signer;
     use std::signer::address_of;
     use std::string::{Self, String, utf8};
+    use aptos_names_v2::migrate_helper;
 
     const COLLECTION_DESCRIPTION: vector<u8> = b".apt names from Aptos Labs";
     const COLLECTION_URI: vector<u8> = b"https://aptosnames.com";
@@ -54,8 +55,16 @@ module aptos_names_v2::domains {
     const EVALID_SIGNATURE_REQUIRED: u64 = 16;
     /// The domain is too short.
     const EDOMAIN_TOO_SHORT: u64 = 17;
+<<<<<<< Updated upstream
     /// Reverse lookup registry not initialized. `init_reverse_lookup_registry_v1` must be called first
     const EREVERSE_LOOKUP_NOT_INITIALIZED: u64 = 18;
+=======
+    /// The domain expiration, even after migration extension, is past now.
+    const EMIGRATION_ALREADY_EXPIRED: u64 = 17;
+
+    /// Extension time in seconds for v2 migration
+    const MIGRATION_EXTENSION_SEC: u64 = 31449600;
+>>>>>>> Stashed changes
 
     /// Tokens require a signer to create, so this is the signer for the collection
     struct CollectionCapabilityV2 has key, drop {
@@ -722,6 +731,24 @@ module aptos_names_v2::domains {
         } else {
             option::none()
         }
+    }
+
+    public entry fun migrate_from_v1(
+        user: &signer,
+        domain_name: String,
+        subdomain_name: Option<String>,
+    ) acquires CollectionCapabilityV2, NameRecordV2, RegisterNameEventsV1, ReverseRecord, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
+        let (expiration_time_sec, target_addr) = migrate_helper::burn_token_v1(user, domain_name, subdomain_name);
+        let new_expiration_time_sec = expiration_time_sec + MIGRATION_EXTENSION_SEC;
+        let now = timestamp::now_seconds();
+        assert!(new_expiration_time_sec >= now, error::invalid_state(EMIGRATION_ALREADY_EXPIRED));
+        register_name_internal(
+            user,
+            subdomain_name,
+            domain_name,
+            new_expiration_time_sec - now,
+            0,
+        );
     }
 
     fun set_reverse_lookup_internal(
