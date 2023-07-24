@@ -68,7 +68,7 @@ module aptos_names_v2::domains {
 
     #[resource_group_member(group = aptos_framework::object::ObjectGroup)]
     struct DomainNameRecordTokenV2 has key {
-        name_domain_name: String,
+        domain_name: String,
         expiration_time_sec: u64,
         target_address: Option<address>,
 
@@ -78,7 +78,7 @@ module aptos_names_v2::domains {
 
     #[resource_group_member(group = aptos_framework::object::ObjectGroup)]
     struct SubdomainNameRecordTokenV2 has key {
-        name_subdomain_name: String,
+        subdomain_name: String,
         expiration_time_sec: u64,
         target_address: Option<address>,
         domain: Object<DomainNameRecordTokenV2>,
