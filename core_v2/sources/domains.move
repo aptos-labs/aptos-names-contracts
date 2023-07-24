@@ -60,6 +60,34 @@ module aptos_names_v2::domains {
         capability: SignerCapability,
     }
 
+    /// Manager object refs
+    struct Manager has key {
+        /// The extend_ref of the manager object to get its signer
+        extend_ref: object::ExtendRef,
+    }
+
+    #[resource_group_member(group = aptos_framework::object::ObjectGroup)]
+    struct DomainNameRecordTokenV2 has key {
+        name_domain_name: String,
+        expiration_time_sec: u64,
+        target_address: Option<address>,
+        subdomain_collection_name: String,
+
+        extend_ref: object::ExtendRef,
+        transfer_ref: object::TransferRef,
+    }
+
+    #[resource_group_member(group = aptos_framework::object::ObjectGroup)]
+    struct SubdomainNameRecordTokenV2 has key {
+        name_subdomain_name: String,
+        expiration_time_sec: u64,
+        target_address: Option<address>,
+        domain: Object<DomainNameRecordTokenV2>,
+
+        extend_ref: object::ExtendRef,
+        transfer_ref: object::TransferRef,
+    }
+
     #[resource_group_member(group = aptos_framework::object::ObjectGroup)]
     struct NameRecordV2 has key {
         domain_name: String,
