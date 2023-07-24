@@ -71,7 +71,6 @@ module aptos_names_v2::domains {
         name_domain_name: String,
         expiration_time_sec: u64,
         target_address: Option<address>,
-        subdomain_collection_name: String,
 
         extend_ref: object::ExtendRef,
         transfer_ref: object::TransferRef,
@@ -83,6 +82,7 @@ module aptos_names_v2::domains {
         expiration_time_sec: u64,
         target_address: Option<address>,
         domain: Object<DomainNameRecordTokenV2>,
+        use_domain_expiration_time: bool,
 
         extend_ref: object::ExtendRef,
         transfer_ref: object::TransferRef,
