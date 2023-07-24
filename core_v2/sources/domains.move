@@ -63,7 +63,7 @@ module aptos_names_v2::domains {
 
     #[resource_group_member(group = aptos_framework::object::ObjectGroup)]
     struct DomainNameRecordV2 has key {
-        name: String,
+        name_domain_name: String,
         expiration_time_sec: u64,
         target_address: Option<address>,
         subdomain_collection_name: String,
@@ -74,14 +74,13 @@ module aptos_names_v2::domains {
 
     #[resource_group_member(group = aptos_framework::object::ObjectGroup)]
     struct SubdomainNameRecordV2 has key {
-        name: String,
+        name_subdomain_name: String,
         expiration_time_sec: u64,
         target_address: Option<address>,
         domain: Object<DomainNameRecordV2>,
 
         extend_ref: object::ExtendRef,
         transfer_ref: object::TransferRef,
-        burn_ref: token::BurnRef,
     }
 
     #[resource_group_member(group = aptos_framework::object::ObjectGroup)]
@@ -313,7 +312,7 @@ module aptos_names_v2::domains {
         object::transfer_with_ref(linear_transfer_ref, to_addr);
 
         let record = DomainNameRecordV2 {
-            name: domain_name,
+            name_domain_name: domain_name,
             expiration_time_sec,
             target_address: option::none(),
             subdomain_collection_name: domain_name,
@@ -354,20 +353,18 @@ module aptos_names_v2::domains {
         );
         // Generates the object signer and the refs. The refs are used to manage the token.
         let object_signer = object::generate_signer(&constructor_ref);
-        let burn_ref = token::generate_burn_ref(&constructor_ref);
         let extend_ref = object::generate_extend_ref(&constructor_ref);
         let transfer_ref = object::generate_transfer_ref(&constructor_ref);
         let linear_transfer_ref = object::generate_linear_transfer_ref(&transfer_ref);
         object::transfer_with_ref(linear_transfer_ref, to_addr);
 
         let record = SubdomainNameRecordV2 {
-            name: subdomain_name,
+            name_subdomain_name: subdomain_name,
             expiration_time_sec,
             target_address: option::none(),
             domain: domain_token,
             extend_ref,
             transfer_ref,
-            burn_ref,
         };
         move_to(&object_signer, record);
     }
