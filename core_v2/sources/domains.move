@@ -4,7 +4,7 @@ module aptos_names_v2::domains {
     use aptos_framework::aptos_coin::AptosCoin;
     use aptos_framework::coin;
     use aptos_framework::event;
-    use aptos_framework::object::{Self, Object};
+    use aptos_framework::object::{Self, Object, is_object};
     use aptos_framework::timestamp;
     use aptos_names_v2::config;
     use aptos_names_v2::price_model;
@@ -12,9 +12,9 @@ module aptos_names_v2::domains {
     use aptos_names_v2::token_helper;
     use aptos_names_v2::utf8_utils;
     use aptos_names_v2::verify;
-    use aptos_std::table::{Self, Table};
     use aptos_token_objects::collection;
     use aptos_token_objects::token;
+    use std::bcs;
     use std::error;
     use std::option::{Self, Option};
     use std::signer;
@@ -55,16 +55,13 @@ module aptos_names_v2::domains {
     const EVALID_SIGNATURE_REQUIRED: u64 = 16;
     /// The domain is too short.
     const EDOMAIN_TOO_SHORT: u64 = 17;
-<<<<<<< Updated upstream
     /// Reverse lookup registry not initialized. `init_reverse_lookup_registry_v1` must be called first
     const EREVERSE_LOOKUP_NOT_INITIALIZED: u64 = 18;
-=======
     /// The domain expiration, even after migration extension, is past now.
     const EMIGRATION_ALREADY_EXPIRED: u64 = 17;
 
     /// Extension time in seconds for v2 migration
     const MIGRATION_EXTENSION_SEC: u64 = 31449600;
->>>>>>> Stashed changes
 
     /// Tokens require a signer to create, so this is the signer for the collection
     struct CollectionCapabilityV2 has key, drop {
@@ -81,12 +78,9 @@ module aptos_names_v2::domains {
         transfer_ref: object::TransferRef,
     }
 
-    /// The registry for reverse lookups (aka primary names), which maps addresses to their primary name (token address)
-    /// - Users can set their primary name to a name that they own. This also forces the name to target their own address too.
-    /// - If you point your primary name to an address that isn't your own, it is no longer your primary name.
-    /// - If you mint a name while you don't have a primary name, your minted name is auto-set to be your primary name. (including minting subdomains)
-    struct ReverseLookupRegistryV1 has key, store {
-        registry: Table<address, address>
+    #[resource_group_member(group = aptos_framework::object::ObjectGroup)]
+    struct ReverseRecord has key {
+        token_addr: Option<address>,
     }
 
     /// Holder for `SetReverseLookupEventV1` events
@@ -173,9 +167,6 @@ module aptos_names_v2::domains {
             utf8(COLLECTION_URI),
         );
 
-        move_to(account, ReverseLookupRegistryV1 {
-            registry: table::new()
-        });
         move_to(account, SetReverseLookupEventsV1 {
             set_reverse_lookup_events: account::new_event_handle<SetReverseLookupEventV1>(account),
         });
@@ -269,7 +260,7 @@ module aptos_names_v2::domains {
         sign: &signer,
         domain_name: String,
         num_years: u8
-    ) acquires CollectionCapabilityV2, NameRecordV2, RegisterNameEventsV1, ReverseLookupRegistryV1, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
+    ) acquires CollectionCapabilityV2, NameRecordV2, RegisterNameEventsV1, ReverseRecord, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
         assert!(config::is_enabled(), error::unavailable(ENOT_ENABLED));
         assert!(
             num_years > 0 && num_years <= config::max_number_of_years_registered(),
@@ -300,7 +291,7 @@ module aptos_names_v2::domains {
         sign: &signer,
         domain_name: String,
         num_years: u8
-    ) acquires CollectionCapabilityV2, NameRecordV2, RegisterNameEventsV1, ReverseLookupRegistryV1, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
+    ) acquires CollectionCapabilityV2, NameRecordV2, RegisterNameEventsV1, ReverseRecord, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
         assert!(config::unrestricted_mint_enabled(), error::permission_denied(EVALID_SIGNATURE_REQUIRED));
         register_domain_generic(sign, domain_name, num_years);
     }
@@ -310,7 +301,7 @@ module aptos_names_v2::domains {
         domain_name: String,
         num_years: u8,
         signature: vector<u8>
-    ) acquires CollectionCapabilityV2, NameRecordV2, RegisterNameEventsV1, ReverseLookupRegistryV1, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
+    ) acquires CollectionCapabilityV2, NameRecordV2, RegisterNameEventsV1, ReverseRecord, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
         let account_address = signer::address_of(sign);
         verify::assert_register_domain_signature_verifies(signature, account_address, domain_name);
         register_domain_generic(sign, domain_name, num_years);
@@ -324,7 +315,7 @@ module aptos_names_v2::domains {
         subdomain_name: String,
         domain_name: String,
         expiration_time_sec: u64
-    ) acquires CollectionCapabilityV2, NameRecordV2, RegisterNameEventsV1, ReverseLookupRegistryV1, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
+    ) acquires CollectionCapabilityV2, NameRecordV2, RegisterNameEventsV1, ReverseRecord, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
         assert!(config::is_enabled(), error::unavailable(ENOT_ENABLED));
 
         assert!(
@@ -365,7 +356,7 @@ module aptos_names_v2::domains {
         domain_name: String,
         registration_duration_secs: u64,
         price: u64
-    ) acquires CollectionCapabilityV2, NameRecordV2, RegisterNameEventsV1, ReverseLookupRegistryV1, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
+    ) acquires CollectionCapabilityV2, NameRecordV2, RegisterNameEventsV1, ReverseRecord, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
         // If we're registering a name that exists but is expired, and the expired name is a primary name,
         // it should get removed from being a primary name.
         clear_reverse_lookup_for_name(subdomain_name, domain_name);
@@ -427,7 +418,7 @@ module aptos_names_v2::domains {
         sign: &signer,
         domain_name: String,
         new_owner: address
-    ) acquires CollectionCapabilityV2, NameRecordV2, ReverseLookupRegistryV1, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
+    ) acquires CollectionCapabilityV2, NameRecordV2, ReverseRecord, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
         force_set_name_address(sign, option::none(), domain_name, new_owner);
     }
 
@@ -436,7 +427,7 @@ module aptos_names_v2::domains {
         subdomain_name: String,
         domain_name: String,
         new_owner: address
-    ) acquires CollectionCapabilityV2, NameRecordV2, ReverseLookupRegistryV1, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
+    ) acquires CollectionCapabilityV2, NameRecordV2, ReverseRecord, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
         force_set_name_address(sign, option::some(subdomain_name), domain_name, new_owner);
     }
 
@@ -445,7 +436,7 @@ module aptos_names_v2::domains {
         subdomain_name: Option<String>,
         domain_name: String,
         new_owner: address
-    ) acquires CollectionCapabilityV2, NameRecordV2, ReverseLookupRegistryV1, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
+    ) acquires CollectionCapabilityV2, NameRecordV2, ReverseRecord, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
         config::assert_signer_is_admin(sign);
         // If the domain name is a primary name, clear it.
         clear_reverse_lookup_for_name(subdomain_name, domain_name);
@@ -461,7 +452,7 @@ module aptos_names_v2::domains {
         sign: &signer,
         domain_name: String,
         registration_duration_secs: u64
-    ) acquires CollectionCapabilityV2, NameRecordV2, RegisterNameEventsV1, ReverseLookupRegistryV1, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
+    ) acquires CollectionCapabilityV2, NameRecordV2, RegisterNameEventsV1, ReverseRecord, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
         force_create_or_seize_name(sign, option::none(), domain_name, registration_duration_secs);
     }
 
@@ -470,7 +461,7 @@ module aptos_names_v2::domains {
         subdomain_name: String,
         domain_name: String,
         registration_duration_secs: u64
-    ) acquires CollectionCapabilityV2, NameRecordV2, RegisterNameEventsV1, ReverseLookupRegistryV1, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
+    ) acquires CollectionCapabilityV2, NameRecordV2, RegisterNameEventsV1, ReverseRecord, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
         force_create_or_seize_name(sign, option::some(subdomain_name), domain_name, registration_duration_secs);
     }
 
@@ -479,7 +470,7 @@ module aptos_names_v2::domains {
         subdomain_name: Option<String>,
         domain_name: String,
         registration_duration_secs: u64
-    ) acquires CollectionCapabilityV2, NameRecordV2, RegisterNameEventsV1, ReverseLookupRegistryV1, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
+    ) acquires CollectionCapabilityV2, NameRecordV2, RegisterNameEventsV1, ReverseRecord, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
         config::assert_signer_is_admin(sign);
         // Register the name
         register_name_internal(sign, subdomain_name, domain_name, registration_duration_secs, 0);
@@ -572,7 +563,7 @@ module aptos_names_v2::domains {
         sign: &signer,
         domain_name: String,
         new_address: address
-    ) acquires CollectionCapabilityV2, NameRecordV2, ReverseLookupRegistryV1, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
+    ) acquires CollectionCapabilityV2, NameRecordV2, ReverseRecord, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
         set_name_address(sign, option::none(), domain_name, new_address);
     }
 
@@ -581,7 +572,7 @@ module aptos_names_v2::domains {
         subdomain_name: String,
         domain_name: String,
         new_address: address
-    ) acquires CollectionCapabilityV2, NameRecordV2, ReverseLookupRegistryV1, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
+    ) acquires CollectionCapabilityV2, NameRecordV2, ReverseRecord, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
         set_name_address(sign, option::some(subdomain_name), domain_name, new_address);
     }
 
@@ -590,7 +581,7 @@ module aptos_names_v2::domains {
         subdomain_name: Option<String>,
         domain_name: String,
         new_address: address
-    ) acquires CollectionCapabilityV2, NameRecordV2, ReverseLookupRegistryV1, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
+    ) acquires CollectionCapabilityV2, NameRecordV2, ReverseRecord, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
         // If the domain name is a primary name, clear it.
         clear_reverse_lookup_for_name(subdomain_name, domain_name);
 
@@ -612,9 +603,9 @@ module aptos_names_v2::domains {
         if (option::is_none(&maybe_reverse_lookup)) {
             return
         };
-        let reverse_record = borrow_global<NameRecordV2>(*option::borrow(&maybe_reverse_lookup));
-        if (reverse_record.domain_name == domain_name &&
-            reverse_record.subdomain_name == subdomain_name &&
+        let reverse_name_record = borrow_global<NameRecordV2>(*option::borrow(&maybe_reverse_lookup));
+        if (reverse_name_record.domain_name == domain_name &&
+            reverse_name_record.subdomain_name == subdomain_name &&
             signer_addr != new_address
         ) {
             clear_reverse_lookup(sign);
@@ -640,7 +631,7 @@ module aptos_names_v2::domains {
     public entry fun clear_domain_address(
         sign: &signer,
         domain_name: String
-    ) acquires CollectionCapabilityV2, NameRecordV2, ReverseLookupRegistryV1, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
+    ) acquires CollectionCapabilityV2, NameRecordV2, ReverseRecord, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
         clear_name_address(sign, option::none(), domain_name);
     }
 
@@ -648,7 +639,7 @@ module aptos_names_v2::domains {
         sign: &signer,
         subdomain_name: String,
         domain_name: String
-    ) acquires CollectionCapabilityV2, NameRecordV2, ReverseLookupRegistryV1, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
+    ) acquires CollectionCapabilityV2, NameRecordV2, ReverseRecord, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
         clear_name_address(sign, option::some(subdomain_name), domain_name);
     }
 
@@ -658,7 +649,7 @@ module aptos_names_v2::domains {
         sign: &signer,
         subdomain_name: Option<String>,
         domain_name: String
-    ) acquires CollectionCapabilityV2, NameRecordV2, ReverseLookupRegistryV1, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
+    ) acquires CollectionCapabilityV2, NameRecordV2, ReverseRecord, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
         assert!(name_is_registered(subdomain_name, domain_name), error::not_found(ENAME_NOT_EXIST));
 
         let signer_addr = signer::address_of(sign);
@@ -696,7 +687,7 @@ module aptos_names_v2::domains {
         account: &signer,
         subdomain_name: Option<String>,
         domain_name: String
-    ) acquires CollectionCapabilityV2, NameRecordV2, ReverseLookupRegistryV1, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
+    ) acquires CollectionCapabilityV2, NameRecordV2, ReverseRecord, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
         // Name must be registered before assigning reverse lookup
         if (!name_is_registered(subdomain_name, domain_name)) {
             return
@@ -709,25 +700,35 @@ module aptos_names_v2::domains {
     /// Entry function for clearing reverse lookup.
     public entry fun clear_reverse_lookup_entry(
         account: &signer
-    ) acquires NameRecordV2, ReverseLookupRegistryV1, SetReverseLookupEventsV1 {
+    ) acquires CollectionCapabilityV2, NameRecordV2, ReverseRecord, SetReverseLookupEventsV1 {
         clear_reverse_lookup(account);
     }
 
     /// Clears the user's reverse lookup.
-    public fun clear_reverse_lookup(account: &signer) acquires NameRecordV2, ReverseLookupRegistryV1, SetReverseLookupEventsV1 {
+    public fun clear_reverse_lookup(
+        account: &signer
+    ) acquires CollectionCapabilityV2, NameRecordV2, ReverseRecord, SetReverseLookupEventsV1 {
         let account_addr = signer::address_of(account);
         clear_reverse_lookup_internal(account_addr);
+    }
+
+    inline fun reverse_record_addr(account_addr: address): address acquires CollectionCapabilityV2 {
+        // TODO: Use object ExtendRef
+        object::create_object_address(
+            &get_token_signer_address(),
+            bcs::to_bytes(&account_addr),
+
+        )
     }
 
     /// Returns the reverse lookup (the token addr) for an address if any.
     public fun get_reverse_lookup(
         account_addr: address
-    ): Option<address> acquires ReverseLookupRegistryV1 {
-        assert!(exists<ReverseLookupRegistryV1>(@aptos_names_v2), error::invalid_state(EREVERSE_LOOKUP_NOT_INITIALIZED));
-        let registry = &borrow_global_mut<ReverseLookupRegistryV1>(@aptos_names_v2).registry;
-        if (table::contains(registry, account_addr)) {
-            let token_addr = *table::borrow(registry, account_addr);
-            option::some(token_addr)
+    ): Option<address> acquires CollectionCapabilityV2, ReverseRecord {
+        let reverse_record_addr = reverse_record_addr(account_addr);
+        if (is_object(reverse_record_addr)) {
+            let reverse_record = borrow_global<ReverseRecord>(reverse_record_addr);
+            reverse_record.token_addr
         } else {
             option::none()
         }
@@ -749,20 +750,33 @@ module aptos_names_v2::domains {
             new_expiration_time_sec - now,
             0,
         );
+        // TODO: `register_name_internal` should accept a `target_addr`
+        if (option::is_some(&target_addr)) {
+            set_name_address_internal(subdomain_name, domain_name, *option::borrow(&target_addr));
+        }
     }
 
     fun set_reverse_lookup_internal(
         account: &signer,
         token_addr: address,
-    ) acquires NameRecordV2, ReverseLookupRegistryV1, SetReverseLookupEventsV1 {
+    ) acquires CollectionCapabilityV2, NameRecordV2, ReverseRecord, SetReverseLookupEventsV1 {
         let account_addr = signer::address_of(account);
         let record = borrow_global<NameRecordV2>(token_addr);
         let record_obj = object::address_to_object<NameRecordV2>(token_addr);
         assert!(object::owns(record_obj, account_addr), error::permission_denied(ENOT_AUTHORIZED));
 
-        assert!(exists<ReverseLookupRegistryV1>(@aptos_names_v2), error::invalid_state(EREVERSE_LOOKUP_NOT_INITIALIZED));
-        let registry = &mut borrow_global_mut<ReverseLookupRegistryV1>(@aptos_names_v2).registry;
-        table::upsert(registry, account_addr, token_addr);
+        let reverse_record_addr = reverse_record_addr(account_addr);
+        if (!is_object(reverse_record_addr)) {
+            // TODO: Use object ExtendRef
+            let constructor_ref = object::create_named_object(&get_token_signer(), bcs::to_bytes(&account_addr));
+            let reverse_record_signer = &object::generate_signer(&constructor_ref);
+            move_to(reverse_record_signer, ReverseRecord {
+                token_addr: option::some(token_addr)
+            })
+        } else {
+            let reverse_record = borrow_global_mut<ReverseRecord>(reverse_record_addr);
+            reverse_record.token_addr = option::some(token_addr);
+        };
 
         emit_set_reverse_lookup_event_v1(
             record.subdomain_name,
@@ -773,16 +787,16 @@ module aptos_names_v2::domains {
 
     fun clear_reverse_lookup_internal(
         account_addr: address
-    ) acquires NameRecordV2, ReverseLookupRegistryV1, SetReverseLookupEventsV1 {
+    ) acquires CollectionCapabilityV2, NameRecordV2, ReverseRecord, SetReverseLookupEventsV1 {
         let maybe_reverse_lookup = get_reverse_lookup(account_addr);
         if (option::is_none(&maybe_reverse_lookup)) {
             return
         };
         let token_addr = *option::borrow(&maybe_reverse_lookup);
         let record = borrow_global<NameRecordV2>(token_addr);
-        assert!(exists<ReverseLookupRegistryV1>(@aptos_names_v2), error::invalid_state(EREVERSE_LOOKUP_NOT_INITIALIZED));
-        let registry = &mut borrow_global_mut<ReverseLookupRegistryV1>(@aptos_names_v2).registry;
-        table::remove(registry, account_addr);
+        let reverse_record_addr = reverse_record_addr(account_addr);
+        let reverse_record = borrow_global_mut<ReverseRecord>(reverse_record_addr);
+        reverse_record.token_addr = option::none();
         emit_set_reverse_lookup_event_v1(
             record.subdomain_name,
             record.domain_name,
@@ -793,7 +807,7 @@ module aptos_names_v2::domains {
     fun clear_reverse_lookup_for_name(
         subdomain_name: Option<String>,
         domain_name: String
-    ) acquires CollectionCapabilityV2, NameRecordV2, ReverseLookupRegistryV1, SetReverseLookupEventsV1 {
+    ) acquires CollectionCapabilityV2, NameRecordV2, ReverseRecord, SetReverseLookupEventsV1 {
         if (!name_is_registered(subdomain_name, domain_name)) return;
 
         // If the name is a primary name, clear it
@@ -838,7 +852,6 @@ module aptos_names_v2::domains {
             target_address,
         };
 
-        assert!(exists<ReverseLookupRegistryV1>(@aptos_names_v2), error::invalid_state(EREVERSE_LOOKUP_NOT_INITIALIZED));
         event::emit_event<SetReverseLookupEventV1>(
             &mut borrow_global_mut<SetReverseLookupEventsV1>(@aptos_names_v2).set_reverse_lookup_events,
             event,
@@ -882,7 +895,6 @@ module aptos_names_v2::domains {
 
     #[test_only]
     public fun get_set_reverse_lookup_event_v1_count(): u64 acquires SetReverseLookupEventsV1 {
-        assert!(exists<ReverseLookupRegistryV1>(@aptos_names_v2), error::invalid_state(EREVERSE_LOOKUP_NOT_INITIALIZED));
         event::counter(&borrow_global<SetReverseLookupEventsV1>(@aptos_names_v2).set_reverse_lookup_events)
     }
 
