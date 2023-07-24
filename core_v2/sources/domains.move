@@ -55,19 +55,31 @@ module aptos_names_v2::domains {
     /// The domain is too short.
     const EDOMAIN_TOO_SHORT: u64 = 17;
 
-    /// Tokens require a signer to create, so this is the signer for the collection
-    struct CollectionCapabilityV2 has key, drop {
-        capability: SignerCapability,
+    /// Manager object refs
+    struct Manager has key {
+        /// The extend_ref of the manager object to get its signer
+        extend_ref: object::ExtendRef,
     }
 
     #[resource_group_member(group = aptos_framework::object::ObjectGroup)]
-    struct NameRecordV2 has key {
-        domain_name: String,
-        subdomain_name: Option<String>,
+    struct DomainNameRecordV2 has key {
+        name: String,
         expiration_time_sec: u64,
         target_address: Option<address>,
+        subdomain_collection: String,
 
         transfer_ref: object::TransferRef,
+    }
+
+    #[resource_group_member(group = aptos_framework::object::ObjectGroup)]
+    struct SubdomainNameRecordV2 has key {
+        name: String,
+        expiration_time_sec: u64,
+        target_address: Option<address>,
+        domain: Object<DomainNameRecordV2>,
+
+        transfer_ref: object::TransferRef,
+        burn_ref: token::BurnRef,
     }
 
     #[resource_group_member(group = aptos_framework::object::ObjectGroup)]
@@ -119,7 +131,7 @@ module aptos_names_v2::domains {
     }
 
     /// This is only callable during publishing
-    fun init_module(account: &signer) {
+    fun init_module(account: &signer) acquires Manager {
         let funds_address: address = @aptos_names_funds;
         let admin_address: address = @aptos_names_admin;
 
@@ -141,57 +153,62 @@ module aptos_names_v2::domains {
             register_name_events: account::new_event_handle<RegisterNameEventV1>(account),
         });
 
-        // Create collection + token_resource
-        let registry_seed = utf8_utils::u128_to_string((timestamp::now_microseconds() as u128));
-        string::append(&mut registry_seed, string::utf8(b"registry_seed"));
-        let (token_resource, token_signer_cap) = account::create_resource_account(
-            account,
-            *string::bytes(&registry_seed),
-        );
-        move_to(account, CollectionCapabilityV2 {
-            capability: token_signer_cap,
-        });
-        collection::create_unlimited_collection(
-            &token_resource,
-            utf8(COLLECTION_DESCRIPTION),
-            config::collection_name_v1(),
-            option::none(),
-            utf8(COLLECTION_URI),
-        );
+        create_manager(account);
+        create_domain_collection(&manager_signer());
 
         move_to(account, SetReverseLookupEventsV1 {
             set_reverse_lookup_events: account::new_event_handle<SetReverseLookupEventV1>(account),
         });
     }
-    
-    public fun get_token_signer_address(): address acquires CollectionCapabilityV2 {
-        account::get_signer_capability_address(&borrow_global<CollectionCapabilityV2>(@aptos_names_v2).capability)
+
+    fun create_domain_collection(admin: &signer) {
+        collection::create_unlimited_collection(
+            admin,
+            utf8(COLLECTION_DESCRIPTION),
+            string::utf8(config::domain_collection_name_v1()),
+            option::none(),
+            utf8(COLLECTION_URI),
+        );
     }
 
-    fun get_token_signer(): signer acquires CollectionCapabilityV2 {
-        account::create_signer_with_capability(&borrow_global<CollectionCapabilityV2>(@aptos_names_v2).capability)
+    /// Creates the manager object.
+    fun create_manager(sender: &signer) {
+        let constructor_ref = object::create_object(signer::address_of(sender));
+        let extend_ref = object::generate_extend_ref(&constructor_ref);
+        move_to(sender, Manager { extend_ref });
     }
 
-    inline fun token_addr_inline(
-        domain_name: String,
-        subdomain_name: Option<String>,
-    ): address acquires CollectionCapabilityV2 {
+    /// Returns the signer of the manager object.
+    fun manager_signer(): signer acquires Manager {
+        let manager = borrow_global<Manager>(@aptos_names_v2);
+        object::generate_signer_for_extending(&manager.extend_ref)
+    }
+
+    /// Returns the address of the manager object.
+    fun manager_address(): address acquires Manager {
+        let manager = borrow_global<Manager>(@aptos_names_v2);
+        object::address_from_extend_ref(&manager.extend_ref)
+    }
+
+    #[view]
+    public fun domain_addr(
+        domain_name: String
+    ): address acquires Manager {
         token::create_token_address(
-            &get_token_signer_address(),
-            &config::collection_name_v1(),
-            &token_helper::get_fully_qualified_domain_name(subdomain_name, domain_name),
+            &manager_address(),
+            &string::utf8(config::domain_collection_name_v1()),
+            &domain_name,
         )
     }
 
-    public fun token_addr(
-        domain_name: String,
-        subdomain_name: Option<String>,
-    ): address acquires CollectionCapabilityV2 {
-        token::create_token_address(
-            &get_token_signer_address(),
-            &config::collection_name_v1(),
-            &token_helper::get_fully_qualified_domain_name(subdomain_name, domain_name),
-        )
+    #[view]
+    public fun subdomain_addr(
+        domain_token: Object<DomainNameRecordV2>,
+        subdomain_name: String
+    ): address acquires DomainNameRecordV2 {
+        let domain_token_addr = object::object_address(&domain_token);
+        let subdomain_collection_name = &borrow_global<DomainNameRecordV2>(copy domain_token_addr).subdomain_collection;
+        token::create_token_address(&domain_token_addr, subdomain_collection_name, &subdomain_name)
     }
 
     public fun get_record_obj(
@@ -229,7 +246,7 @@ module aptos_names_v2::domains {
         string::append(&mut uri, name);
         let constructor_ref = token::create_named_token(
             &get_token_signer(),
-            config::collection_name_v1(),
+            string::utf8(config::collection_name_v1()),
             description,
             name,
             option::none(),
