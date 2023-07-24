@@ -16,7 +16,7 @@ module aptos_names_v2::domains {
     use aptos_token_objects::token;
     use std::bcs;
     use std::error;
-    use std::option::{Self, Option};
+    use std::option::{Self, Option, some, none};
     use std::signer;
     use std::signer::address_of;
     use std::string::{Self, String, utf8};
@@ -66,8 +66,9 @@ module aptos_names_v2::domains {
         name: String,
         expiration_time_sec: u64,
         target_address: Option<address>,
-        subdomain_collection: String,
+        subdomain_collection_name: String,
 
+        extend_ref: object::ExtendRef,
         transfer_ref: object::TransferRef,
     }
 
@@ -78,6 +79,7 @@ module aptos_names_v2::domains {
         target_address: Option<address>,
         domain: Object<DomainNameRecordV2>,
 
+        extend_ref: object::ExtendRef,
         transfer_ref: object::TransferRef,
         burn_ref: token::BurnRef,
     }
@@ -191,7 +193,7 @@ module aptos_names_v2::domains {
     }
 
     #[view]
-    public fun domain_addr(
+    public fun domain_token_addr(
         domain_name: String
     ): address acquires Manager {
         token::create_token_address(
@@ -201,75 +203,180 @@ module aptos_names_v2::domains {
         )
     }
 
+    inline fun domain_token_addr_inline(
+        domain_name: String,
+    ): address acquires Manager {
+        token::create_token_address(
+            &manager_address(),
+            &string::utf8(config::domain_collection_name_v1()),
+            &domain_name,
+        )
+    }
+
     #[view]
-    public fun subdomain_addr(
+    public fun subdomain_token_addr(
         domain_token: Object<DomainNameRecordV2>,
         subdomain_name: String
     ): address acquires DomainNameRecordV2 {
         let domain_token_addr = object::object_address(&domain_token);
-        let subdomain_collection_name = &borrow_global<DomainNameRecordV2>(copy domain_token_addr).subdomain_collection;
+        let subdomain_collection_name = &borrow_global<DomainNameRecordV2>(domain_token_addr).subdomain_collection_name;
         token::create_token_address(&domain_token_addr, subdomain_collection_name, &subdomain_name)
     }
 
-    public fun get_record_obj(
-        domain_name: String,
-        subdomain_name: Option<String>,
-    ): Object<NameRecordV2> acquires CollectionCapabilityV2 {
-        object::address_to_object(token_addr_inline(domain_name, subdomain_name))
+    inline fun subdomain_token_addr_inline(
+        domain_token: Object<DomainNameRecordV2>,
+        subdomain_name: String,
+    ): address acquires DomainNameRecordV2 {
+        let domain_token_addr = object::object_address(&domain_token);
+        let subdomain_collection_name = &borrow_global<DomainNameRecordV2>(domain_token_addr).subdomain_collection_name;
+        token::create_token_address(&domain_token_addr, subdomain_collection_name, &subdomain_name)
     }
 
-    inline fun get_record(
+    public fun get_domain_obj(
         domain_name: String,
-        subdomain_name: Option<String>,
-    ): &NameRecordV2 acquires CollectionCapabilityV2 {
-        borrow_global(token_addr_inline(domain_name, subdomain_name))
+    ): Object<DomainNameRecordV2> acquires Manager {
+        object::address_to_object(domain_token_addr_inline(domain_name))
     }
 
-    inline fun get_record_mut(
-        domain_name: String,
-        subdomain_name: Option<String>,
-    ): &mut NameRecordV2 acquires CollectionCapabilityV2 {
-        borrow_global_mut(token_addr_inline(domain_name, subdomain_name))
+    public fun get_subdomain_obj(
+        domain_token: Object<DomainNameRecordV2>,
+        subdomain_name: String,
+    ): Object<SubdomainNameRecordV2> acquires DomainNameRecordV2 {
+        object::address_to_object(subdomain_token_addr_inline(domain_token, subdomain_name))
     }
 
-    /// Creates a token for the name.
-    /// NOTE: This function performs no validation checks
-    fun create_token(
-        to_addr: address,
+    inline fun get_domain(
         domain_name: String,
-        subdomain_name: Option<String>,
-        expiration_time_sec: u64,
-    ) acquires CollectionCapabilityV2 {
-        let name = token_helper::get_fully_qualified_domain_name(subdomain_name, domain_name);
-        let description = config::tokendata_description();
-        let uri: string::String = config::tokendata_url_prefix();
-        string::append(&mut uri, name);
-        let constructor_ref = token::create_named_token(
-            &get_token_signer(),
-            string::utf8(config::collection_name_v1()),
+    ): &DomainNameRecordV2 acquires Manager {
+        borrow_global(domain_token_addr_inline(domain_name))
+    }
+
+    inline fun get_subdomain(
+        domain_token: Object<DomainNameRecordV2>,
+        subdomain_name: String,
+    ): &SubdomainNameRecordV2 acquires DomainNameRecordV2 {
+        borrow_global(subdomain_token_addr_inline(domain_token, subdomain_name))
+    }
+
+    inline fun get_domain_mut(
+        domain_name: String,
+    ): &mut DomainNameRecordV2 acquires Manager {
+        borrow_global_mut(domain_token_addr_inline(domain_name))
+    }
+
+    inline fun get_subdomain_mut(
+        domain_token: Object<DomainNameRecordV2>,
+        subdomain_name: String,
+    ): &mut SubdomainNameRecordV2 acquires DomainNameRecordV2 {
+        borrow_global_mut(subdomain_token_addr_inline(domain_token, subdomain_name))
+    }
+
+    /// Creates the subdomain collection. This function creates a collection with unlimited supply using
+    /// the module constants for description, name, and URI, defined above. The royalty configuration
+    /// is skipped in this collection for simplicity.
+    fun create_subdomain_collection(domain_token_object_signer: &signer, name: String, description: String, uri: String) {
+        // Creates the collection with unlimited supply and without establishing any royalty configuration.
+        collection::create_unlimited_collection(
+            domain_token_object_signer,
             description,
             name,
             option::none(),
             uri,
         );
-        let token_signer = object::generate_signer(&constructor_ref);
-        let record = NameRecordV2 {
-            domain_name,
-            subdomain_name,
+    }
+
+    /// Creates a token for the domain name.
+    /// NOTE: This function performs no validation checks
+    fun create_domain_token(
+        to_addr: address,
+        domain_name: String,
+        expiration_time_sec: u64,
+    ) acquires Manager {
+        let name = token_helper::get_fully_qualified_domain_name(none<>(), domain_name);
+        let description = config::tokendata_description();
+        let uri: string::String = config::tokendata_url_prefix();
+        string::append(&mut uri, name);
+        let constructor_ref = token::create_named_token(
+            &manager_signer(),
+            string::utf8(config::domain_collection_name_v1()),
+            description,
+            name,
+            option::none(),
+            uri,
+        );
+
+        // Generates the object signer and the refs. The refs are used to manage the token.
+        let object_signer = object::generate_signer(&constructor_ref);
+        let extend_ref = object::generate_extend_ref(&constructor_ref);
+        let transfer_ref = object::generate_transfer_ref(&constructor_ref);
+        let linear_transfer_ref = object::generate_linear_transfer_ref(&transfer_ref);
+        object::transfer_with_ref(linear_transfer_ref, to_addr);
+
+        let record = DomainNameRecordV2 {
+            name: domain_name,
             expiration_time_sec,
             target_address: option::none(),
-            transfer_ref: object::generate_transfer_ref(&constructor_ref),
+            subdomain_collection_name: domain_name,
+            extend_ref,
+            transfer_ref,
         };
-        move_to(&token_signer, record);
-        let record_obj = object::object_from_constructor_ref<NameRecordV2>(&constructor_ref);
-        object::transfer(&get_token_signer(), record_obj, to_addr);
+        move_to(&object_signer, record);
+
+        // Creates a subdomain collection which is associated to the domain token.
+        create_subdomain_collection(&object_signer, domain_name, description, uri);
+    }
+
+    /// Creates a token for the subdomain name.
+    /// NOTE: This function performs no validation checks
+    fun create_subdomain_token(
+        to_addr: address,
+        domain_name: String,
+        domain_token: Object<DomainNameRecordV2>,
+        subdomain_name: String,
+        expiration_time_sec: u64,
+    ) acquires DomainNameRecordV2 {
+        let name = token_helper::get_fully_qualified_domain_name(some(subdomain_name), domain_name);
+        let description = config::tokendata_description();
+        let uri: string::String = config::tokendata_url_prefix();
+        string::append(&mut uri, name);
+
+        let domain = borrow_global<DomainNameRecordV2>(object::object_address(&domain_token));
+        let domain_token_object_signer = object::generate_signer_for_extending(&domain.extend_ref);
+        // Creates the subdomain token, and get the constructor ref of the token. The constructor ref
+        // is used to generate the refs of the token.
+        let constructor_ref = token::create_named_token(
+            &domain_token_object_signer,
+            domain_name,
+            description,
+            name,
+            option::none(),
+            uri,
+        );
+        // Generates the object signer and the refs. The refs are used to manage the token.
+        let object_signer = object::generate_signer(&constructor_ref);
+        let burn_ref = token::generate_burn_ref(&constructor_ref);
+        let extend_ref = object::generate_extend_ref(&constructor_ref);
+        let transfer_ref = object::generate_transfer_ref(&constructor_ref);
+        let linear_transfer_ref = object::generate_linear_transfer_ref(&transfer_ref);
+        object::transfer_with_ref(linear_transfer_ref, to_addr);
+
+        let record = SubdomainNameRecordV2 {
+            name: subdomain_name,
+            expiration_time_sec,
+            target_address: option::none(),
+            domain: domain_token,
+            extend_ref,
+            transfer_ref,
+            burn_ref,
+        };
+        move_to(&object_signer, record);
     }
 
     fun register_domain_generic(
         sign: &signer,
         domain_name: String,
         num_years: u8
-    ) acquires CollectionCapabilityV2, NameRecordV2, RegisterNameEventsV1, ReverseRecord, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
+    ) acquires Manager, DomainNameRecordV2, SubdomainNameRecordV2, RegisterNameEventsV1, ReverseRecord, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
         assert!(config::is_enabled(), error::unavailable(ENOT_ENABLED));
         assert!(
             num_years > 0 && num_years <= config::max_number_of_years_registered(),
@@ -300,7 +407,7 @@ module aptos_names_v2::domains {
         sign: &signer,
         domain_name: String,
         num_years: u8
-    ) acquires CollectionCapabilityV2, NameRecordV2, RegisterNameEventsV1, ReverseRecord, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
+    ) acquires Manager, DomainNameRecordV2, RegisterNameEventsV1, ReverseRecord, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
         assert!(config::unrestricted_mint_enabled(), error::permission_denied(EVALID_SIGNATURE_REQUIRED));
         register_domain_generic(sign, domain_name, num_years);
     }
@@ -535,7 +642,7 @@ module aptos_names_v2::domains {
         domain_name: String
     ): bool acquires CollectionCapabilityV2 {
         object::is_object(token_addr_inline(domain_name, subdomain_name)) &&
-        !object::is_owner(get_record_obj(domain_name, subdomain_name), get_token_signer_address())
+        !object::is_owner(get_domain_obj(domain_name, subdomain_name), get_token_signer_address())
     }
 
     /// Check if the address is the owner of the given aptos_name

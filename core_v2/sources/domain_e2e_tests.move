@@ -368,7 +368,7 @@ module aptos_names_v2::domain_e2e_tests {
         assert!(is_owner, 1);
 
         // Transfer the domain to rando
-        let record_obj = domains::get_record_obj(test_helper::domain_name(), option::none());
+        let record_obj = domains::get_domain_obj(test_helper::domain_name(), option::none());
         object::transfer(user, record_obj, signer::address_of(rando));
 
         // Verify primary name for |user| hasn't changed
@@ -398,7 +398,7 @@ module aptos_names_v2::domain_e2e_tests {
         assert!(is_owner, 1);
 
         // Transfer the domain to rando
-        let record_obj = domains::get_record_obj(test_helper::domain_name(), option::none());
+        let record_obj = domains::get_domain_obj(test_helper::domain_name(), option::none());
         object::transfer(user, record_obj, signer::address_of(rando));
 
         // Verify primary name for |user| hasn't changed
