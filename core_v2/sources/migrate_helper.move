@@ -1,38 +1,40 @@
 module aptos_names_v2::migrate_helper {
     friend aptos_names_v2::domains;
 
-    use aptos_names::token_helper::{build_tokendata_id, get_token_signer_address};
     use std::option::Option;
     use std::string::String;
     use aptos_token::token;
-    use aptos_names::domains;
 
-     public(friend) fun burn_token_v1(
+    public(friend) fun burn_token_v1(
         user: &signer,
+        burn_signer: &signer,
         domain_name: String,
         subdomain_name: Option<String>,
     ): (u64, Option<address>) {
+        // Clear the domain
+        aptos_names::domains::clear_domain_address(user, domain_name);
+
+        // Get the v1 token info
         let (
-            property_version,
+            _property_version,
             expiration_time_sec,
             target_addr
-        ) = domains::get_name_record_v1_props_for_name(
+        ) = aptos_names::domains::get_name_record_v1_props_for_name(
             subdomain_name,
             domain_name,
         );
-        let tokendata_id = build_tokendata_id(
-            get_token_signer_address(),
+        let tokendata_id = aptos_names::token_helper::build_tokendata_id(
+            aptos_names::token_helper::get_token_signer_address(),
             subdomain_name,
             domain_name,
         );
-        let (creator, collection_name, name) = token::get_token_data_id_fields(&tokendata_id);
+        let token_id = aptos_names::token_helper::latest_token_id(&tokendata_id);
 
-        token::burn(
+        // Burn by sending to `burn_signer`
+        token::direct_transfer(
             user,
-            creator,
-            collection_name,
-            name,
-            property_version,
+            burn_signer,
+            token_id,
             1,
         );
 

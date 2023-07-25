@@ -7,6 +7,7 @@ module aptos_names_v2::domains {
     use aptos_framework::object::{Self, Object, is_object};
     use aptos_framework::timestamp;
     use aptos_names_v2::config;
+    use aptos_names_v2::migrate_helper;
     use aptos_names_v2::price_model;
     use aptos_names_v2::time_helper;
     use aptos_names_v2::token_helper;
@@ -20,8 +21,9 @@ module aptos_names_v2::domains {
     use std::signer;
     use std::signer::address_of;
     use std::string::{Self, String, utf8};
-    use aptos_names_v2::migrate_helper;
 
+    const APP_SIGNER_CAPABILITY_SEED: vector<u8> = b"APP_SIGNER_CAPABILITY";
+    const BURN_SIGNER_CAPABILITY_SEED: vector<u8> = b"BURN_SIGNER_CAPABILITY";
     const COLLECTION_DESCRIPTION: vector<u8> = b".apt names from Aptos Labs";
     const COLLECTION_URI: vector<u8> = b"https://aptosnames.com";
 
@@ -60,12 +62,10 @@ module aptos_names_v2::domains {
     /// The domain expiration, even after migration extension, is past now.
     const EMIGRATION_ALREADY_EXPIRED: u64 = 17;
 
-    /// Extension time in seconds for v2 migration
-    const MIGRATION_EXTENSION_SEC: u64 = 31449600;
-
     /// Tokens require a signer to create, so this is the signer for the collection
     struct CollectionCapabilityV2 has key, drop {
         capability: SignerCapability,
+        burn_signer_capability: SignerCapability,
     }
 
     #[resource_group_member(group = aptos_framework::object::ObjectGroup)]
@@ -150,14 +150,17 @@ module aptos_names_v2::domains {
         });
 
         // Create collection + token_resource
-        let registry_seed = utf8_utils::u128_to_string((timestamp::now_microseconds() as u128));
-        string::append(&mut registry_seed, string::utf8(b"registry_seed"));
         let (token_resource, token_signer_cap) = account::create_resource_account(
             account,
-            *string::bytes(&registry_seed),
+            APP_SIGNER_CAPABILITY_SEED,
+        );
+        let (_, burn_signer_capability) = account::create_resource_account(
+            account,
+            BURN_SIGNER_CAPABILITY_SEED,
         );
         move_to(account, CollectionCapabilityV2 {
             capability: token_signer_cap,
+            burn_signer_capability,
         });
         collection::create_unlimited_collection(
             &token_resource,
@@ -178,6 +181,18 @@ module aptos_names_v2::domains {
 
     fun get_token_signer(): signer acquires CollectionCapabilityV2 {
         account::create_signer_with_capability(&borrow_global<CollectionCapabilityV2>(@aptos_names_v2).capability)
+    }
+
+    public fun get_burn_signer_address(): address acquires CollectionCapabilityV2 {
+        account::get_signer_capability_address(
+            &borrow_global<CollectionCapabilityV2>(@aptos_names_v2).burn_signer_capability
+        )
+    }
+
+    fun get_burn_signer(): signer acquires CollectionCapabilityV2 {
+        account::create_signer_with_capability(
+            &borrow_global<CollectionCapabilityV2>(@aptos_names_v2).burn_signer_capability
+        )
     }
 
     inline fun token_addr_inline(
@@ -734,13 +749,19 @@ module aptos_names_v2::domains {
         }
     }
 
+    /// Burns the ANS token v1, mints ANS token v2, and extends the expiration by a year.
     public entry fun migrate_from_v1(
         user: &signer,
         domain_name: String,
         subdomain_name: Option<String>,
     ) acquires CollectionCapabilityV2, NameRecordV2, RegisterNameEventsV1, ReverseRecord, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
-        let (expiration_time_sec, target_addr) = migrate_helper::burn_token_v1(user, domain_name, subdomain_name);
-        let new_expiration_time_sec = expiration_time_sec + MIGRATION_EXTENSION_SEC;
+        let (expiration_time_sec, target_addr) = migrate_helper::burn_token_v1(
+            user,
+            &get_burn_signer(),
+            domain_name,
+            subdomain_name
+        );
+        let new_expiration_time_sec = expiration_time_sec + time_helper::years_to_seconds(1);
         let now = timestamp::now_seconds();
         assert!(new_expiration_time_sec >= now, error::invalid_state(EMIGRATION_ALREADY_EXPIRED));
         register_name_internal(
