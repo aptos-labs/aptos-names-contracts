@@ -55,8 +55,7 @@ module aptos_names_v2::domain_e2e_tests {
           };
       */
 
-        // let signature: vector<u8> = x"c381226467371d5a5ca2408333b8f8c68d4c6f81d1f020c11402620ec47c1b74114c60a02bcb4798ee84df6e85be2c79e6f691962beecef1ab73b93a9dcaea03";
-        let signature: vector<u8> = x"f004a92a27f962352456bb5b6728d4d37361d16b5932ed012f8f07bc94e3e73dbf38b643b6e16caa97ff313d48c8fe524325529b7c0e9abf7bd9d5183ff97a03";
+        let signature: vector<u8> = x"c381226467371d5a5ca2408333b8f8c68d4c6f81d1f020c11402620ec47c1b74114c60a02bcb4798ee84df6e85be2c79e6f691962beecef1ab73b93a9dcaea03";
         e2e_test_with_signature(myself, user, aptos, rando, foundation, signature);
     }
 

@@ -75,8 +75,7 @@ module aptos_names_v2::config {
         set_domain_price_for_length(framework, (5 * octas()), 6);
 
         // TODO: SET REAL VALUES FOR PUBLIC KEY AND UNRESTRICTED MINT ENABLED
-        // let public_key = x"e9a99bdb905a37ffbf4c505b427558380613fec5ca8b5555b15cfa80e9cce8bf";
-        let public_key = x"667a0687c3e7fc831366372667c11e4aa4502be09e7c99a5303711ce4f0b0fe2";
+        let public_key = x"e9a99bdb905a37ffbf4c505b427558380613fec5ca8b5555b15cfa80e9cce8bf";
         set_captcha_public_key(framework, public_key);
         set_unrestricted_mint_enabled(framework, true);
 
