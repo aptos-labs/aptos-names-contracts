@@ -57,10 +57,8 @@ module aptos_names_v2::domains {
     const EVALID_SIGNATURE_REQUIRED: u64 = 16;
     /// The domain is too short.
     const EDOMAIN_TOO_SHORT: u64 = 17;
-    /// Reverse lookup registry not initialized. `init_reverse_lookup_registry_v1` must be called first
-    const EREVERSE_LOOKUP_NOT_INITIALIZED: u64 = 18;
     /// The domain expiration, even after migration extension, is past now.
-    const EMIGRATION_ALREADY_EXPIRED: u64 = 17;
+    const EMIGRATION_ALREADY_EXPIRED: u64 = 18;
 
     /// Tokens require a signer to create, so this is the signer for the collection
     struct CollectionCapabilityV2 has key, drop {
