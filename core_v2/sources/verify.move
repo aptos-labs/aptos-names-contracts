@@ -1,6 +1,5 @@
 module aptos_names_v2::verify {
     use std::string;
-    use aptos_std::debug;
     use aptos_framework::account;
     use aptos_framework::chain_id;
     use aptos_std::ed25519;
@@ -20,8 +19,6 @@ module aptos_names_v2::verify {
     public(friend) fun assert_register_domain_signature_verifies(signature: vector<u8>, account_address: address, domain_name: string::String) {
         let chain_id = chain_id::get();
         let sequence_number = account::get_sequence_number(account_address);
-        debug::print(&sequence_number);
-        debug::print(&account_address);
         let register_domain_proof_challenge = RegisterDomainProofChallenge {
             sequence_number,
             register_address: account_address,
