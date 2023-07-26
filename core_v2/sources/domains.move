@@ -4,7 +4,7 @@ module aptos_names_v2::domains {
     use aptos_framework::aptos_coin::AptosCoin;
     use aptos_framework::coin;
     use aptos_framework::event;
-    use aptos_framework::object::{Self, Object, is_object};
+    use aptos_framework::object::{Self, Object};
     use aptos_framework::timestamp;
     use aptos_names_v2::config;
     use aptos_names_v2::price_model;
@@ -14,7 +14,6 @@ module aptos_names_v2::domains {
     use aptos_names_v2::verify;
     use aptos_token_objects::collection;
     use aptos_token_objects::token;
-    use std::bcs;
     use std::error;
     use std::option::{Self, Option};
     use std::signer;
@@ -70,7 +69,6 @@ module aptos_names_v2::domains {
         transfer_ref: object::TransferRef,
     }
 
-    #[resource_group_member(group = aptos_framework::object::ObjectGroup)]
     struct ReverseRecord has key {
         token_addr: Option<address>,
     }
@@ -692,34 +690,24 @@ module aptos_names_v2::domains {
     /// Entry function for clearing reverse lookup.
     public entry fun clear_reverse_lookup_entry(
         account: &signer
-    ) acquires CollectionCapabilityV2, NameRecordV2, ReverseRecord, SetReverseLookupEventsV1 {
+    ) acquires NameRecordV2, ReverseRecord, SetReverseLookupEventsV1 {
         clear_reverse_lookup(account);
     }
 
     /// Clears the user's reverse lookup.
     public fun clear_reverse_lookup(
         account: &signer
-    ) acquires CollectionCapabilityV2, NameRecordV2, ReverseRecord, SetReverseLookupEventsV1 {
+    ) acquires NameRecordV2, ReverseRecord, SetReverseLookupEventsV1 {
         let account_addr = signer::address_of(account);
         clear_reverse_lookup_internal(account_addr);
-    }
-
-    inline fun reverse_record_addr(account_addr: address): address acquires CollectionCapabilityV2 {
-        // TODO: Use object ExtendRef
-        object::create_object_address(
-            &get_token_signer_address(),
-            bcs::to_bytes(&account_addr),
-
-        )
     }
 
     /// Returns the reverse lookup (the token addr) for an address if any.
     public fun get_reverse_lookup(
         account_addr: address
-    ): Option<address> acquires CollectionCapabilityV2, ReverseRecord {
-        let reverse_record_addr = reverse_record_addr(account_addr);
-        if (is_object(reverse_record_addr)) {
-            let reverse_record = borrow_global<ReverseRecord>(reverse_record_addr);
+    ): Option<address> acquires ReverseRecord {
+        if (exists<ReverseRecord>(account_addr)) {
+            let reverse_record = borrow_global<ReverseRecord>(account_addr);
             reverse_record.token_addr
         } else {
             option::none()
@@ -729,22 +717,18 @@ module aptos_names_v2::domains {
     fun set_reverse_lookup_internal(
         account: &signer,
         token_addr: address,
-    ) acquires CollectionCapabilityV2, NameRecordV2, ReverseRecord, SetReverseLookupEventsV1 {
+    ) acquires NameRecordV2, ReverseRecord, SetReverseLookupEventsV1 {
         let account_addr = signer::address_of(account);
         let record = borrow_global<NameRecordV2>(token_addr);
         let record_obj = object::address_to_object<NameRecordV2>(token_addr);
         assert!(object::owns(record_obj, account_addr), error::permission_denied(ENOT_AUTHORIZED));
 
-        let reverse_record_addr = reverse_record_addr(account_addr);
-        if (!is_object(reverse_record_addr)) {
-            // TODO: Use object ExtendRef
-            let constructor_ref = object::create_named_object(&get_token_signer(), bcs::to_bytes(&account_addr));
-            let reverse_record_signer = &object::generate_signer(&constructor_ref);
-            move_to(reverse_record_signer, ReverseRecord {
+        if (!exists<ReverseRecord>(account_addr)) {
+            move_to(account, ReverseRecord {
                 token_addr: option::some(token_addr)
             })
         } else {
-            let reverse_record = borrow_global_mut<ReverseRecord>(reverse_record_addr);
+            let reverse_record = borrow_global_mut<ReverseRecord>(account_addr);
             reverse_record.token_addr = option::some(token_addr);
         };
 
@@ -757,15 +741,14 @@ module aptos_names_v2::domains {
 
     fun clear_reverse_lookup_internal(
         account_addr: address
-    ) acquires CollectionCapabilityV2, NameRecordV2, ReverseRecord, SetReverseLookupEventsV1 {
+    ) acquires NameRecordV2, ReverseRecord, SetReverseLookupEventsV1 {
         let maybe_reverse_lookup = get_reverse_lookup(account_addr);
         if (option::is_none(&maybe_reverse_lookup)) {
             return
         };
         let token_addr = *option::borrow(&maybe_reverse_lookup);
         let record = borrow_global<NameRecordV2>(token_addr);
-        let reverse_record_addr = reverse_record_addr(account_addr);
-        let reverse_record = borrow_global_mut<ReverseRecord>(reverse_record_addr);
+        let reverse_record = borrow_global_mut<ReverseRecord>(account_addr);
         reverse_record.token_addr = option::none();
         emit_set_reverse_lookup_event_v1(
             record.subdomain_name,
