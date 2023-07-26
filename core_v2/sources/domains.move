@@ -660,19 +660,15 @@ module aptos_names_v2::domains {
             assert!(false, error::invalid_state(ENAME_NOT_EXIST));
         };
         let record = get_record(domain_name, subdomain_name);
-        time_is_expired(record.expiration_time_sec)
-    }
-
-    /// Returns true if the name is registered, and is expired.
-    /// If the name does not exist, raises an error
-    public fun name_is_expired_new(
-        subdomain_name: Option<String>,
-        domain_name: String
-    ): bool acquires CollectionCapabilityV2, NameRecordV2 {
-        if (!name_is_registered(subdomain_name, domain_name)) {
-            assert!(false, error::invalid_state(ENAME_NOT_EXIST));
+        // check the auto-renew flag
+        if (option::is_some(&record.subdomain_ext)) {
+            let subdomain_ext = option::borrow(&record.subdomain_ext);
+            if (subdomain_ext.use_domain_expiration_sec) {
+                // refer to the expiration date of the domain
+                let domain_record = get_record(domain_name, option::none());
+                return time_is_expired(domain_record.expiration_time_sec)
+            }
         };
-        let record = get_record(domain_name, subdomain_name);
         time_is_expired(record.expiration_time_sec)
     }
 
