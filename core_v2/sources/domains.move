@@ -172,7 +172,8 @@ module aptos_names_v2::domains {
             set_reverse_lookup_events: account::new_event_handle<SetReverseLookupEventV1>(account),
         });
     }
-    
+
+    #[view]
     public fun get_token_signer_address(): address acquires CollectionCapabilityV2 {
         account::get_signer_capability_address(&borrow_global<CollectionCapabilityV2>(@aptos_names_v2).capability)
     }
@@ -181,6 +182,7 @@ module aptos_names_v2::domains {
         account::create_signer_with_capability(&borrow_global<CollectionCapabilityV2>(@aptos_names_v2).capability)
     }
 
+    #[view]
     public fun get_burn_signer_address(): address acquires CollectionCapabilityV2 {
         account::get_signer_capability_address(
             &borrow_global<CollectionCapabilityV2>(@aptos_names_v2).burn_signer_capability
@@ -506,6 +508,7 @@ module aptos_names_v2::domains {
         record.target_address = option::none();
     }
 
+    #[view]
     /// Checks for the name not existing, or being expired
     /// Returns true if the name is available for registration
     /// if this is a subdomain, and the domain doesn't exist, returns false
@@ -523,6 +526,7 @@ module aptos_names_v2::domains {
         !name_is_registered(subdomain_name, domain_name) || name_is_expired(subdomain_name, domain_name)
     }
 
+    #[view]
     /// Returns true if the name is registered, and is expired.
     /// If the name does not exist, raises an error
     public fun name_is_expired(
@@ -533,6 +537,7 @@ module aptos_names_v2::domains {
         time_is_expired(record.expiration_time_sec)
     }
 
+    #[view]
     /// Returns true if the object exists AND the owner is not the `token_resource` account
     public fun name_is_registered(
         subdomain_name: Option<String>,
@@ -542,6 +547,7 @@ module aptos_names_v2::domains {
         !object::is_owner(get_record_obj(domain_name, subdomain_name), get_token_signer_address())
     }
 
+    #[view]
     /// Check if the address is the owner of the given aptos_name
     /// If the name does not exist or owner owns an expired name, returns false
     public fun is_owner_of_name(
@@ -557,6 +563,7 @@ module aptos_names_v2::domains {
         object::owns(record_obj, owner_addr)
     }
 
+    #[view]
     /// gets the address pointed to by a given name
     /// Is `Option<address>` because the name may not be registered, or it may not have an address associated with it
     public fun name_resolved_address(
@@ -734,6 +741,7 @@ module aptos_names_v2::domains {
         )
     }
 
+    #[view]
     /// Returns the reverse lookup (the token addr) for an address if any.
     public fun get_reverse_lookup(
         account_addr: address
@@ -876,6 +884,7 @@ module aptos_names_v2::domains {
         );
     }
 
+    #[view]
     public fun get_name_record_v1_props_for_name(
         subdomain: Option<String>,
         domain: String,
@@ -891,6 +900,7 @@ module aptos_names_v2::domains {
         (record.subdomain_name, record.domain_name)
     }
 
+    #[view]
     /// Given a time, returns true if that time is in the past, false otherwise
     public fun time_is_expired(expiration_time_sec: u64): bool {
         timestamp::now_seconds() >= expiration_time_sec
