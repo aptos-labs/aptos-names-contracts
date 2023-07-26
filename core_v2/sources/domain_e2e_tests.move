@@ -432,4 +432,39 @@ module aptos_names_v2::domain_e2e_tests {
         let is_owner = domains::is_owner_of_name(user_addr, option::none(), test_helper::domain_name());
         assert!(!is_owner, 1);
     }
+
+    #[test(myself = @aptos_names_v2, user = @0x077, aptos = @0x1, rando = @0x266f, foundation = @0xf01d)]
+    fun test_transfer(myself: &signer, user: signer, aptos: signer, rando: signer, foundation: signer) {
+        let users = test_helper::e2e_test_setup(myself, user, &aptos, rando, &foundation);
+        let user = vector::borrow(&users, 0);
+        let user_addr = signer::address_of(user);
+        let rando = vector::borrow(&users, 1);
+        let rando_addr = signer::address_of(rando);
+
+        // Register the domain
+        test_helper::register_name(
+            user,
+            option::none(),
+            test_helper::domain_name(),
+            test_helper::one_year_secs(),
+            test_helper::fq_domain_name(),
+            1,
+            vector::empty<u8>()
+        );
+
+        // user is owner
+        {
+            let is_owner = domains::is_owner_of_name(user_addr, option::none(), test_helper::domain_name());
+            assert!(is_owner, 1);
+        };
+
+        let token_addr = domains::token_addr(test_helper::domain_name(), option::none());
+        object::transfer_raw(user, token_addr, rando_addr);
+
+        // rando is owner
+        {
+            let is_owner = domains::is_owner_of_name(rando_addr, option::none(), test_helper::domain_name());
+            assert!(is_owner, 1);
+        };
+    }
 }
