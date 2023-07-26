@@ -479,10 +479,9 @@ module aptos_names_v2::domain_e2e_tests {
         );
 
         // Migrate the domain from v1
-        aptos_names_v2::domains::migrate_from_v1(
+        aptos_names_v2::domains::migrate_domain_from_v1(
             user,
             test_helper::domain_name(),
-            option::none(),
         );
 
         // The v1 name belongs to the burn signer and the target address is clear

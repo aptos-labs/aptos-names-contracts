@@ -748,30 +748,29 @@ module aptos_names_v2::domains {
     }
 
     /// Burns the ANS token v1, mints ANS token v2, and extends the expiration by a year.
-    public entry fun migrate_from_v1(
+    public entry fun migrate_domain_from_v1(
         user: &signer,
         domain_name: String,
-        subdomain_name: Option<String>,
     ) acquires CollectionCapabilityV2, NameRecordV2, RegisterNameEventsV1, ReverseRecord, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
         let (expiration_time_sec, target_addr) = migrate_helper::burn_token_v1(
             user,
             &get_burn_signer(),
             domain_name,
-            subdomain_name
+            option::none(),
         );
         let new_expiration_time_sec = expiration_time_sec + time_helper::years_to_seconds(1);
         let now = timestamp::now_seconds();
         assert!(new_expiration_time_sec >= now, error::invalid_state(EMIGRATION_ALREADY_EXPIRED));
         register_name_internal(
             user,
-            subdomain_name,
+            option::none(),
             domain_name,
             new_expiration_time_sec - now,
             0,
         );
         // TODO: `register_name_internal` should accept a `target_addr`
         if (option::is_some(&target_addr)) {
-            set_name_address_internal(subdomain_name, domain_name, *option::borrow(&target_addr));
+            set_name_address_internal(option::none(), domain_name, *option::borrow(&target_addr));
         }
     }
 
