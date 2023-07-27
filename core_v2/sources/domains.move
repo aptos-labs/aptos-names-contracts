@@ -4,7 +4,7 @@ module aptos_names_v2::domains {
     use aptos_framework::aptos_coin::AptosCoin;
     use aptos_framework::coin;
     use aptos_framework::event;
-    use aptos_framework::object::{Self, Object, ConstructorRef};
+    use aptos_framework::object::{Self, Object};
     use aptos_framework::timestamp;
     use aptos_names_v2::config;
     use aptos_names_v2::migrate_helper;
@@ -199,6 +199,10 @@ module aptos_names_v2::domains {
         });
     }
 
+    inline fun is_subdomain(subdomain: Option<String>): bool {
+        option::is_some(&subdomain)
+    }
+
     public fun get_token_signer_address(): address acquires CollectionCapabilityV2 {
         account::get_signer_capability_address(&borrow_global<CollectionCapabilityV2>(@aptos_names_v2).capability)
     }
@@ -222,9 +226,9 @@ module aptos_names_v2::domains {
     inline fun token_addr_inline(
         domain_name: String,
         subdomain_name: Option<String>,
-    ): address acquires CollectionCapabilityV2 {
+    ): address acquires CollectionCapabilityV2, NameRecordV2 {
         token::create_token_address(
-            &get_token_signer_address(),
+            &get_creator_signer_address(domain_name, subdomain_name),
             &get_collection_name(domain_name, subdomain_name),
             &token_helper::get_fully_qualified_domain_name(subdomain_name, domain_name),
         )
@@ -233,9 +237,9 @@ module aptos_names_v2::domains {
     public fun token_addr(
         domain_name: String,
         subdomain_name: Option<String>,
-    ): address acquires CollectionCapabilityV2 {
+    ): address acquires CollectionCapabilityV2, NameRecordV2 {
         token::create_token_address(
-            &get_token_signer_address(),
+            &get_creator_signer_address(domain_name, subdomain_name),
             &get_collection_name(domain_name, subdomain_name),
             &token_helper::get_fully_qualified_domain_name(subdomain_name, domain_name),
         )
@@ -244,21 +248,21 @@ module aptos_names_v2::domains {
     public fun get_record_obj(
         domain_name: String,
         subdomain_name: Option<String>,
-    ): Object<NameRecordV2> acquires CollectionCapabilityV2 {
+    ): Object<NameRecordV2> acquires CollectionCapabilityV2, NameRecordV2 {
         object::address_to_object(token_addr_inline(domain_name, subdomain_name))
     }
 
     inline fun get_record(
         domain_name: String,
         subdomain_name: Option<String>,
-    ): &NameRecordV2 acquires CollectionCapabilityV2 {
+    ): &NameRecordV2 acquires CollectionCapabilityV2, NameRecordV2 {
         borrow_global(token_addr_inline(domain_name, subdomain_name))
     }
 
     inline fun get_record_mut(
         domain_name: String,
         subdomain_name: Option<String>,
-    ): &mut NameRecordV2 acquires CollectionCapabilityV2 {
+    ): &mut NameRecordV2 acquires CollectionCapabilityV2, NameRecordV2 {
         borrow_global_mut(token_addr_inline(domain_name, subdomain_name))
     }
 
@@ -272,10 +276,34 @@ module aptos_names_v2::domains {
     }
 
     inline fun get_collection_name(domain_name: String, subdomain_name: Option<String>): String {
-        if (option::is_some(&subdomain_name)) {
+        if (is_subdomain(subdomain_name)) {
             domain_name
         } else {
             config::collection_name_v1()
+        }
+    }
+
+    fun get_creator_signer_address(domain_name: String, subdomain_name: Option<String>): address acquires CollectionCapabilityV2, NameRecordV2 {
+        // subdomain creator is domain token
+        if (is_subdomain(subdomain_name)) {
+            let domain = get_record(domain_name, option::none());
+            object::address_from_extend_ref(&domain.extend_ref)
+        }
+            // domain creator is token signer
+        else {
+            get_token_signer_address()
+        }
+    }
+
+    inline fun get_creator_signer(domain_name: String, subdomain_name: Option<String>): signer acquires CollectionCapabilityV2, NameRecordV2 {
+        // subdomain creator is domain tokenr
+        if (is_subdomain(subdomain_name)) {
+            let domain = get_record(domain_name, option::none());
+            object::generate_signer_for_extending(&domain.extend_ref)
+        }
+            // domain creator is token signer
+        else {
+            get_token_signer()
         }
     }
 
@@ -293,37 +321,28 @@ module aptos_names_v2::domains {
         string::append(&mut uri, name);
 
         let subdomain_ext: Option<SubdomainExt>;
-        let constructor_ref: ConstructorRef;
-        let token_signer: signer;
-
+        let constructor_ref = token::create_named_token(
+            &get_creator_signer(domain_name, subdomain_name),
+            get_collection_name(domain_name, subdomain_name),
+            description,
+            name,
+            option::none(),
+            uri,
+        );
+        let token_signer = object::generate_signer(&constructor_ref);
+        // need to make a copy because option::extract() below will set subdomain_name to none()
+        let subdomain_name_copy = subdomain_name;
         // creating subdomain
-        if (option::is_some(&subdomain_name)) {
-            let domain_record = get_record(domain_name, option::none());
-            constructor_ref = token::create_named_token(
-                &object::generate_signer_for_extending(&domain_record.extend_ref),
-                domain_name,
-                description,
-                name,
-                option::none(),
-                uri,
-            );
-            token_signer = object::generate_signer(&constructor_ref);
+        if (is_subdomain(subdomain_name)) {
             subdomain_ext = option::some(SubdomainExt {
                 subdomain_name: option::extract(&mut subdomain_name),
-                use_domain_expiration_sec: true, // by default subdomain follow domain's expiration
+                // TODO: use_domain_expiration_sec should be passed in as a param
+                // Now by default subdomain follow domain's expiration
+                use_domain_expiration_sec: true,
             });
         }
-        // creating domain
+            // creating domain
         else {
-            constructor_ref = token::create_named_token(
-                &get_token_signer(),
-                config::collection_name_v1(),
-                description,
-                name,
-                option::none(),
-                uri,
-            );
-            token_signer = object::generate_signer(&constructor_ref);
             subdomain_ext = option::none<SubdomainExt>();
             // create subdomain collection
             // TODO: revisit description, name and uri
@@ -345,7 +364,7 @@ module aptos_names_v2::domains {
         };
         move_to(&token_signer, record);
         let record_obj = object::object_from_constructor_ref<NameRecordV2>(&constructor_ref);
-        object::transfer(&get_token_signer(), record_obj, to_addr);
+        object::transfer(&get_creator_signer(domain_name, subdomain_name_copy), record_obj, to_addr);
     }
 
     fun register_domain_generic(
@@ -452,7 +471,7 @@ module aptos_names_v2::domains {
 
         // if it is a subdomain, and it expires later than its domain, throw an error
         // This is done here so that any governance moderation activities must abide by the same invariant
-        if (option::is_some(&subdomain_name)) {
+        if (is_subdomain(subdomain_name)) {
             let record = get_record(domain_name, option::none());
             assert!(
                 name_expiration_time_secs <= record.expiration_time_sec,
@@ -482,7 +501,7 @@ module aptos_names_v2::domains {
         if (option::is_none(&reverse_lookup_result)) {
             // If the user has no reverse lookup set, set the user's reverse lookup.
             set_reverse_lookup(sign, subdomain_name, domain_name);
-        } else if (option::is_none(&subdomain_name)) {
+        } else if (!is_subdomain(subdomain_name)) {
             // Automatically set the name to point to the sender's address
             set_name_address_internal(subdomain_name, domain_name, signer::address_of(sign));
         };
@@ -575,9 +594,19 @@ module aptos_names_v2::domains {
     ) acquires CollectionCapabilityV2, NameRecordV2 {
         config::assert_signer_is_admin(sign);
         let record = get_record_mut(domain_name, subdomain_name);
+        let creator_address: address;
+        // we cannot use get_creator_signer_address here because NameRecordV2 is already mutabley borrowed by get_record_mut
+        // clear a subdomain
+        if (is_subdomain(subdomain_name)) {
+            creator_address = object::address_from_extend_ref(&record.extend_ref)
+        }
+            // clear a domain
+        else {
+            creator_address = get_token_signer_address();
+        };
         object::transfer_with_ref(
             object::generate_linear_transfer_ref(&record.transfer_ref),
-            get_token_signer_address()
+            creator_address,
         );
         record.target_address = option::none();
     }
@@ -717,7 +746,7 @@ module aptos_names_v2::domains {
     ): bool acquires CollectionCapabilityV2, NameRecordV2 {
         // If this is a subdomain, ensure the domain also exists, and is not expired: i.e not registerable
         // So if the domain name is registerable, we return false, as the subdomain is not registerable
-        if (option::is_some(&subdomain_name) && name_is_registerable(option::none(), domain_name)) {
+        if (is_subdomain(subdomain_name) && name_is_registerable(option::none(), domain_name)) {
             return false
         };
         // Check to see if the domain is registered, or expired
@@ -750,10 +779,10 @@ module aptos_names_v2::domains {
     public fun name_is_registered(
         subdomain_name: Option<String>,
         domain_name: String
-    ): bool acquires CollectionCapabilityV2 {
+    ): bool acquires CollectionCapabilityV2, NameRecordV2 {
         // TODO: check if the name is registered in v1 and v2
         object::is_object(token_addr_inline(domain_name, subdomain_name)) &&
-        !object::is_owner(get_record_obj(domain_name, subdomain_name), get_token_signer_address())
+            !object::is_owner(get_record_obj(domain_name, subdomain_name), get_creator_signer_address(domain_name, subdomain_name))
     }
 
     /// Check if the address is the owner of the given aptos_name
