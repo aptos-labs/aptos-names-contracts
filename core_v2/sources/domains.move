@@ -65,10 +65,6 @@ module aptos_names_v2::domains {
         extend_ref: object::ExtendRef,
     }
 
-    struct DomainExt has store {
-        extend_ref: object::ExtendRef,
-    }
-
     struct SubdomainExt has store {
         subdomain_name: String,
         use_domain_expiration_sec: bool,
@@ -80,7 +76,8 @@ module aptos_names_v2::domains {
         expiration_time_sec: u64,
         target_address: Option<address>,
         transfer_ref: object::TransferRef,
-        domain_ext: Option<DomainExt>,
+        extend_ref: object::ExtendRef,
+        // Only present for subdomain
         subdomain_ext: Option<SubdomainExt>,
     }
 
@@ -228,7 +225,7 @@ module aptos_names_v2::domains {
         borrow_global_mut(token_addr_inline(domain_name, subdomain_name))
     }
 
-    fun extract_subdomain_name(record: &NameRecordV2): Option<String> {
+    inline fun extract_subdomain_name(record: &NameRecordV2): Option<String> {
         if (option::is_some(&record.subdomain_ext)) {
             let subdomain_ext = option::borrow(&record.subdomain_ext);
             option::some(subdomain_ext.subdomain_name)
@@ -259,18 +256,15 @@ module aptos_names_v2::domains {
         );
         let token_signer = object::generate_signer(&constructor_ref);
 
-        let domain_ext: Option<DomainExt>;
         let subdomain_ext: Option<SubdomainExt>;
         if (option::is_some(&subdomain_name)) {
-            domain_ext = option::none<DomainExt>();
             subdomain_ext = option::some(SubdomainExt {
                 subdomain_name: option::extract(&mut subdomain_name),
-                use_domain_expiration_sec: true, // by default subdomain follow domain's expiration
+                // TODO: use_domain_expiration_sec should be passed in as a param
+                // Now by default subdomain follow domain's expiration
+                use_domain_expiration_sec: true,
             })
         } else {
-            domain_ext = option::some(DomainExt {
-                extend_ref: object::generate_extend_ref(&constructor_ref)
-            });
             subdomain_ext = option::none<SubdomainExt>();
         };
         let record = NameRecordV2 {
@@ -278,7 +272,7 @@ module aptos_names_v2::domains {
             expiration_time_sec,
             target_address: option::none(),
             transfer_ref: object::generate_transfer_ref(&constructor_ref),
-            domain_ext,
+            extend_ref: object::generate_extend_ref(&constructor_ref),
             subdomain_ext,
         };
         move_to(&token_signer, record);
