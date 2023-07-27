@@ -200,15 +200,9 @@ module aptos_names_v2::domains {
         domain_name: String,
         subdomain_name: Option<String>,
     ): address acquires CollectionCapabilityV2 {
-        let collection_name: String;
-        if (option::is_some(&subdomain_name)) {
-            collection_name = domain_name;
-        } else {
-            collection_name = config::collection_name_v1();
-        };
         token::create_token_address(
             &get_token_signer_address(),
-            &collection_name,
+            &get_collection_name(domain_name, subdomain_name),
             &token_helper::get_fully_qualified_domain_name(subdomain_name, domain_name),
         )
     }
@@ -217,15 +211,9 @@ module aptos_names_v2::domains {
         domain_name: String,
         subdomain_name: Option<String>,
     ): address acquires CollectionCapabilityV2 {
-        let collection_name: String;
-        if (option::is_some(&subdomain_name)) {
-            collection_name = domain_name;
-        } else {
-            collection_name = config::collection_name_v1();
-        };
         token::create_token_address(
             &get_token_signer_address(),
-            &collection_name,
+            &get_collection_name(domain_name, subdomain_name),
             &token_helper::get_fully_qualified_domain_name(subdomain_name, domain_name),
         )
     }
@@ -257,6 +245,14 @@ module aptos_names_v2::domains {
             option::some(subdomain_ext.subdomain_name)
         } else {
             option::none<String>()
+        }
+    }
+
+    inline fun get_collection_name(domain_name: String, subdomain_name: Option<String>): String {
+        if (option::is_some(&subdomain_name)) {
+            domain_name
+        } else {
+            config::collection_name_v1()
         }
     }
 
