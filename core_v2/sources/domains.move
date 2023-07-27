@@ -65,36 +65,20 @@ module aptos_names_v2::domains {
         extend_ref: object::ExtendRef,
     }
 
-    #[resource_group_member(group = aptos_framework::object::ObjectGroup)]
-    struct DomainNameRecordTokenV2 has key {
-        domain_name: String,
-        expiration_time_sec: u64,
-        target_address: Option<address>,
-
-        extend_ref: object::ExtendRef,
-        transfer_ref: object::TransferRef,
-    }
-
-    #[resource_group_member(group = aptos_framework::object::ObjectGroup)]
-    struct SubdomainNameRecordTokenV2 has key {
+    struct SubdomainExt has store {
         subdomain_name: String,
-        expiration_time_sec: u64,
-        target_address: Option<address>,
-        domain: Object<DomainNameRecordTokenV2>,
-        use_domain_expiration_time: bool,
-
-        extend_ref: object::ExtendRef,
-        transfer_ref: object::TransferRef,
+        use_domain_expiration_sec: bool,
     }
 
     #[resource_group_member(group = aptos_framework::object::ObjectGroup)]
     struct NameRecordV2 has key {
         domain_name: String,
-        subdomain_name: Option<String>,
         expiration_time_sec: u64,
         target_address: Option<address>,
-
         transfer_ref: object::TransferRef,
+        extend_ref: object::ExtendRef,
+        // Only present for subdomain
+        subdomain_ext: Option<SubdomainExt>,
     }
 
     struct ReverseRecord has key {
@@ -241,6 +225,15 @@ module aptos_names_v2::domains {
         borrow_global_mut(token_addr_inline(domain_name, subdomain_name))
     }
 
+    inline fun extract_subdomain_name(record: &NameRecordV2): Option<String> {
+        if (option::is_some(&record.subdomain_ext)) {
+            let subdomain_ext = option::borrow(&record.subdomain_ext);
+            option::some(subdomain_ext.subdomain_name)
+        } else {
+            option::none<String>()
+        }
+    }
+
     /// Creates a token for the name.
     /// NOTE: This function performs no validation checks
     fun create_token(
@@ -262,12 +255,25 @@ module aptos_names_v2::domains {
             uri,
         );
         let token_signer = object::generate_signer(&constructor_ref);
+
+        let subdomain_ext: Option<SubdomainExt>;
+        if (option::is_some(&subdomain_name)) {
+            subdomain_ext = option::some(SubdomainExt {
+                subdomain_name: option::extract(&mut subdomain_name),
+                // TODO: use_domain_expiration_sec should be passed in as a param
+                // Now by default subdomain follow domain's expiration
+                use_domain_expiration_sec: true,
+            })
+        } else {
+            subdomain_ext = option::none<SubdomainExt>();
+        };
         let record = NameRecordV2 {
             domain_name,
-            subdomain_name,
             expiration_time_sec,
             target_address: option::none(),
             transfer_ref: object::generate_transfer_ref(&constructor_ref),
+            extend_ref: object::generate_extend_ref(&constructor_ref),
+            subdomain_ext,
         };
         move_to(&token_signer, record);
         let record_obj = object::object_from_constructor_ref<NameRecordV2>(&constructor_ref);
@@ -622,8 +628,9 @@ module aptos_names_v2::domains {
             return
         };
         let reverse_name_record = borrow_global<NameRecordV2>(*option::borrow(&maybe_reverse_lookup));
+        let reverse_name_record_subdomain = extract_subdomain_name(reverse_name_record);
         if (reverse_name_record.domain_name == domain_name &&
-            reverse_name_record.subdomain_name == subdomain_name &&
+            reverse_name_record_subdomain == subdomain_name &&
             signer_addr != new_address
         ) {
             clear_reverse_lookup(sign);
@@ -761,7 +768,7 @@ module aptos_names_v2::domains {
         };
 
         emit_set_reverse_lookup_event_v1(
-            record.subdomain_name,
+            extract_subdomain_name(record),
             record.domain_name,
             option::some(account_addr)
         );
@@ -779,7 +786,7 @@ module aptos_names_v2::domains {
         let reverse_record = borrow_global_mut<ReverseRecord>(account_addr);
         reverse_record.token_addr = option::none();
         emit_set_reverse_lookup_event_v1(
-            record.subdomain_name,
+            extract_subdomain_name(record),
             record.domain_name,
             option::none()
         );
@@ -798,7 +805,8 @@ module aptos_names_v2::domains {
         let reverse_token_addr = get_reverse_lookup(target_address);
         if (option::is_none(&reverse_token_addr)) return;
         let reverse_record = borrow_global<NameRecordV2>(*option::borrow(&reverse_token_addr));
-        if (reverse_record.subdomain_name == subdomain_name && reverse_record.domain_name == domain_name) {
+        let reverse_record_subdomain_name = extract_subdomain_name(reverse_record);
+        if (reverse_record_subdomain_name == subdomain_name && reverse_record.domain_name == domain_name) {
             clear_reverse_lookup_internal(target_address);
         };
     }
@@ -851,7 +859,7 @@ module aptos_names_v2::domains {
         token_addr: address
     ): (Option<String>, String) acquires NameRecordV2 {
         let record = borrow_global<NameRecordV2>(token_addr);
-        (record.subdomain_name, record.domain_name)
+        (extract_subdomain_name(record), record.domain_name)
     }
 
     /// Given a time, returns true if that time is in the past, false otherwise
