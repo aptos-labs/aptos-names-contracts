@@ -4,7 +4,7 @@ module aptos_names_v2::domains {
     use aptos_framework::aptos_coin::AptosCoin;
     use aptos_framework::coin;
     use aptos_framework::event;
-    use aptos_framework::object::{Self, Object};
+    use aptos_framework::object::{Self, Object, ConstructorRef};
     use aptos_framework::timestamp;
     use aptos_names_v2::config;
     use aptos_names_v2::price_model;
@@ -200,9 +200,15 @@ module aptos_names_v2::domains {
         domain_name: String,
         subdomain_name: Option<String>,
     ): address acquires CollectionCapabilityV2 {
+        let collection_name: String;
+        if (option::is_some(&subdomain_name)) {
+            collection_name = domain_name;
+        } else {
+            collection_name = config::collection_name_v1();
+        };
         token::create_token_address(
             &get_token_signer_address(),
-            &config::collection_name_v1(),
+            &collection_name,
             &token_helper::get_fully_qualified_domain_name(subdomain_name, domain_name),
         )
     }
@@ -211,9 +217,15 @@ module aptos_names_v2::domains {
         domain_name: String,
         subdomain_name: Option<String>,
     ): address acquires CollectionCapabilityV2 {
+        let collection_name: String;
+        if (option::is_some(&subdomain_name)) {
+            collection_name = domain_name;
+        } else {
+            collection_name = config::collection_name_v1();
+        };
         token::create_token_address(
             &get_token_signer_address(),
-            &config::collection_name_v1(),
+            &collection_name,
             &token_helper::get_fully_qualified_domain_name(subdomain_name, domain_name),
         )
     }
@@ -255,31 +267,54 @@ module aptos_names_v2::domains {
         domain_name: String,
         subdomain_name: Option<String>,
         expiration_time_sec: u64,
-    ) acquires CollectionCapabilityV2 {
+    ) acquires CollectionCapabilityV2, NameRecordV2 {
         let name = token_helper::get_fully_qualified_domain_name(subdomain_name, domain_name);
         let description = config::tokendata_description();
         let uri: string::String = config::tokendata_url_prefix();
         string::append(&mut uri, name);
-        let constructor_ref = token::create_named_token(
-            &get_token_signer(),
-            config::collection_name_v1(),
-            description,
-            name,
-            option::none(),
-            uri,
-        );
-        let token_signer = object::generate_signer(&constructor_ref);
 
         let subdomain_ext: Option<SubdomainExt>;
+        let constructor_ref: ConstructorRef;
+        let token_signer: signer;
+
+        // creating subdomain
         if (option::is_some(&subdomain_name)) {
+            let domain_record = get_record(domain_name, option::none());
+            constructor_ref = token::create_named_token(
+                &object::generate_signer_for_extending(&domain_record.extend_ref),
+                domain_name,
+                description,
+                name,
+                option::none(),
+                uri,
+            );
+            token_signer = object::generate_signer(&constructor_ref);
             subdomain_ext = option::some(SubdomainExt {
                 subdomain_name: option::extract(&mut subdomain_name),
-                // TODO: use_domain_expiration_sec should be passed in as a param
-                // Now by default subdomain follow domain's expiration
-                use_domain_expiration_sec: true,
-            })
-        } else {
+                use_domain_expiration_sec: true, // by default subdomain follow domain's expiration
+            });
+        }
+        // creating domain
+        else {
+            constructor_ref = token::create_named_token(
+                &get_token_signer(),
+                config::collection_name_v1(),
+                description,
+                name,
+                option::none(),
+                uri,
+            );
+            token_signer = object::generate_signer(&constructor_ref);
             subdomain_ext = option::none<SubdomainExt>();
+            // create subdomain collection
+            // TODO: revisit description, name and uri
+            collection::create_unlimited_collection(
+                &token_signer,
+                domain_name,
+                domain_name,
+                option::none(),
+                utf8(COLLECTION_URI),
+            );
         };
         let record = NameRecordV2 {
             domain_name,
