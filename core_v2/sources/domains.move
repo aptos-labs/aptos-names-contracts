@@ -629,7 +629,7 @@ module aptos_names_v2::domains {
         // check if the domain is registered
         assert!(name_is_registered(option::none(), domain_name), error::not_found(ENAME_NOT_EXIST));
         // check if the domain is expired already
-        assert!(!name_is_expired(option::none(), domain_name), error::invalid_state(ENAME_NOT_AVAILABLE));
+        assert!(!name_is_expired(option::none(), domain_name), error::invalid_state(ENAME_EXPIRED));
         let record = get_record_mut(domain_name, option::none());
 
         record.expiration_time_sec <= timestamp::now_seconds() + MAX_REMAINING_TIME_FOR_RENEWAL_SEC
