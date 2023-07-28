@@ -468,4 +468,96 @@ module aptos_names_v2::domain_e2e_tests {
             assert!(is_owner, 1);
         };
     }
+
+    #[test(
+        aptos_names = @aptos_names,
+        aptos_names_v2 = @aptos_names_v2,
+        user = @0x077,
+        aptos = @0x1,
+        rando = @0x266f,
+        foundation = @0xf01d
+    )]
+    fun test_migration(
+        aptos_names: &signer,
+        aptos_names_v2: &signer,
+        user: signer,
+        aptos: signer,
+        rando: signer,
+        foundation: signer
+    ) {
+        // Setup test env for v1
+        let users = aptos_names::test_helper::e2e_test_setup(aptos_names, user, &aptos, rando, &foundation);
+
+        // Setup test env for v2
+        account::create_account_for_test(@aptos_names_v2);
+        aptos_names_v2::domains::init_module_for_test(aptos_names_v2);
+        aptos_names_v2::config::set_fund_destination_address_test_only(signer::address_of(&foundation));
+
+        let user = vector::borrow(&users, 0);
+        let user_addr = signer::address_of(user);
+
+        // Register the domain in v1
+        aptos_names::test_helper::register_name(
+            user,
+            option::none(),
+            test_helper::domain_name(),
+            test_helper::one_year_secs(),
+            test_helper::fq_domain_name(),
+            1,
+            vector::empty<u8>()
+        );
+        aptos_names::test_helper::set_name_address(
+            user,
+            option::none(),
+            test_helper::domain_name(),
+            user_addr,
+        );
+
+        // Migrate the domain from v1
+        aptos_names_v2::domains::migrate_domain_from_v1(
+            user,
+            test_helper::domain_name(),
+        );
+
+        // The v1 name belongs to the burn signer and the target address is clear
+        {
+            assert!(
+                aptos_names::domains::name_is_registerable(option::none(), test_helper::domain_name()) == false,
+                1,
+            );
+            let (is_owner, _) = aptos_names::domains::is_owner_of_name(
+                aptos_names_v2::domains::get_burn_signer_address(),
+                option::none(),
+                test_helper::domain_name(),
+            );
+            assert!(is_owner, 2);
+            let target_addr = aptos_names::domains::name_resolved_address(
+                option::none(),
+                test_helper::domain_name(),
+            );
+            assert!(option::is_none(&target_addr), 3);
+        };
+
+        // The v2 name belongs to `user`, the target address is the user_addr, and exipire in 1 + 1 years
+        {
+            assert!(
+                aptos_names_v2::domains::name_is_registerable(option::none(), test_helper::domain_name()) == false,
+                1,
+            );
+            let is_owner = aptos_names_v2::domains::is_owner_of_name(
+                user_addr,
+                option::none(),
+                test_helper::domain_name(),
+            );
+            assert!(is_owner, 2);
+            let (expiration_time_sec, target_addr) = aptos_names_v2::domains::get_name_record_v1_props_for_name(
+                option::none(),
+                test_helper::domain_name(),
+            );
+
+            assert!(time_helper::seconds_to_years(expiration_time_sec - timestamp::now_seconds()) == 2, 3);
+            assert!(option::is_some(&target_addr), 4);
+            assert!(*option::borrow(&target_addr) == user_addr, 5);
+        }
+    }
 }
