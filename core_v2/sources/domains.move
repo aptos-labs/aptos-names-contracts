@@ -565,13 +565,16 @@ module aptos_names_v2::domains {
         time_is_expired(record.expiration_time_sec)
     }
 
-    /// Returns true if the object exists AND the owner is not the `token_resource` account
+    /// Returns true if
+    /// 1. The name has already been registered in ANS v1 OR
+    /// 2. The object exists AND the owner is not the `token_resource` account
     public fun name_is_registered(
         subdomain_name: Option<String>,
         domain_name: String
     ): bool acquires CollectionCapabilityV2 {
-        object::is_object(token_addr_inline(domain_name, subdomain_name)) &&
-        !object::is_owner(get_record_obj(domain_name, subdomain_name), get_token_signer_address())
+        aptos_names::domains::name_is_registered(subdomain_name, domain_name) ||
+            (object::is_object(token_addr_inline(domain_name, subdomain_name)) &&
+            !object::is_owner(get_record_obj(domain_name, subdomain_name), get_token_signer_address()))
     }
 
     /// Check if the address is the owner of the given aptos_name
@@ -844,7 +847,7 @@ module aptos_names_v2::domains {
         subdomain_name: Option<String>,
         domain_name: String
     ) acquires CollectionCapabilityV2, NameRecordV2, ReverseRecord, SetReverseLookupEventsV1 {
-        if (!name_is_registered(subdomain_name, domain_name)) return;
+        if (!object::is_object(token_addr_inline(domain_name, subdomain_name))) return;
 
         // If the name is a primary name, clear it
         let record = get_record(domain_name, subdomain_name);
