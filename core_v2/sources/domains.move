@@ -121,7 +121,10 @@ module aptos_names_v2::domains {
         register_name_events: event::EventHandle<RegisterNameEventV1>,
     }
 
-    // TODO: angie add RenewNameEventV1 here.
+    /// Holder for `RenewNameEventV1` events
+    struct RenewNameEventsV1 has key, store {
+        renew_name_events: event::EventHandle<RenewNameEventV1>,
+    }
 
     /// A name has been set as the reverse lookup for an address, or
     /// the reverse lookup has been cleared (in which case |target_address|
@@ -143,8 +146,16 @@ module aptos_names_v2::domains {
 
     /// A name (potentially subdomain) has been registered on chain
     /// Includes the the fee paid for the registration, and the expiration time
-    /// Also includes the so we can tell which version of a given domain NFT is the latest
     struct RegisterNameEventV1 has drop, store {
+        domain_name: String,
+        subdomain_name: Option<String>,
+        registration_fee_octas: u64,
+        expiration_time_secs: u64,
+    }
+
+    /// A name (potentially subdomain) has been renewed on chain
+    /// Includes the the fee paid for the registration, and the expiration time
+    struct RenewNameEventV1 has drop, store {
         domain_name: String,
         subdomain_name: Option<String>,
         registration_fee_octas: u64,
@@ -172,6 +183,10 @@ module aptos_names_v2::domains {
 
         move_to(account, RegisterNameEventsV1 {
             register_name_events: account::new_event_handle<RegisterNameEventV1>(account),
+        });
+
+        move_to(account, RenewNameEventsV1 {
+            renew_name_events: account::new_event_handle<RenewNameEventV1>(account),
         });
 
         // Create collection + token_resource
@@ -579,7 +594,7 @@ module aptos_names_v2::domains {
         sign: &signer,
         domain_name: String,
         num_years: u8,
-    ) acquires CollectionCapabilityV2, NameRecordV2, RegisterNameEventsV1 {
+    ) acquires CollectionCapabilityV2, NameRecordV2, RenewNameEventsV1 {
         // check the domain eligibility
         let length = validate_domain_name_string(domain_name);
 
@@ -593,7 +608,7 @@ module aptos_names_v2::domains {
         domain_name: String,
         num_years: u8,
         price: u64,
-    ) acquires CollectionCapabilityV2, NameRecordV2, RegisterNameEventsV1 {
+    ) acquires CollectionCapabilityV2, NameRecordV2, RenewNameEventsV1 {
         let record = get_record_mut(domain_name, option::none());
         let registration_duration_secs = time_helper::years_to_seconds((num_years as u64));
         record.expiration_time_sec = timestamp::now_seconds() + registration_duration_secs;
@@ -601,9 +616,9 @@ module aptos_names_v2::domains {
         // pay the price
         coin::transfer<AptosCoin>(sign, config::fund_destination_address(), price);
         // log the event
-        event::emit_event<RegisterNameEventV1>(
-            &mut borrow_global_mut<RegisterNameEventsV1>(@aptos_names_v2).register_name_events,
-            RegisterNameEventV1 {
+        event::emit_event<RenewNameEventV1>(
+            &mut borrow_global_mut<RenewNameEventsV1>(@aptos_names_v2).renew_name_events,
+            RenewNameEventV1 {
                 domain_name,
                 subdomain_name: option::none(),
                 registration_fee_octas: price,
