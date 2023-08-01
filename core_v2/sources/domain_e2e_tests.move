@@ -553,4 +553,48 @@ module aptos_names_v2::domain_e2e_tests {
             assert!(*option::borrow(&target_addr) == user_addr, 5);
         }
     }
+
+    #[test(
+        aptos_names = @aptos_names,
+        aptos_names_v2 = @aptos_names_v2,
+        user = @0x077,
+        aptos = @0x1,
+        rando = @0x266f,
+        foundation = @0xf01d
+    )]
+    #[expected_failure(abort_code = 196611, location = aptos_names_v2::domains)]
+    fun test_name_is_registerable_v1_lookup(
+        aptos_names: &signer,
+        aptos_names_v2: &signer,
+        user: signer,
+        aptos: signer,
+        rando: signer,
+        foundation: signer
+    ) {
+        let users = test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user, &aptos, rando, &foundation);
+
+        let user = vector::borrow(&users, 0);
+
+        // Register the domain in v1
+        aptos_names::test_helper::register_name(
+            user,
+            option::none(),
+            test_helper::domain_name(),
+            test_helper::one_year_secs(),
+            test_helper::fq_domain_name(),
+            1,
+            vector::empty<u8>()
+        );
+        assert!(
+            !aptos_names_v2::domains::name_is_registerable(option::none(), test_helper::domain_name()),
+            1,
+        );
+
+        // Fails because the domain is already registered from v1
+        aptos_names_v2::domains::register_domain(
+            user,
+            test_helper::domain_name(),
+            1,
+        );
+    }
 }

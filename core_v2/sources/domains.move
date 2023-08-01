@@ -541,7 +541,6 @@ module aptos_names_v2::domains {
     /// Checks for the name not existing, or being expired
     /// Returns true if the name is available for registration
     /// if this is a subdomain, and the domain doesn't exist, returns false
-    /// Doesn't use the `name_is_expired` or `name_is_registered` internally to share the borrow
     public fun name_is_registerable(
         subdomain_name: Option<String>,
         domain_name: String
@@ -561,12 +560,27 @@ module aptos_names_v2::domains {
         subdomain_name: Option<String>,
         domain_name: String
     ): bool acquires CollectionCapabilityV2, NameRecordV2 {
-        let record = get_record(domain_name, subdomain_name);
-        time_is_expired(record.expiration_time_sec)
+        // Name must exist in v1 or v2 to succeed
+        assert!(
+            aptos_names::domains::name_is_registered(subdomain_name, domain_name) || name_is_registered(
+                subdomain_name,
+                domain_name
+            ),
+            error::invalid_state(ENAME_NOT_EXIST)
+        );
+        // We check v2 first because a v2 names replace v1 names
+        if (object::is_object(token_addr_inline(domain_name, subdomain_name))) {
+            let record = get_record(domain_name, subdomain_name);
+            time_is_expired(record.expiration_time_sec)
+        } else {
+            // The name is only registered in v1, return the result from v1
+            aptos_names::domains::name_is_expired(subdomain_name, domain_name)
+        }
     }
 
     /// Returns true if
-    /// 1. The name has already been registered in ANS v1 OR
+    /// 1. The name has already been registered in ANS v1
+    /// OR
     /// 2. The object exists AND the owner is not the `token_resource` account
     public fun name_is_registered(
         subdomain_name: Option<String>,
