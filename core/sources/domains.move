@@ -427,22 +427,21 @@ module aptos_names::domains {
         if (option::is_some(&subdomain_name) && name_is_registerable(option::none(), domain_name)) {
             return false
         };
-        // Check to see if the domain is registered, or expired
-        let aptos_names = borrow_global<NameRegistryV1>(@aptos_names);
-        let name_record_key = create_name_record_key_v1(subdomain_name, domain_name);
-        !table::contains(&aptos_names.registry, name_record_key) || name_is_expired(subdomain_name, domain_name)
+        // Check to see if the domain is expired
+        name_is_expired(subdomain_name, domain_name)
     }
 
-    /// Returns true if the name is registered, and is expired.
-    /// If the name does not exist, raises an error
+    /// Returns true if the name is not registered OR (is registered AND is expired)
     public fun name_is_expired(subdomain_name: Option<String>, domain_name: String): bool acquires NameRegistryV1 {
-        let aptos_names = borrow_global<NameRegistryV1>(@aptos_names);
-        let name_record_key = create_name_record_key_v1(subdomain_name, domain_name);
-        assert!(table::contains(&aptos_names.registry, name_record_key), error::not_found(ENAME_NOT_EXIST));
-
-        let name_record = table::borrow(&aptos_names.registry, name_record_key);
-        let (_property_version, expiration_time_sec, _target_address) = get_name_record_v1_props(name_record);
-        time_is_expired(expiration_time_sec)
+        if (!name_is_registered(subdomain_name, domain_name)) {
+            true
+        } else {
+            let aptos_names = borrow_global<NameRegistryV1>(@aptos_names);
+            let name_record_key = create_name_record_key_v1(subdomain_name, domain_name);
+            let name_record = table::borrow(&aptos_names.registry, name_record_key);
+            let (_property_version, expiration_time_sec, _target_address) = get_name_record_v1_props(name_record);
+            time_is_expired(expiration_time_sec)
+        }
     }
 
     /// Returns true if the name is registered
