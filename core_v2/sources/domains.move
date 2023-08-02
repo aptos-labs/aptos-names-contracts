@@ -7,6 +7,7 @@ module aptos_names_v2::domains {
     use aptos_framework::object::{Self, Object};
     use aptos_framework::timestamp;
     use aptos_names_v2::config;
+    use aptos_names_v2::migrate_helper;
     use aptos_names_v2::price_model;
     use aptos_names_v2::time_helper;
     use aptos_names_v2::token_helper;
@@ -20,10 +21,14 @@ module aptos_names_v2::domains {
     use std::signer::address_of;
     use std::string::{Self, String, utf8};
 
+    const APP_SIGNER_CAPABILITY_SEED: vector<u8> = b"APP_SIGNER_CAPABILITY";
+    const BURN_SIGNER_CAPABILITY_SEED: vector<u8> = b"BURN_SIGNER_CAPABILITY";
     const COLLECTION_DESCRIPTION: vector<u8> = b".apt names from Aptos Labs";
     const COLLECTION_URI: vector<u8> = b"https://aptosnames.com";
     /// current MAX_REMAINING_TIME_FOR_RENEWAL_SEC is 6 months
     const MAX_REMAINING_TIME_FOR_RENEWAL_SEC: u64 = 15552000;
+    /// 2024/03/07 23:59:59
+    const AUTO_RENEWAL_EXPIRATION_CUTOFF_SEC: u64 = 1709855999;
 
     /// The Naming Service contract is not enabled
     const ENOT_ENABLED: u64 = 1;
@@ -65,10 +70,13 @@ module aptos_names_v2::domains {
     const ESUBDOMAIN_NOT_EXIST: u64 = 21;
     /// The name is not a subdomain
     const ENOT_A_SUBDOMAIN: u64 = 22;
+    /// The domain expiration, even after migration extension, is past now.
+    const EMIGRATION_ALREADY_EXPIRED: u64 = 23;
 
     /// Tokens require a signer to create, so this is the signer for the collection
     struct CollectionCapabilityV2 has key, drop {
         capability: SignerCapability,
+        burn_signer_capability: SignerCapability,
     }
 
     /// Manager object refs
@@ -166,14 +174,17 @@ module aptos_names_v2::domains {
         });
 
         // Create collection + token_resource
-        let registry_seed = utf8_utils::u128_to_string((timestamp::now_microseconds() as u128));
-        string::append(&mut registry_seed, string::utf8(b"registry_seed"));
         let (token_resource, token_signer_cap) = account::create_resource_account(
             account,
-            *string::bytes(&registry_seed),
+            APP_SIGNER_CAPABILITY_SEED,
+        );
+        let (_, burn_signer_capability) = account::create_resource_account(
+            account,
+            BURN_SIGNER_CAPABILITY_SEED,
         );
         move_to(account, CollectionCapabilityV2 {
             capability: token_signer_cap,
+            burn_signer_capability,
         });
         collection::create_unlimited_collection(
             &token_resource,
@@ -194,6 +205,18 @@ module aptos_names_v2::domains {
 
     fun get_token_signer(): signer acquires CollectionCapabilityV2 {
         account::create_signer_with_capability(&borrow_global<CollectionCapabilityV2>(@aptos_names_v2).capability)
+    }
+
+    public fun get_burn_signer_address(): address acquires CollectionCapabilityV2 {
+        account::get_signer_capability_address(
+            &borrow_global<CollectionCapabilityV2>(@aptos_names_v2).burn_signer_capability
+        )
+    }
+
+    fun get_burn_signer(): signer acquires CollectionCapabilityV2 {
+        account::create_signer_with_capability(
+            &borrow_global<CollectionCapabilityV2>(@aptos_names_v2).burn_signer_capability
+        )
     }
 
     inline fun token_addr_inline(
@@ -897,6 +920,40 @@ module aptos_names_v2::domains {
         } else {
             option::none()
         }
+    }
+
+    /// Burns the ANS token v1, mints ANS token v2, and extends the expiration by a year.
+    public entry fun migrate_domain_from_v1(
+        user: &signer,
+        domain_name: String,
+    ) acquires CollectionCapabilityV2, NameRecordV2, RegisterNameEventsV1, ReverseRecord, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
+        let (expiration_time_sec, target_addr) = migrate_helper::burn_token_v1(
+            user,
+            &get_burn_signer(),
+            domain_name,
+            option::none(),
+        );
+
+        let now = timestamp::now_seconds();
+        assert!(expiration_time_sec >= now, error::invalid_state(EMIGRATION_ALREADY_EXPIRED));
+
+        let new_expiration_time_sec = if (expiration_time_sec <= AUTO_RENEWAL_EXPIRATION_CUTOFF_SEC) {
+            expiration_time_sec + time_helper::years_to_seconds(1)
+        } else {
+            expiration_time_sec
+        };
+        register_name_internal(
+            user,
+            option::none(),
+            domain_name,
+            new_expiration_time_sec - now,
+            0,
+        );
+        // TODO: `register_name_internal` should accept a `target_addr`
+        if (option::is_some(&target_addr)) {
+            set_name_address_internal(option::none(), domain_name, *option::borrow(&target_addr));
+        }
+        // TODO: If the name was a primary name in v1 we should make it a primary name in v2
     }
 
     fun set_reverse_lookup_internal(
