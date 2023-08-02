@@ -189,7 +189,7 @@ module aptos_names_v2::domains {
         collection::create_unlimited_collection(
             &token_resource,
             utf8(COLLECTION_DESCRIPTION),
-            config::collection_name_v1(),
+            config::collection_name(),
             option::none(),
             utf8(COLLECTION_URI),
         );
@@ -225,7 +225,7 @@ module aptos_names_v2::domains {
     ): address acquires CollectionCapabilityV2 {
         token::create_token_address(
             &get_token_signer_address(),
-            &config::collection_name_v1(),
+            &config::collection_name(),
             &token_helper::get_fully_qualified_domain_name(subdomain_name, domain_name),
         )
     }
@@ -236,7 +236,7 @@ module aptos_names_v2::domains {
     ): address acquires CollectionCapabilityV2 {
         token::create_token_address(
             &get_token_signer_address(),
-            &config::collection_name_v1(),
+            &config::collection_name(),
             &token_helper::get_fully_qualified_domain_name(subdomain_name, domain_name),
         )
     }
@@ -285,7 +285,7 @@ module aptos_names_v2::domains {
         string::append(&mut uri, name);
         let constructor_ref = token::create_named_token(
             &get_token_signer(),
-            config::collection_name_v1(),
+            config::collection_name(),
             description,
             name,
             option::none(),
