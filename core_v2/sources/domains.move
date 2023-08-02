@@ -96,6 +96,8 @@ module aptos_names_v2::domains {
         expiration_time_sec: u64,
         target_address: Option<address>,
         transfer_ref: object::TransferRef,
+        // Currently unused, but may be used in the future to extend with more metadata
+        extend_ref: object::ExtendRef,
         // Only present for subdomain
         subdomain_ext: Option<SubdomainExt>,
     }
@@ -331,6 +333,7 @@ module aptos_names_v2::domains {
             expiration_time_sec,
             target_address: option::none(),
             transfer_ref: object::generate_transfer_ref(&constructor_ref),
+            extend_ref: object::generate_extend_ref(&constructor_ref),
             subdomain_ext,
         };
         move_to(&token_signer, record);
