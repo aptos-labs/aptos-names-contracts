@@ -38,7 +38,8 @@ module aptos_names_v2::config {
     const DOMAIN_TYPE: vector<u8> = b"domain";
     const SUBDOMAIN_TYPE: vector<u8> = b"subdomain";
 
-    const COLLECTION_NAME: vector<u8> = b"Aptos Names V2";
+    const DOMAIN_COLLECTION_NAME_V1: vector<u8> = b"Aptos Domain Names V1";
+    const SUBDOMAIN_COLLECTION_NAME_V1: vector<u8> = b"Aptos Subdomain Names V1";
 
     /// Raised if the signer is not authorized to perform an action
     const ENOT_AUTHORIZED: u64 = 1;
@@ -144,8 +145,12 @@ module aptos_names_v2::config {
         return string::utf8(SUBDOMAIN_TYPE)
     }
 
-    public fun collection_name(): String {
-        return string::utf8(COLLECTION_NAME)
+    public fun domain_collection_name_v1(): String {
+        return string::utf8(DOMAIN_COLLECTION_NAME_V1)
+    }
+
+    public fun subdomain_collection_name_v1(): String {
+        return string::utf8(SUBDOMAIN_COLLECTION_NAME_V1)
     }
 
     public fun domain_price_for_length(domain_length: u64): u64 acquires ConfigurationV1 {
