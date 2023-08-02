@@ -254,9 +254,9 @@ module aptos_names_v2::domains {
 
     inline fun get_collection_name(domain_name: String, subdomain_name: Option<String>): String {
         if (is_subdomain(subdomain_name)) {
-            domain_name
+            config::subdomain_collection_name_v1()
         } else {
-            config::collection_name_v1()
+            config::domain_collection_name_v1()
         }
     }
 
@@ -321,15 +321,15 @@ module aptos_names_v2::domains {
             // creating domain
         else {
             subdomain_ext = option::none<SubdomainExt>();
-            // create subdomain collection
-            // TODO: revisit description, name and uri
-            collection::create_unlimited_collection(
-                &token_signer,
-                domain_name,
-                domain_name,
-                option::none(),
-                utf8(COLLECTION_URI),
-            );
+            // // create subdomain collection
+            // // TODO: revisit description, name and uri
+            // collection::create_unlimited_collection(
+            //     &token_signer,
+            //     domain_name,
+            //     domain_name,
+            //     option::none(),
+            //     utf8(COLLECTION_URI),
+            // );
         };
         let record = NameRecordV2 {
             domain_name,
