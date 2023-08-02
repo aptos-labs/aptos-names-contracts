@@ -27,6 +27,8 @@ module aptos_names_v2::domains {
     const COLLECTION_URI: vector<u8> = b"https://aptosnames.com";
     /// current MAX_REMAINING_TIME_FOR_RENEWAL_SEC is 6 months
     const MAX_REMAINING_TIME_FOR_RENEWAL_SEC: u64 = 15552000;
+    /// 2024/03/07 23:59:59
+    const AUTO_RENEWAL_EXPIRATION_CUTOFF_SEC: u64 = 1709855999;
 
     /// The Naming Service contract is not enabled
     const ENOT_ENABLED: u64 = 1;
@@ -931,9 +933,15 @@ module aptos_names_v2::domains {
             domain_name,
             option::none(),
         );
-        let new_expiration_time_sec = expiration_time_sec + time_helper::years_to_seconds(1);
+
         let now = timestamp::now_seconds();
-        assert!(new_expiration_time_sec >= now, error::invalid_state(EMIGRATION_ALREADY_EXPIRED));
+        assert!(expiration_time_sec >= now, error::invalid_state(EMIGRATION_ALREADY_EXPIRED));
+
+        let new_expiration_time_sec = if (expiration_time_sec <= AUTO_RENEWAL_EXPIRATION_CUTOFF_SEC) {
+            expiration_time_sec + time_helper::years_to_seconds(1)
+        } else {
+            expiration_time_sec
+        };
         register_name_internal(
             user,
             option::none(),
@@ -945,6 +953,7 @@ module aptos_names_v2::domains {
         if (option::is_some(&target_addr)) {
             set_name_address_internal(option::none(), domain_name, *option::borrow(&target_addr));
         }
+        // TODO: If the name was a primary name in v1 we should make it a primary name in v2
     }
 
     fun set_reverse_lookup_internal(
