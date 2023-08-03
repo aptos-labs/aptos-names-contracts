@@ -38,7 +38,8 @@ module aptos_names_v2::config {
     const DOMAIN_TYPE: vector<u8> = b"domain";
     const SUBDOMAIN_TYPE: vector<u8> = b"subdomain";
 
-    const COLLECTION_NAME_V1: vector<u8> = b"Aptos Names V1";
+    const DOMAIN_COLLECTION_NAME_V1: vector<u8> = b"Aptos Domain Names V1";
+    const SUBDOMAIN_COLLECTION_NAME_V1: vector<u8> = b"Aptos Subdomain Names V1";
 
     /// Raised if the signer is not authorized to perform an action
     const ENOT_AUTHORIZED: u64 = 1;
@@ -75,7 +76,7 @@ module aptos_names_v2::config {
         set_domain_price_for_length(framework, (5 * octas()), 6);
 
         // TODO: SET REAL VALUES FOR PUBLIC KEY AND UNRESTRICTED MINT ENABLED
-        let public_key = x"667a0687c3e7fc831366372667c11e4aa4502be09e7c99a5303711ce4f0b0fe2";
+        let public_key = x"e9a99bdb905a37ffbf4c505b427558380613fec5ca8b5555b15cfa80e9cce8bf";
         set_captcha_public_key(framework, public_key);
         set_unrestricted_mint_enabled(framework, true);
 
@@ -144,8 +145,12 @@ module aptos_names_v2::config {
         return string::utf8(SUBDOMAIN_TYPE)
     }
 
-    public fun collection_name_v1(): String {
-        return string::utf8(COLLECTION_NAME_V1)
+    public fun domain_collection_name_v1(): String {
+        return string::utf8(DOMAIN_COLLECTION_NAME_V1)
+    }
+
+    public fun subdomain_collection_name_v1(): String {
+        return string::utf8(SUBDOMAIN_COLLECTION_NAME_V1)
     }
 
     public fun domain_price_for_length(domain_length: u64): u64 acquires ConfigurationV1 {
