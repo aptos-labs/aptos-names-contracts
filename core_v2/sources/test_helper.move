@@ -84,13 +84,12 @@ module aptos_names_v2::test_helper {
         let set_name_address_event_v1_event_count_before = domains::get_set_name_address_event_v1_count();
         let set_reverse_lookup_event_v1_event_count_before = domains::get_set_reverse_lookup_event_v1_count();
 
-        let years = (time_helper::seconds_to_years(registration_duration_secs) as u8);
         if (option::is_none(&subdomain_name)) {
             if (vector::length(&signature)== 0) {
-                domains::register_domain(user, domain_name, years);
+                domains::register_domain(user, domain_name, registration_duration_secs);
             } else {
-                domains::register_domain_with_signature(user, domain_name, years, signature);
-            }
+                domains::register_domain_with_signature(user, domain_name, registration_duration_secs, signature);
+            };
         } else {
             domains::register_subdomain(user, *option::borrow(&subdomain_name), domain_name, registration_duration_secs);
         };
@@ -118,7 +117,7 @@ module aptos_names_v2::test_helper {
             // If it's a subdomain, we only charge a nomincal fee
             expected_user_balance_after = user_balance_before - price_model::price_for_subdomain_v1(registration_duration_secs);
         } else {
-            let domain_price = price_model::price_for_domain_v1(string::length(&domain_name), years);
+            let domain_price = price_model::price_for_domain_v1(string::length(&domain_name), registration_duration_secs);
             assert!(domain_price / config::octas() == 40, domain_price / config::octas());
             expected_user_balance_after = user_balance_before - domain_price;
         };
@@ -131,16 +130,26 @@ module aptos_names_v2::test_helper {
         assert!(time_helper::seconds_to_days(expiration_time_sec - timestamp::now_seconds()) == 365, 10);
 
         if (is_subdomain) {
+            let subdomain_name_copy = subdomain_name;
+            let (expiration_time_sec_lookup_result, target_address_lookup_result) = domains::get_subdomain_props(*option::borrow(&subdomain_name_copy), domain_name);
+            assert!(time_helper::seconds_to_days(expiration_time_sec_lookup_result - timestamp::now_seconds()) == 365, 100);
+
             if (option::is_none(&user_reverse_lookup_before)) {
                 // Should automatically point to the users address
                 assert!(target_address == option::some(user_addr), 11);
+                assert!(target_address_lookup_result == option::some(user_addr), 111);
             } else {
                 // We haven't set a target address yet!
                 assert!(target_address == option::none(), 11);
+                assert!(target_address_lookup_result == option::none(), 111);
             }
         } else {
+            let (expiration_time_sec_lookup_result, target_address_lookup_result) = domains::get_domain_props(domain_name);
+            assert!(time_helper::seconds_to_days(expiration_time_sec_lookup_result - timestamp::now_seconds()) == 365, 100);
+
             // Should automatically point to the users address
             assert!(target_address == option::some(user_addr), 11);
+            assert!(target_address_lookup_result == option::some(user_addr), 111);
         };
 
         // TODO: Re-enable / Re-write
@@ -162,9 +171,12 @@ module aptos_names_v2::test_helper {
         // Reverse lookup should be set if user did not have one before
         if (option::is_none(&user_reverse_lookup_before)) {
             let maybe_reverse_lookup_after = domains::get_reverse_lookup(user_addr);
+            let (subdomain_name_lookup_result, domain_name_lookup_result) = domains::get_reverse_lookup_name(user_addr);
             if (option::is_some(&maybe_reverse_lookup_after)) {
                 let reverse_lookup_after = option::borrow(&maybe_reverse_lookup_after);
                 assert!(*reverse_lookup_after == domains::token_addr(domain_name, subdomain_name), 36);
+                assert!(subdomain_name_lookup_result == subdomain_name, 136);
+                assert!(domain_name_lookup_result == option::some(domain_name), 137);
             } else {
                 // Reverse lookup is not set, even though user did not have a reverse lookup before.
                 assert!(false, 37);

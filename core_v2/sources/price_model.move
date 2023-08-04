@@ -6,6 +6,7 @@ module aptos_names_v2::price_model {
 
     /// The domain length is too short- currently the minimum is 2 characters
     const EDOMAIN_TOO_SHORT: u64 = 1;
+    const SECONDS_PER_YEAR: u64 = 60 * 60 * 24 * 365;
 
     /// The longer the name is registered for, the more expensive it is per year.
     /// The curve is exponential, with every year costing more than the previous
@@ -24,9 +25,10 @@ module aptos_names_v2::price_model {
     }
 
     /// There is a fixed cost per each tier of domain names, from 2 to >=6, and it also scales exponentially with number of years to register
-    public fun price_for_domain_v1(domain_length: u64, registration_years: u8): u64 {
+    public fun price_for_domain_v1(domain_length: u64, registration_secs: u64): u64 {
         assert!(domain_length >= 2, error::out_of_range(EDOMAIN_TOO_SHORT));
         let length_to_charge_for = math64::min(domain_length, 6);
+        let registration_years = (registration_secs / SECONDS_PER_YEAR as u8);
         scale_price_for_years(config::domain_price_for_length(length_to_charge_for), registration_years)
     }
 
@@ -57,28 +59,28 @@ module aptos_names_v2::price_model {
         config::set_domain_price_for_length(myself, (15 * config::octas()), 5);
         config::set_domain_price_for_length(myself, (5 * config::octas()), 6);
 
-        let price = price_for_domain_v1(2, 1) / config::octas();
+        let price = price_for_domain_v1(2, SECONDS_PER_YEAR) / config::octas();
         assert!(price == 100, price);
 
-        let price = price_for_domain_v1(4, 1) / config::octas();
+        let price = price_for_domain_v1(4, SECONDS_PER_YEAR) / config::octas();
         assert!(price == 30, price);
 
-        let price = price_for_domain_v1(2, 3) / config::octas();
+        let price = price_for_domain_v1(2, 3 * SECONDS_PER_YEAR) / config::octas();
         assert!(price == 335, price);
 
-        let price = price_for_domain_v1(5, 1) / config::octas();
+        let price = price_for_domain_v1(5, SECONDS_PER_YEAR) / config::octas();
         assert!(price == 15, price);
 
-        let price = price_for_domain_v1(5, 8) / config::octas();
+        let price = price_for_domain_v1(5, 8 * SECONDS_PER_YEAR) / config::octas();
         assert!(price == 204, price);
 
-        let price = price_for_domain_v1(10, 1) / config::octas();
+        let price = price_for_domain_v1(10, SECONDS_PER_YEAR) / config::octas();
         assert!(price == 5, price);
 
-        let price = price_for_domain_v1(15, 1) / config::octas();
+        let price = price_for_domain_v1(15, SECONDS_PER_YEAR) / config::octas();
         assert!(price == 5, price);
 
-        let price = price_for_domain_v1(15, 10) / config::octas();
+        let price = price_for_domain_v1(15, 10 * SECONDS_PER_YEAR) / config::octas();
         assert!(price == 102, price);
     }
 
