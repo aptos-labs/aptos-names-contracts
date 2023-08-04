@@ -1,0 +1,109 @@
+module aptos_names_v2::query_helper {
+    use aptos_names_v2::domains;
+    use std::option::{Self, Option};
+    use std::string::{String};
+
+    #[view]
+    /// Returns (expiration time, target address) given the domain
+    public fun get_domain_props(
+        domain: String,
+    ): (u64, Option<address>) {
+        domains::get_name_record_v1_props_for_name(option::none(), domain)
+    }
+
+    #[view]
+    /// Returns (expiration time, target address) given the subdomain
+    public fun get_subdomain_props(
+        subdomain: String,
+        domain: String,
+    ): (u64, Option<address>) {
+        domains::get_name_record_v1_props_for_name(option::some(subdomain), domain)
+    }
+
+    #[view]
+    /// Returns (subdomain_name, domain_name) if address has a reverse lookup (primary name) setup
+    public fun get_reverse_lookup_name(
+        account_addr: address
+    ): (Option<String>, Option<String>) {
+        let reverse_record_address = domains::get_reverse_lookup(account_addr);
+        if (option::is_some(&reverse_record_address)) {
+            let address = option::borrow(&reverse_record_address);
+            let (subdomain_name, domain_name) = domains::get_record_props_from_token_addr(*address);
+            (subdomain_name, option::some(domain_name))
+        } else {
+            (option::none(), option::none())
+        }
+    }
+
+    #[view]
+    /// Returns true if domain is not registered OR (name is registered AND is expired)
+    public fun domain_name_is_expired(domain_name: String): bool {
+        domains::name_is_expired(option::none(), domain_name)
+    }
+
+    #[view]
+    /// Returns true if subdomain is not registered OR (name is registered AND is expired)
+    public fun subdomain_name_is_expired(
+        subdomain_name: String,
+        domain_name: String
+    ): bool {
+        domains::name_is_expired(option::some(subdomain_name), domain_name)
+    }
+
+    #[view]
+    /// Returns true if domain exists AND the owner is not the `token_resource` account
+    public fun domain_name_is_registered(
+        domain_name: String
+    ): bool {
+        domains::name_is_registered(option::none(), domain_name)
+    }
+
+    #[view]
+    /// Returns true if subdomain exists AND the owner is not the `token_resource` account
+    public fun subdomain_name_is_registered(
+        subdomain_name: String,
+        domain_name: String
+    ): bool {
+        domains::name_is_registered(option::some(subdomain_name), domain_name)
+    }
+
+    #[view]
+    /// Check if the address is the owner of the given domain
+    /// If the name does not exist or owner owns an expired name, returns false
+    public fun is_owner_of_domain_name(
+        owner_addr: address,
+        domain_name: String
+    ): bool {
+        domains::is_owner_of_name(owner_addr, option::none(), domain_name)
+    }
+
+    #[view]
+    /// Check if the address is the owner of the given subdomain
+    /// If the name does not exist or owner owns an expired name, returns false
+    public fun is_owner_of_subdomain_name(
+        owner_addr: address,
+        subdomain_name: String,
+        domain_name: String
+    ): bool {
+        domains::is_owner_of_name(owner_addr, option::some(subdomain_name), domain_name)
+    }
+
+    #[view]
+    /// gets the address pointed to by a given domain name
+    /// Is `Option<address>` because the name may not be registered, or it may not have an address associated with it
+    public fun domain_name_resolved_address(
+        domain_name: String
+    ): Option<address> {
+        domains::name_resolved_address(option::none(), domain_name)
+    }
+
+    #[view]
+    /// gets the address pointed to by a given subdomain name
+    /// Is `Option<address>` because the name may not be registered, or it may not have an address associated with it
+    public fun subdomain_name_resolved_address(
+        subdomain_name: String,
+        domain_name: String
+    ): Option<address> {
+        domains::name_resolved_address(option::some(subdomain_name), domain_name)
+    }
+}

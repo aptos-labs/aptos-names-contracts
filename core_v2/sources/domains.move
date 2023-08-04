@@ -1124,35 +1124,6 @@ module aptos_names_v2::domains {
         (extract_subdomain_name(record), record.domain_name)
     }
 
-    #[view]
-    public fun get_domain_props(
-        domain: String,
-    ): (u64, Option<address>) acquires CollectionCapabilityV2, NameRecordV2 {
-        get_name_record_v1_props_for_name(option::none(), domain)
-    }
-
-    #[view]
-    public fun get_subdomain_props(
-        subdomain: String,
-        domain: String,
-    ): (u64, Option<address>) acquires CollectionCapabilityV2, NameRecordV2 {
-        get_name_record_v1_props_for_name(option::some(subdomain), domain)
-    }
-
-    #[view]
-    public fun get_reverse_lookup_name(
-        account_addr: address
-    ): (Option<String>, Option<String>) acquires ReverseRecord, NameRecordV2 {
-        let reverse_record_address = get_reverse_lookup(account_addr);
-        if (option::is_some(&reverse_record_address)) {
-            let address = option::borrow(&reverse_record_address);
-            let (subdomain_name, domain_name) = get_record_props_from_token_addr(*address);
-            (subdomain_name, option::some(domain_name))
-        } else {
-            (option::none(), option::none())
-        }
-    }
-
     /// Given a time, returns true if that time is in the past, false otherwise
     public fun time_is_expired(expiration_time_sec: u64): bool {
         timestamp::now_seconds() >= expiration_time_sec
