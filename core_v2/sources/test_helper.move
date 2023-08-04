@@ -7,6 +7,7 @@ module aptos_names_v2::test_helper {
     use aptos_names_v2::config;
     use aptos_names_v2::domains;
     use aptos_names_v2::price_model;
+    use aptos_names_v2::query_helper;
     use aptos_names_v2::test_utils;
     use aptos_names_v2::time_helper;
     use std::option::{Self, Option};
@@ -99,11 +100,28 @@ module aptos_names_v2::test_helper {
         assert!(!domains::name_is_registerable(subdomain_name, domain_name), 13);
         assert!(domains::name_is_registered(subdomain_name, domain_name), 14);
 
+        if (is_subdomain) {
+            let subdomain_name_copy = subdomain_name;
+            let subdomain_name_extracted = option::borrow(&subdomain_name_copy);
+            assert!(!query_helper::subdomain_name_is_expired(*subdomain_name_extracted, domain_name), 112);
+            assert!(query_helper::subdomain_name_is_registered(*subdomain_name_extracted, domain_name), 113);
+        } else {
+            assert!(!query_helper::domain_name_is_expired(domain_name), 112);
+            assert!(query_helper::domain_name_is_registered(domain_name), 113);
+        };
+
         let is_owner = domains::is_owner_of_name(user_addr, subdomain_name, domain_name);
         // TODO: Re-enable / Re-write
         // let (tdi_creator, tdi_collection, tdi_name, tdi_property_version) = token::get_token_id_fields(&token_id);
 
         assert!(is_owner, 3);
+        if (is_subdomain) {
+            let subdomain_name_copy = subdomain_name;
+            let subdomain_name_extracted = option::borrow(&subdomain_name_copy);
+            assert!(query_helper::is_owner_of_subdomain_name(user_addr, *subdomain_name_extracted, domain_name), 103);
+        } else {
+            assert!(query_helper::is_owner_of_domain_name(user_addr, domain_name), 103);
+        };
         // assert!(tdi_creator == domains::get_token_signer_address(), 4);
         // assert!(tdi_collection == config::collection_name_v1(), 5);
         // test_utils::print_actual_expected(b"tdi_name: ", tdi_name, expected_fq_domain_name, false);
@@ -131,7 +149,7 @@ module aptos_names_v2::test_helper {
 
         if (is_subdomain) {
             let subdomain_name_copy = subdomain_name;
-            let (expiration_time_sec_lookup_result, target_address_lookup_result) = domains::get_subdomain_props(*option::borrow(&subdomain_name_copy), domain_name);
+            let (expiration_time_sec_lookup_result, target_address_lookup_result) = query_helper::get_subdomain_props(*option::borrow(&subdomain_name_copy), domain_name);
             assert!(time_helper::seconds_to_days(expiration_time_sec_lookup_result - timestamp::now_seconds()) == 365, 100);
 
             if (option::is_none(&user_reverse_lookup_before)) {
@@ -144,7 +162,7 @@ module aptos_names_v2::test_helper {
                 assert!(target_address_lookup_result == option::none(), 111);
             }
         } else {
-            let (expiration_time_sec_lookup_result, target_address_lookup_result) = domains::get_domain_props(domain_name);
+            let (expiration_time_sec_lookup_result, target_address_lookup_result) = query_helper::get_domain_props(domain_name);
             assert!(time_helper::seconds_to_days(expiration_time_sec_lookup_result - timestamp::now_seconds()) == 365, 100);
 
             // Should automatically point to the users address
@@ -171,7 +189,7 @@ module aptos_names_v2::test_helper {
         // Reverse lookup should be set if user did not have one before
         if (option::is_none(&user_reverse_lookup_before)) {
             let maybe_reverse_lookup_after = domains::get_reverse_lookup(user_addr);
-            let (subdomain_name_lookup_result, domain_name_lookup_result) = domains::get_reverse_lookup_name(user_addr);
+            let (subdomain_name_lookup_result, domain_name_lookup_result) = query_helper::get_reverse_lookup_name(user_addr);
             if (option::is_some(&maybe_reverse_lookup_after)) {
                 let reverse_lookup_after = option::borrow(&maybe_reverse_lookup_after);
                 assert!(*reverse_lookup_after == domains::token_addr(domain_name, subdomain_name), 36);
