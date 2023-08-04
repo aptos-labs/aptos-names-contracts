@@ -182,6 +182,7 @@ module aptos_names_v2::subdomain_e2e_tests {
         assert!(domains::name_is_expired(option::some(test_helper::subdomain_name()), test_helper::domain_name()), 80);
     }
 
+<<<<<<< HEAD
     #[test(
         aptos_names = @aptos_names,
         aptos_names_v2 = @aptos_names_v2,
@@ -190,6 +191,35 @@ module aptos_names_v2::subdomain_e2e_tests {
         rando = @0x266f,
         foundation = @0xf01d
     )]
+    #[test(myself = @aptos_names_v2, user = @0x077, aptos = @0x1, rando = @0x266f, foundation = @0xf01d)]
+    fun test_transfer_subdomain(myself: &signer, user: signer, aptos: signer, rando: signer, foundation: signer) {
+        let users = test_helper::e2e_test_setup(myself, user, &aptos, rando, &foundation);
+        let user = vector::borrow(&users, 0);
+        let user_addr = signer::address_of(user);
+        let rando = vector::borrow(&users, 1);
+        let rando_addr = signer::address_of(rando);
+        // create the domain
+        test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>());
+        test_helper::register_name(user, option::some(test_helper::subdomain_name()), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>());
+
+        // user is the owner of domain
+        let is_owner = domains::is_owner_of_name(user_addr, option::none(), test_helper::domain_name());
+        assert!(is_owner, 1);
+
+        // transfer the subdomain to rando
+        domains::transfer_subdomain_owner(user, test_helper::subdomain_name(), test_helper::domain_name(), rando_addr, rando_addr);
+
+        // rando owns the subdomain
+        let is_owner = domains::is_owner_of_name(rando_addr, option::some(test_helper::subdomain_name()), test_helper::domain_name());
+        assert!(is_owner, 2);
+
+        // when rando owns the subdomain and user owns the domain, user can still transfer the subdomain.
+        domains::transfer_subdomain_owner(user, test_helper::subdomain_name(), test_helper::domain_name(), user_addr, user_addr);
+        let is_owner = domains::is_owner_of_name(user_addr, option::some(test_helper::subdomain_name()), test_helper::domain_name());
+        assert!(is_owner, 1);
+    }
+
+    #[test(myself = @aptos_names_v2, user = @0x077, aptos = @0x1, rando = @0x266f, foundation = @0xf01d)]
     #[expected_failure(abort_code = 196632, location = aptos_names_v2::domains)]
     fun test_set_expiration_date_for_subdomain(
         aptos_names: &signer,
