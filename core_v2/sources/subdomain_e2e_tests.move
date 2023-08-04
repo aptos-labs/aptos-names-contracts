@@ -156,6 +156,15 @@ module aptos_names_v2::subdomain_e2e_tests {
     }
 
     #[test(myself = @aptos_names_v2, user = @0x077, aptos = @0x1, rando = @0x266f, foundation = @0xf01d)]
+    #[expected_failure(abort_code = 65561, location = aptos_names_v2::domains)]
+    fun test_register_domain_duration_not_whole_years(myself: &signer, user: signer, aptos: signer, rando: signer, foundation: signer) {
+        let users = test_helper::e2e_test_setup(myself, user, &aptos, rando, &foundation);
+        let user = vector::borrow(&users, 0);
+        // Register the domain
+        test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs()+5, test_helper::fq_domain_name(), 1, vector::empty<u8>());
+    }
+
+    #[test(myself = @aptos_names_v2, user = @0x077, aptos = @0x1, rando = @0x266f, foundation = @0xf01d)]
     fun names_are_registerable_after_expiry_e2e_test(myself: &signer, user: signer, aptos: signer, rando: signer, foundation: signer) {
         let users = test_helper::e2e_test_setup(myself, user, &aptos, rando, &foundation);
         let user = vector::borrow(&users, 0);

@@ -73,7 +73,9 @@ module aptos_names_v2::domains {
     const ENOT_A_SUBDOMAIN: u64 = 22;
     /// The domain expiration, even after migration extension, is past now.
     const EMIGRATION_ALREADY_EXPIRED: u64 = 23;
+    /// The subdomain expiration can be set any date before the domain expiration
     const ESUBDOMAIN_EXPIRATION_PASS_DOMAIN_EXPIRATION: u64 = 24;
+    /// The duration must be whole years
     const EDURATION_MUST_BE_WHOLE_YEARS: u64 = 25;
 
     /// Tokens require a signer to create, so this is the signer for the collection
