@@ -1,5 +1,5 @@
 module aptos_names_v2::domains {
-    use aptos_framework::account::{Self, SignerCapability};
+    use aptos_framework::account::{Self};
     use aptos_framework::aptos_account;
     use aptos_framework::aptos_coin::AptosCoin;
     use aptos_framework::coin;
@@ -1157,7 +1157,7 @@ module aptos_names_v2::domains {
     }
 
     #[test_only]
-    public fun init_module_for_test(account: &signer) {
+    public fun init_module_for_test(account: &signer) acquires CollectionCapabilityV2 {
         init_module(account);
     }
 
