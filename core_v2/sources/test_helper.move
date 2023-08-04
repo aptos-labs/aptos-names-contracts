@@ -46,11 +46,21 @@ module aptos_names_v2::test_helper {
         string::utf8(b"sub.test.apt")
     }
 
-    public fun e2e_test_setup(myself: &signer, user: signer, aptos: &signer, rando: signer, foundation: &signer): vector<signer> {
+    /// Sets up test by initializing ANS v1 and ANS v2
+    public fun e2e_test_setup(
+        aptos_names: &signer,
+        aptos_names_v2: &signer,
+        user: signer,
+        aptos: &signer,
+        rando: signer,
+        foundation: &signer
+    ): vector<signer> {
+        account::create_account_for_test(@aptos_names);
         account::create_account_for_test(@aptos_names_v2);
         let new_accounts = setup_and_fund_accounts(aptos, foundation, vector[user, rando]);
         timestamp::set_time_has_started_for_testing(aptos);
-        domains::init_module_for_test(myself);
+        aptos_names::domains::init_module_for_test(aptos_names);
+        aptos_names_v2::domains::init_module_for_test(aptos_names_v2);
         config::set_fund_destination_address_test_only(signer::address_of(foundation));
         new_accounts
     }
