@@ -80,8 +80,8 @@ module aptos_names_v2::domains {
 
     /// Tokens require a signer to create, so this is the signer for the collection
     struct CollectionCapabilityV2 has key, drop {
-        capability: SignerCapability,
-        burn_signer_capability: SignerCapability,
+        app_extend_ref: object::ExtendRef,
+        burn_extend_ref: object::ExtendRef,
     }
 
     /// Manager object refs
@@ -168,7 +168,7 @@ module aptos_names_v2::domains {
     }
 
     /// This is only callable during publishing
-    fun init_module(account: &signer) {
+    fun init_module(account: &signer) acquires CollectionCapabilityV2 {
         let funds_address: address = @aptos_names_funds;
         let admin_address: address = @aptos_names_admin;
 
@@ -195,20 +195,18 @@ module aptos_names_v2::domains {
         });
 
         // Create collection + token_resource
-        let (token_resource, token_signer_cap) = account::create_resource_account(
-            account,
-            APP_SIGNER_CAPABILITY_SEED,
-        );
-        let (_, burn_signer_capability) = account::create_resource_account(
-            account,
-            BURN_SIGNER_CAPABILITY_SEED,
-        );
+        let app_constructor_ref = object::create_named_object(account, APP_SIGNER_CAPABILITY_SEED);
+        let app_extend_ref = object::generate_extend_ref(&app_constructor_ref);
+
+        let burn_constructor_ref = object::create_named_object(account, BURN_SIGNER_CAPABILITY_SEED);
+        let burn_extend_ref = object::generate_extend_ref(&burn_constructor_ref);
+
         move_to(account, CollectionCapabilityV2 {
-            capability: token_signer_cap,
-            burn_signer_capability,
+            app_extend_ref,
+            burn_extend_ref,
         });
         collection::create_unlimited_collection(
-            &token_resource,
+            &get_token_signer(),
             utf8(COLLECTION_DESCRIPTION),
             config::domain_collection_name_v1(),
             option::none(),
@@ -216,7 +214,7 @@ module aptos_names_v2::domains {
         );
         // TODO: figure out description for subdomain collection
         collection::create_unlimited_collection(
-            &token_resource,
+            &get_token_signer(),
             utf8(COLLECTION_DESCRIPTION),
             config::subdomain_collection_name_v1(),
             option::none(),
@@ -233,23 +231,23 @@ module aptos_names_v2::domains {
     }
 
     public fun get_token_signer_address(): address acquires CollectionCapabilityV2 {
-        account::get_signer_capability_address(&borrow_global<CollectionCapabilityV2>(@aptos_names_v2).capability)
+        let manager = borrow_global<CollectionCapabilityV2>(@aptos_names_v2);
+        let manager_addr = object::address_from_extend_ref(&manager.app_extend_ref);
+        object::owner(object::address_to_object<object::ObjectCore>(manager_addr))
     }
 
     fun get_token_signer(): signer acquires CollectionCapabilityV2 {
-        account::create_signer_with_capability(&borrow_global<CollectionCapabilityV2>(@aptos_names_v2).capability)
+        object::generate_signer_for_extending(&borrow_global<CollectionCapabilityV2>(@aptos_names_v2).app_extend_ref)
     }
 
     public fun get_burn_signer_address(): address acquires CollectionCapabilityV2 {
-        account::get_signer_capability_address(
-            &borrow_global<CollectionCapabilityV2>(@aptos_names_v2).burn_signer_capability
-        )
+        let manager = borrow_global<CollectionCapabilityV2>(@aptos_names_v2);
+        let manager_addr = object::address_from_extend_ref(&manager.burn_extend_ref);
+        object::owner(object::address_to_object<object::ObjectCore>(manager_addr))
     }
 
     fun get_burn_signer(): signer acquires CollectionCapabilityV2 {
-        account::create_signer_with_capability(
-            &borrow_global<CollectionCapabilityV2>(@aptos_names_v2).burn_signer_capability
-        )
+        object::generate_signer_for_extending(&borrow_global<CollectionCapabilityV2>(@aptos_names_v2).burn_extend_ref)
     }
 
     inline fun token_addr_inline(
