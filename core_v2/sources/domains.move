@@ -1125,14 +1125,14 @@ module aptos_names_v2::domains {
     }
 
     #[view]
-    public fun get_name_record_v1_props_for_domain(
+    public fun get_domain_props(
         domain: String,
     ): (u64, Option<address>) acquires CollectionCapabilityV2, NameRecordV2 {
         get_name_record_v1_props_for_name(option::none(), domain)
     }
 
     #[view]
-    public fun get_name_record_v1_props_for_subdomain(
+    public fun get_subdomain_props(
         subdomain: String,
         domain: String,
     ): (u64, Option<address>) acquires CollectionCapabilityV2, NameRecordV2 {
@@ -1142,18 +1142,14 @@ module aptos_names_v2::domains {
     #[view]
     public fun get_reverse_lookup_name(
         account_addr: address
-    ): Option<String> acquires ReverseRecord, NameRecordV2 {
+    ): (Option<String>, Option<String>) acquires ReverseRecord, NameRecordV2 {
         let reverse_record_address = get_reverse_lookup(account_addr);
         if (option::is_some(&reverse_record_address)) {
             let address = option::borrow(&reverse_record_address);
             let (subdomain_name, domain_name) = get_record_props_from_token_addr(*address);
-            if (is_subdomain(subdomain_name)) {
-                option::some(token_helper::get_fully_qualified_domain_name(subdomain_name, domain_name))
-            } else {
-                option::some(domain_name)
-            }
+            (subdomain_name, option::some(domain_name))
         } else {
-            option::none()
+            (option::none(), option::none())
         }
     }
 

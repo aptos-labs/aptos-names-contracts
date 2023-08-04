@@ -545,7 +545,7 @@ module aptos_names_v2::domain_e2e_tests {
                 aptos_names::domains::name_is_registerable(option::none(), test_helper::domain_name()) == false,
                 1,
             );
-            let (is_owner, _) = aptos_names::domains::is_owner_of_name(
+            let is_owner = aptos_names::domains::is_owner_of_name(
                 aptos_names_v2::domains::get_burn_signer_address(),
                 option::none(),
                 test_helper::domain_name(),
@@ -640,7 +640,7 @@ module aptos_names_v2::domain_e2e_tests {
                 aptos_names::domains::name_is_registerable(option::none(), test_helper::domain_name()) == false,
                 1,
             );
-            let (is_owner, _) = aptos_names::domains::is_owner_of_name(
+            let is_owner = aptos_names::domains::is_owner_of_name(
                 aptos_names_v2::domains::get_burn_signer_address(),
                 option::none(),
                 test_helper::domain_name(),

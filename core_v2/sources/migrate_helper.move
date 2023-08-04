@@ -16,7 +16,6 @@ module aptos_names_v2::migrate_helper {
 
         // Get the v1 token info
         let (
-            _property_version,
             expiration_time_sec,
             target_addr
         ) = aptos_names::domains::get_name_record_v1_props_for_name(
