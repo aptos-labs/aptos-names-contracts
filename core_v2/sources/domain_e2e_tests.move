@@ -96,7 +96,14 @@ module aptos_names_v2::domain_e2e_tests {
         foundation = @0xf01d
     )]
     #[expected_failure(abort_code = 65537, location = aptos_names_v2::verify)]
-    fun e2e_test_with_invalid_signature(aptos_names: &signer, aptos_names_v2: &signer, user: signer, aptos: signer, rando: signer, foundation: signer) {
+    fun e2e_test_with_invalid_signature(
+        aptos_names: &signer,
+        aptos_names_v2: &signer,
+        user: signer,
+        aptos: signer,
+        rando: signer,
+        foundation: signer
+    ) {
         let signature: vector<u8> = x"2b0340b4529e3f90f0b1af7364241c51172c1133f0c077b7836962c3f104115832ccec0b74382533c33d9bd14a6e68021e5c23439242ddd43047e7929084ac01";
         e2e_test_with_signature(aptos_names, aptos_names_v2, user, aptos, rando, foundation, signature);
     }
@@ -146,7 +153,14 @@ module aptos_names_v2::domain_e2e_tests {
         foundation = @0xf01d
     )]
     #[expected_failure(abort_code = 327696, location = aptos_names_v2::domains)]
-    fun test_register_domain_abort_with_disabled_unrestricted_mint(aptos_names: &signer, aptos_names_v2: &signer, user: signer, aptos: signer, rando: signer, foundation: signer) {
+    fun test_register_domain_abort_with_disabled_unrestricted_mint(
+        aptos_names: &signer,
+        aptos_names_v2: &signer,
+        user: signer,
+        aptos: signer,
+        rando: signer,
+        foundation: signer
+    ) {
         let users = test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user, &aptos, rando, &foundation);
         let user = vector::borrow(&users, 0);
 
@@ -216,7 +230,14 @@ module aptos_names_v2::domain_e2e_tests {
         foundation = @0xf01d
     )]
     #[expected_failure(abort_code = 196611, location = aptos_names_v2::domains)]
-    fun dont_allow_double_domain_registrations_e2e_test(aptos_names: &signer, aptos_names_v2: &signer, user: signer, aptos: signer, rando: signer, foundation: signer) {
+    fun dont_allow_double_domain_registrations_e2e_test(
+        aptos_names: &signer,
+        aptos_names_v2: &signer,
+        user: signer,
+        aptos: signer,
+        rando: signer,
+        foundation: signer
+    ) {
         let users = test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user, &aptos, rando, &foundation);
         let user = vector::borrow(&users, 0);
 
@@ -235,7 +256,14 @@ module aptos_names_v2::domain_e2e_tests {
         foundation = @0xf01d
     )]
     #[expected_failure(abort_code = 327689, location = aptos_names_v2::domains)]
-    fun dont_allow_rando_to_set_domain_address_e2e_test(aptos_names: &signer, aptos_names_v2: &signer, user: signer, aptos: signer, rando: signer, foundation: signer) {
+    fun dont_allow_rando_to_set_domain_address_e2e_test(
+        aptos_names: &signer,
+        aptos_names_v2: &signer,
+        user: signer,
+        aptos: signer,
+        rando: signer,
+        foundation: signer
+    ) {
         let users = test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user, &aptos, rando, &foundation);
         let user = vector::borrow(&users, 0);
         let rando = vector::borrow(&users, 1);
@@ -255,7 +283,14 @@ module aptos_names_v2::domain_e2e_tests {
         foundation = @0xf01d
     )]
     #[expected_failure(abort_code = 327682, location = aptos_names_v2::domains)]
-    fun dont_allow_rando_to_clear_domain_address_e2e_test(aptos_names: &signer, aptos_names_v2: &signer, user: signer, aptos: signer, rando: signer, foundation: signer) {
+    fun dont_allow_rando_to_clear_domain_address_e2e_test(
+        aptos_names: &signer,
+        aptos_names_v2: &signer,
+        user: signer,
+        aptos: signer,
+        rando: signer,
+        foundation: signer
+    ) {
         let users = test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user, &aptos, rando, &foundation);
         let user = vector::borrow(&users, 0);
         let rando = vector::borrow(&users, 1);
@@ -347,7 +382,14 @@ module aptos_names_v2::domain_e2e_tests {
         foundation = @0xf01d
     )]
     #[expected_failure(abort_code = 327681, location = aptos_names_v2::config)]
-    fun rando_cant_force_set_name_address_e2e_test(aptos_names: &signer, aptos_names_v2: &signer, user: signer, aptos: signer, rando: signer, foundation: signer) {
+    fun rando_cant_force_set_name_address_e2e_test(
+        aptos_names: &signer,
+        aptos_names_v2: &signer,
+        user: signer,
+        aptos: signer,
+        rando: signer,
+        foundation: signer
+    ) {
         let users = test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user, &aptos, rando, &foundation);
         let user = vector::borrow(&users, 0);
         let rando = vector::borrow(&users, 1);
@@ -492,7 +534,14 @@ module aptos_names_v2::domain_e2e_tests {
         foundation = @0xf01d
     )]
     #[expected_failure(abort_code = 327681, location = aptos_names_v2::config)]
-    fun rando_cant_force_seize_domain_name_e2e_test(aptos_names: &signer, aptos_names_v2: &signer, user: signer, aptos: signer, rando: signer, foundation: signer) {
+    fun rando_cant_force_seize_domain_name_e2e_test(
+        aptos_names: &signer,
+        aptos_names_v2: &signer,
+        user: signer,
+        aptos: signer,
+        rando: signer,
+        foundation: signer
+    ) {
         let users = test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user, &aptos, rando, &foundation);
         let user = vector::borrow(&users, 0);
         let rando = vector::borrow(&users, 1);
@@ -515,7 +564,14 @@ module aptos_names_v2::domain_e2e_tests {
         foundation = @0xf01d
     )]
     #[expected_failure(abort_code = 327681, location = aptos_names_v2::config)]
-    fun rando_cant_force_create_domain_name_e2e_test(aptos_names: &signer, aptos_names_v2: &signer, user: signer, aptos: signer, rando: signer, foundation: signer) {
+    fun rando_cant_force_create_domain_name_e2e_test(
+        aptos_names: &signer,
+        aptos_names_v2: &signer,
+        user: signer,
+        aptos: signer,
+        rando: signer,
+        foundation: signer
+    ) {
         let users = test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user, &aptos, rando, &foundation);
         let rando = vector::borrow(&users, 1);
 
