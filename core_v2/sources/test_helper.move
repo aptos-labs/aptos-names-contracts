@@ -79,9 +79,16 @@ module aptos_names_v2::test_helper {
                 domains::register_domain(user, domain_name, registration_duration_secs);
             } else {
                 domains::register_domain_with_signature(user, domain_name, registration_duration_secs, signature);
-            }
+            };
+            let (expiration_time, target_address) = domains::get_name_record_v1_props_for_domain(domain_name);
+            assert!(expiration_time == timestamp::now_seconds() + registration_duration_secs, 4);
+            assert!(target_address == option::some(user_addr), 5);
         } else {
             domains::register_subdomain(user, *option::borrow(&subdomain_name), domain_name, registration_duration_secs);
+            let subdomain_name_copy = subdomain_name;
+            let (expiration_time, target_address) = domains::get_name_record_v1_props_for_subdomain(*option::borrow(&subdomain_name_copy), domain_name);
+            assert!(expiration_time == timestamp::now_seconds() + registration_duration_secs, 4);
+            assert!(target_address == option::some(user_addr), 5);
         };
 
         // It should now be: not expired, registered, and not registerable
