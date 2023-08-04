@@ -9,6 +9,7 @@ module aptos_names_v2::subdomain_e2e_tests {
     use std::vector;
     use aptos_names_v2::time_helper;
 
+    const MAX_REMAINING_TIME_FOR_RENEWAL_SEC: u64 = 15552000;
 
     #[test(aptos_names = @aptos_names, aptos_names_v2 = @aptos_names_v2, user = @0x077, aptos = @0x1, rando = @0x266f, foundation = @0xf01d)]
     fun happy_path_e2e_test(aptos_names: &signer, aptos_names_v2: &signer, user: signer, aptos: signer, rando: signer, foundation: signer) {
@@ -49,6 +50,53 @@ module aptos_names_v2::subdomain_e2e_tests {
     }
 
     #[test(aptos_names = @aptos_names, aptos_names_v2 = @aptos_names_v2, user = @0x077, aptos = @0x1, rando = @0x266f, foundation = @0xf01d)]
+    fun auto_renew_subdomain_e2e_test(aptos_names: &signer, aptos_names_v2: &signer, user: signer, aptos: signer, rando: signer, foundation: signer) {
+        let users = test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user, &aptos, rando, &foundation);
+        let user = vector::borrow(&users, 0);
+        // Register the domain
+        test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>());
+
+        // Register a subdomain!
+        test_helper::register_name(user, option::some(test_helper::subdomain_name()), test_helper::domain_name(), timestamp::now_seconds() + test_helper::one_year_secs(), test_helper::fq_subdomain_name(), 1, vector::empty<u8>());
+        // The subdomain auto-renewal policy is true by default
+        assert!(domains::get_subdomain_renewal_policy(test_helper::domain_name(), test_helper::subdomain_name()), 2);
+
+        // Renew the domain (and the subdomain should be auto renewed)
+        let (original_expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(option::some(test_helper::subdomain_name()), test_helper::domain_name());
+        timestamp::update_global_time_for_test_secs(original_expiration_time_sec - 5);
+        domains::renew_domain(user, test_helper::domain_name(), 1);
+        // Set the time past the domain's expiration time
+        timestamp::update_global_time_for_test_secs(original_expiration_time_sec + 5);
+        // Both domain and subdomain are not expired
+        assert!(!domains::name_is_expired(option::none(), test_helper::domain_name()), 80);
+        assert!(!domains::name_is_expired(option::some(test_helper::subdomain_name()), test_helper::domain_name()), 80);
+     }
+
+    #[test(aptos_names = @aptos_names, aptos_names_v2 = @aptos_names_v2, user = @0x077, aptos = @0x1, rando = @0x266f, foundation = @0xf01d)]
+    fun manual_renew_subdomain_e2e_test(aptos_names: &signer, aptos_names_v2: &signer, user: signer, aptos: signer, rando: signer, foundation: signer) {
+        let users = test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user, &aptos, rando, &foundation);
+        let user = vector::borrow(&users, 0);
+        // Register the domain
+        test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>());
+
+        // Register a subdomain!
+        test_helper::register_name(user, option::some(test_helper::subdomain_name()), test_helper::domain_name(), timestamp::now_seconds() + test_helper::one_year_secs(), test_helper::fq_subdomain_name(), 1, vector::empty<u8>());
+        domains::set_subdomain_renewal_policy(user, test_helper::domain_name(), test_helper::subdomain_name(), false);
+        assert!(!domains::get_subdomain_renewal_policy(test_helper::domain_name(), test_helper::subdomain_name()), 2);
+
+        // Set the time past the domain's expiration time
+        let (expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(option::some(test_helper::subdomain_name()), test_helper::domain_name());
+        // Renew the domain before it's expired
+        timestamp::update_global_time_for_test_secs(expiration_time_sec - 5);
+        domains::renew_domain(user, test_helper::domain_name(), 1);
+        // Set the time past the domain's expiration time
+        timestamp::update_global_time_for_test_secs(expiration_time_sec + 5);
+        // Ensure the subdomain is still expired after domain renewal
+        assert!(!domains::name_is_expired(option::none(), test_helper::domain_name()), 80);
+        assert!(domains::name_is_expired(option::some(test_helper::subdomain_name()), test_helper::domain_name()), 80);
+    }
+
+    #[test(aptos_names = @aptos_names, aptos_names_v2 = @aptos_names_v2, user = @0x077, aptos = @0x1, rando = @0x266f, foundation = @0xf01d)]
     fun names_are_registerable_after_expiry_e2e_test(aptos_names: &signer, aptos_names_v2: &signer, user: signer, aptos: signer, rando: signer, foundation: signer) {
         let users = test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user, &aptos, rando, &foundation);
         let user = vector::borrow(&users, 0);
@@ -59,6 +107,8 @@ module aptos_names_v2::subdomain_e2e_tests {
 
         // Register a subdomain!
         test_helper::register_name(user, option::some(test_helper::subdomain_name()), test_helper::domain_name(), timestamp::now_seconds() + test_helper::one_year_secs(), test_helper::fq_subdomain_name(), 1, vector::empty<u8>());
+        // Set the subdomain auto-renewal policy to false
+        domains::set_subdomain_renewal_policy(user, test_helper::domain_name(), test_helper::subdomain_name(), false);
 
         // Set the time past the domain's expiration time
         let (expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(option::some(test_helper::subdomain_name()), test_helper::domain_name());

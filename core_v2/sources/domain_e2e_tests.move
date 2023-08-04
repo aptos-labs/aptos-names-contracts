@@ -476,7 +476,7 @@ module aptos_names_v2::domain_e2e_tests {
         rando = @0x266f,
         foundation = @0xf01d
     )]
-    fun test_migration(
+    fun test_migration_auto_renewal(
         aptos_names: &signer,
         aptos_names_v2: &signer,
         user: signer,
@@ -531,7 +531,7 @@ module aptos_names_v2::domain_e2e_tests {
             assert!(option::is_none(&target_addr), 3);
         };
 
-        // The v2 name belongs to `user`, the target address is the user_addr, and exipire in 1 + 1 years
+        // The v2 name belongs to `user`, the target address is the user_addr, and expire in 1 + 1 years
         {
             assert!(
                 aptos_names_v2::domains::name_is_registerable(option::none(), test_helper::domain_name()) == false,
@@ -549,6 +549,95 @@ module aptos_names_v2::domain_e2e_tests {
             );
 
             assert!(time_helper::seconds_to_years(expiration_time_sec - timestamp::now_seconds()) == 2, 3);
+            assert!(option::is_some(&target_addr), 4);
+            assert!(*option::borrow(&target_addr) == user_addr, 5);
+        }
+    }
+
+    #[test(
+        aptos_names = @aptos_names,
+        aptos_names_v2 = @aptos_names_v2,
+        user = @0x077,
+        aptos = @0x1,
+        rando = @0x266f,
+        foundation = @0xf01d
+    )]
+    fun test_migration_no_auto_renewal(
+        aptos_names: &signer,
+        aptos_names_v2: &signer,
+        user: signer,
+        aptos: signer,
+        rando: signer,
+        foundation: signer
+    ) {
+        let users = test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user, &aptos, rando, &foundation);
+
+        let user = vector::borrow(&users, 0);
+        let user_addr = signer::address_of(user);
+
+        // Set time 1690000000 (2023/07/2023), where our expiration falls past 2024/03/07
+        timestamp::update_global_time_for_test_secs(1690000000);
+
+        // Register the domain in v1
+        aptos_names::test_helper::register_name(
+            user,
+            option::none(),
+            test_helper::domain_name(),
+            test_helper::one_year_secs(),
+            test_helper::fq_domain_name(),
+            1,
+            vector::empty<u8>()
+        );
+        aptos_names::test_helper::set_name_address(
+            user,
+            option::none(),
+            test_helper::domain_name(),
+            user_addr,
+        );
+
+        // Migrate the domain from v1
+        aptos_names_v2::domains::migrate_domain_from_v1(
+            user,
+            test_helper::domain_name(),
+        );
+
+        // The v1 name belongs to the burn signer and the target address is clear
+        {
+            assert!(
+                aptos_names::domains::name_is_registerable(option::none(), test_helper::domain_name()) == false,
+                1,
+            );
+            let (is_owner, _) = aptos_names::domains::is_owner_of_name(
+                aptos_names_v2::domains::get_burn_signer_address(),
+                option::none(),
+                test_helper::domain_name(),
+            );
+            assert!(is_owner, 2);
+            let target_addr = aptos_names::domains::name_resolved_address(
+                option::none(),
+                test_helper::domain_name(),
+            );
+            assert!(option::is_none(&target_addr), 3);
+        };
+
+        // The v2 name belongs to `user`, the target address is the user_addr, and expire in 1 year
+        {
+            assert!(
+                aptos_names_v2::domains::name_is_registerable(option::none(), test_helper::domain_name()) == false,
+                1,
+            );
+            let is_owner = aptos_names_v2::domains::is_owner_of_name(
+                user_addr,
+                option::none(),
+                test_helper::domain_name(),
+            );
+            assert!(is_owner, 2);
+            let (expiration_time_sec, target_addr) = aptos_names_v2::domains::get_name_record_v1_props_for_name(
+                option::none(),
+                test_helper::domain_name(),
+            );
+
+            assert!(time_helper::seconds_to_years(expiration_time_sec - timestamp::now_seconds()) == 1, 3);
             assert!(option::is_some(&target_addr), 4);
             assert!(*option::borrow(&target_addr) == user_addr, 5);
         }

@@ -25,6 +25,10 @@ module aptos_names_v2::domains {
     const BURN_SIGNER_CAPABILITY_SEED: vector<u8> = b"BURN_SIGNER_CAPABILITY";
     const COLLECTION_DESCRIPTION: vector<u8> = b".apt names from Aptos Labs";
     const COLLECTION_URI: vector<u8> = b"https://aptosnames.com";
+    /// current MAX_REMAINING_TIME_FOR_RENEWAL_SEC is 6 months
+    const MAX_REMAINING_TIME_FOR_RENEWAL_SEC: u64 = 15552000;
+    /// 2024/03/07 23:59:59
+    const AUTO_RENEWAL_EXPIRATION_CUTOFF_SEC: u64 = 1709855999;
 
     /// The Naming Service contract is not enabled
     const ENOT_ENABLED: u64 = 1;
@@ -56,8 +60,18 @@ module aptos_names_v2::domains {
     const EVALID_SIGNATURE_REQUIRED: u64 = 16;
     /// The domain is too short.
     const EDOMAIN_TOO_SHORT: u64 = 17;
+    /// The name is not expired in 6 months, thus not eligible for renewal
+    const EDOMAIN_NOT_AVAILABLE_TO_RENEW: u64 = 18;
+    /// The subdomain is not eligible for renewal
+    const ESUBDOMAIN_IS_AUTO_RENEW: u64 = 19;
+    /// The name is expired
+    const ENAME_EXPIRED: u64 = 20;
+    /// The subdomain not exist
+    const ESUBDOMAIN_NOT_EXIST: u64 = 21;
+    /// The name is not a subdomain
+    const ENOT_A_SUBDOMAIN: u64 = 22;
     /// The domain expiration, even after migration extension, is past now.
-    const EMIGRATION_ALREADY_EXPIRED: u64 = 18;
+    const EMIGRATION_ALREADY_EXPIRED: u64 = 23;
 
     /// Tokens require a signer to create, so this is the signer for the collection
     struct CollectionCapabilityV2 has key, drop {
@@ -82,6 +96,7 @@ module aptos_names_v2::domains {
         expiration_time_sec: u64,
         target_address: Option<address>,
         transfer_ref: object::TransferRef,
+        // Currently unused, but may be used in the future to extend with more metadata
         extend_ref: object::ExtendRef,
         // Only present for subdomain
         subdomain_ext: Option<SubdomainExt>,
@@ -106,6 +121,11 @@ module aptos_names_v2::domains {
         register_name_events: event::EventHandle<RegisterNameEventV1>,
     }
 
+    /// Holder for `RenewNameEventV1` events
+    struct RenewNameEventsV1 has key, store {
+        renew_name_events: event::EventHandle<RenewNameEventV1>,
+    }
+
     /// A name has been set as the reverse lookup for an address, or
     /// the reverse lookup has been cleared (in which case |target_address|
     /// will be none)
@@ -126,10 +146,18 @@ module aptos_names_v2::domains {
 
     /// A name (potentially subdomain) has been registered on chain
     /// Includes the the fee paid for the registration, and the expiration time
-    /// Also includes the so we can tell which version of a given domain NFT is the latest
     struct RegisterNameEventV1 has drop, store {
-        subdomain_name: Option<String>,
         domain_name: String,
+        subdomain_name: Option<String>,
+        registration_fee_octas: u64,
+        expiration_time_secs: u64,
+    }
+
+    /// A name (potentially subdomain) has been renewed on chain
+    /// Includes the the fee paid for the registration, and the expiration time
+    struct RenewNameEventV1 has drop, store {
+        domain_name: String,
+        subdomain_name: Option<String>,
         registration_fee_octas: u64,
         expiration_time_secs: u64,
     }
@@ -157,6 +185,10 @@ module aptos_names_v2::domains {
             register_name_events: account::new_event_handle<RegisterNameEventV1>(account),
         });
 
+        move_to(account, RenewNameEventsV1 {
+            renew_name_events: account::new_event_handle<RenewNameEventV1>(account),
+        });
+
         // Create collection + token_resource
         let (token_resource, token_signer_cap) = account::create_resource_account(
             account,
@@ -173,7 +205,15 @@ module aptos_names_v2::domains {
         collection::create_unlimited_collection(
             &token_resource,
             utf8(COLLECTION_DESCRIPTION),
-            config::collection_name_v1(),
+            config::domain_collection_name_v1(),
+            option::none(),
+            utf8(COLLECTION_URI),
+        );
+        // TODO: figure out description for subdomain collection
+        collection::create_unlimited_collection(
+            &token_resource,
+            utf8(COLLECTION_DESCRIPTION),
+            config::subdomain_collection_name_v1(),
             option::none(),
             utf8(COLLECTION_URI),
         );
@@ -182,7 +222,11 @@ module aptos_names_v2::domains {
             set_reverse_lookup_events: account::new_event_handle<SetReverseLookupEventV1>(account),
         });
     }
-    
+
+    inline fun is_subdomain(subdomain: Option<String>): bool {
+        option::is_some(&subdomain)
+    }
+
     public fun get_token_signer_address(): address acquires CollectionCapabilityV2 {
         account::get_signer_capability_address(&borrow_global<CollectionCapabilityV2>(@aptos_names_v2).capability)
     }
@@ -209,7 +253,7 @@ module aptos_names_v2::domains {
     ): address acquires CollectionCapabilityV2 {
         token::create_token_address(
             &get_token_signer_address(),
-            &config::collection_name_v1(),
+            &get_collection_name(is_subdomain(subdomain_name)),
             &token_helper::get_fully_qualified_domain_name(subdomain_name, domain_name),
         )
     }
@@ -220,7 +264,7 @@ module aptos_names_v2::domains {
     ): address acquires CollectionCapabilityV2 {
         token::create_token_address(
             &get_token_signer_address(),
-            &config::collection_name_v1(),
+            &get_collection_name(is_subdomain(subdomain_name)),
             &token_helper::get_fully_qualified_domain_name(subdomain_name, domain_name),
         )
     }
@@ -235,14 +279,14 @@ module aptos_names_v2::domains {
     inline fun get_record(
         domain_name: String,
         subdomain_name: Option<String>,
-    ): &NameRecordV2 acquires CollectionCapabilityV2 {
+    ): &NameRecordV2 acquires CollectionCapabilityV2, NameRecordV2 {
         borrow_global(token_addr_inline(domain_name, subdomain_name))
     }
 
     inline fun get_record_mut(
         domain_name: String,
         subdomain_name: Option<String>,
-    ): &mut NameRecordV2 acquires CollectionCapabilityV2 {
+    ): &mut NameRecordV2 acquires CollectionCapabilityV2, NameRecordV2 {
         borrow_global_mut(token_addr_inline(domain_name, subdomain_name))
     }
 
@@ -252,6 +296,14 @@ module aptos_names_v2::domains {
             option::some(subdomain_ext.subdomain_name)
         } else {
             option::none<String>()
+        }
+    }
+
+    inline fun get_collection_name(is_subdomain: bool): String {
+        if (is_subdomain) {
+            config::subdomain_collection_name_v1()
+        } else {
+            config::domain_collection_name_v1()
         }
     }
 
@@ -267,25 +319,28 @@ module aptos_names_v2::domains {
         let description = config::tokendata_description();
         let uri: string::String = config::tokendata_url_prefix();
         string::append(&mut uri, name);
+
+        let subdomain_ext: Option<SubdomainExt>;
         let constructor_ref = token::create_named_token(
             &get_token_signer(),
-            config::collection_name_v1(),
+            get_collection_name(is_subdomain(subdomain_name)),
             description,
             name,
             option::none(),
             uri,
         );
         let token_signer = object::generate_signer(&constructor_ref);
-
-        let subdomain_ext: Option<SubdomainExt>;
-        if (option::is_some(&subdomain_name)) {
+        // creating subdomain
+        if (is_subdomain(subdomain_name)) {
             subdomain_ext = option::some(SubdomainExt {
                 subdomain_name: option::extract(&mut subdomain_name),
                 // TODO: use_domain_expiration_sec should be passed in as a param
                 // Now by default subdomain follow domain's expiration
                 use_domain_expiration_sec: true,
-            })
-        } else {
+            });
+        }
+        // creating domain
+        else {
             subdomain_ext = option::none<SubdomainExt>();
         };
         let record = NameRecordV2 {
@@ -319,10 +374,7 @@ module aptos_names_v2::domains {
         // Conver the num_years to its seconds representation for the inner method
         let registration_duration_secs: u64 = time_helper::years_to_seconds((num_years as u64));
 
-        let (is_valid, length) = utf8_utils::string_is_allowed(&domain_name);
-        assert!(is_valid, error::invalid_argument(EDOMAIN_HAS_INVALID_CHARACTERS));
-        assert!(length <= config::max_domain_length(), error::out_of_range(EDOMAIN_TOO_LONG));
-        assert!(length >= config::min_domain_length(), error::out_of_range(EDOMAIN_TOO_SHORT));
+        let length = validate_name_string(domain_name);
 
         let price = price_model::price_for_domain_v1(length, num_years);
         coin::transfer<AptosCoin>(sign, config::fund_destination_address(), price);
@@ -369,10 +421,8 @@ module aptos_names_v2::domains {
         );
 
         // We are registering a subdomain name: this has no cost, but is only doable by the owner of the domain
-        let (is_valid, length) = utf8_utils::string_is_allowed(&subdomain_name);
-        assert!(is_valid, error::invalid_argument(ESUBDOMAIN_HAS_INVALID_CHARACTERS));
-        assert!(length <= config::max_domain_length(), error::out_of_range(ESUBDOMAIN_TOO_LONG));
-        assert!(length >= config::min_domain_length(), error::out_of_range(ESUBDOMAIN_TOO_SHORT));
+
+        validate_name_string(domain_name);
 
         // Ensure signer owns the domain we're registering a subdomain for
         let signer_addr = signer::address_of(sign);
@@ -410,10 +460,10 @@ module aptos_names_v2::domains {
 
         // if it is a subdomain, and it expires later than its domain, throw an error
         // This is done here so that any governance moderation activities must abide by the same invariant
-        if (option::is_some(&subdomain_name)) {
-            let record = get_record(domain_name, option::none());
+        if (is_subdomain(subdomain_name)) {
+            let domain_record = get_record(domain_name, option::none());
             assert!(
-                name_expiration_time_secs <= record.expiration_time_sec,
+                name_expiration_time_secs <= domain_record.expiration_time_sec,
                 error::out_of_range(ESUBDOMAIN_CAN_NOT_EXCEED_DOMAIN_REGISTRATION)
             );
         };
@@ -440,7 +490,7 @@ module aptos_names_v2::domains {
         if (option::is_none(&reverse_lookup_result)) {
             // If the user has no reverse lookup set, set the user's reverse lookup.
             set_reverse_lookup(sign, subdomain_name, domain_name);
-        } else if (option::is_none(&subdomain_name)) {
+        } else if (!is_subdomain(subdomain_name)) {
             // Automatically set the name to point to the sender's address
             set_name_address_internal(subdomain_name, domain_name, signer::address_of(sign));
         };
@@ -448,8 +498,8 @@ module aptos_names_v2::domains {
         event::emit_event<RegisterNameEventV1>(
             &mut borrow_global_mut<RegisterNameEventsV1>(@aptos_names_v2).register_name_events,
             RegisterNameEventV1 {
-                subdomain_name,
                 domain_name,
+                subdomain_name,
                 registration_fee_octas: price,
                 expiration_time_secs: name_expiration_time_secs,
             },
@@ -521,6 +571,8 @@ module aptos_names_v2::domains {
         register_name_internal(sign, subdomain_name, domain_name, registration_duration_secs, 0);
     }
 
+    // TODO: angie add force_renew_domain and force_renew_subdomain here.
+
     #[legacy_entry_fun]
     /// This removes a name mapping from the registry; functionally this 'expires' it.
     /// This is a privileged operation, used via governance.
@@ -533,9 +585,134 @@ module aptos_names_v2::domains {
         let record = get_record_mut(domain_name, subdomain_name);
         object::transfer_with_ref(
             object::generate_linear_transfer_ref(&record.transfer_ref),
-            get_token_signer_address()
+            get_token_signer_address(),
         );
         record.target_address = option::none();
+    }
+
+    public entry fun renew_domain(
+        sign: &signer,
+        domain_name: String,
+        num_years: u8,
+    ) acquires CollectionCapabilityV2, NameRecordV2, RenewNameEventsV1 {
+        // check the domain eligibility
+        let length = validate_name_string(domain_name);
+
+        assert!(is_domain_in_renewal_window(domain_name), error::invalid_state(EDOMAIN_NOT_AVAILABLE_TO_RENEW));
+        let price = price_model::price_for_domain_v1(length, num_years);
+        renew_domain_internal(sign, domain_name, num_years, price);
+    }
+
+    fun renew_domain_internal(
+        sign: &signer,
+        domain_name: String,
+        num_years: u8,
+        price: u64,
+    ) acquires CollectionCapabilityV2, NameRecordV2, RenewNameEventsV1 {
+        let record = get_record_mut(domain_name, option::none());
+        let registration_duration_secs = time_helper::years_to_seconds((num_years as u64));
+        record.expiration_time_sec = record.expiration_time_sec + registration_duration_secs;
+
+        // pay the price
+        coin::transfer<AptosCoin>(sign, config::fund_destination_address(), price);
+        // log the event
+        event::emit_event<RenewNameEventV1>(
+            &mut borrow_global_mut<RenewNameEventsV1>(@aptos_names_v2).renew_name_events,
+            RenewNameEventV1 {
+                domain_name,
+                subdomain_name: option::none(),
+                registration_fee_octas: price,
+                expiration_time_secs: record.expiration_time_sec,
+            },
+        );
+    }
+
+    fun validate_name_string(
+        name: String,
+    ): u64 {
+        let (is_valid, length) = utf8_utils::string_is_allowed(&name);
+        assert!(is_valid, error::invalid_argument(EDOMAIN_HAS_INVALID_CHARACTERS));
+        assert!(length <= config::max_domain_length(), error::out_of_range(EDOMAIN_TOO_LONG));
+        assert!(length >= config::min_domain_length(), error::out_of_range(EDOMAIN_TOO_SHORT));
+
+        return length
+    }
+
+    public fun is_domain_in_renewal_window(
+        domain_name: String,
+    ): bool acquires CollectionCapabilityV2, NameRecordV2 {
+        // check if the domain is registered
+        assert!(name_is_registered(option::none(), domain_name), error::not_found(ENAME_NOT_EXIST));
+        // check if the domain is expired already
+        assert!(!name_is_expired(option::none(), domain_name), error::invalid_state(ENAME_EXPIRED));
+        let record = get_record_mut(domain_name, option::none());
+
+        record.expiration_time_sec <= timestamp::now_seconds() + MAX_REMAINING_TIME_FOR_RENEWAL_SEC
+    }
+
+    /// this is for domain owner to update subdomain expiration time
+    public fun renew_subdomain_as_domain_owner(
+        sign: &signer,
+        subdomain_name: String,
+        domain_name: String,
+        registration_duration_secs: u64,
+    ) acquires CollectionCapabilityV2, NameRecordV2{
+        validate_subdomain_to_renew(sign, subdomain_name, domain_name);
+
+        let record = get_record_mut(domain_name, option::some(subdomain_name));
+        assert!(option::is_some(&record.subdomain_ext), error::invalid_state(ENOT_A_SUBDOMAIN));
+
+        // check the auto-renew flag
+        let subdomain_ext = option::borrow(&record.subdomain_ext);
+        if (subdomain_ext.use_domain_expiration_sec) {
+            assert!(false, error::invalid_state(ESUBDOMAIN_IS_AUTO_RENEW));
+        };
+        // manually set the expiration date
+        record.expiration_time_sec = record.expiration_time_sec + registration_duration_secs;
+    }
+
+    public fun set_subdomain_renewal_policy(
+        sign: &signer,
+        domain_name: String,
+        subdomain_name: String,
+        use_domain_expiration_sec: bool,
+    ) acquires CollectionCapabilityV2, NameRecordV2 {
+        validate_subdomain_to_renew(sign, subdomain_name, domain_name);
+        // if manually set the expiration date
+        let record = get_record_mut(domain_name, option::some(subdomain_name));
+        // check the auto-renew flag
+        if (option::is_none(&record.subdomain_ext)) {
+            assert!(false, error::invalid_state(ENOT_A_SUBDOMAIN));
+        };
+        let subdomain_ext = option::borrow_mut(&mut record.subdomain_ext);
+        subdomain_ext.use_domain_expiration_sec = use_domain_expiration_sec;
+    }
+
+    public fun get_subdomain_renewal_policy(
+        domain_name: String,
+        subdomain_name: String,
+    ): bool acquires CollectionCapabilityV2, NameRecordV2 {
+        let record = get_record_mut(domain_name, option::some(subdomain_name));
+        // check the auto-renew flag
+        if (!option::is_some(&record.subdomain_ext)) {
+            assert!(false, error::invalid_state(ESUBDOMAIN_NOT_EXIST));
+        };
+        let subdomain_ext = option::borrow_mut(&mut record.subdomain_ext);
+        subdomain_ext.use_domain_expiration_sec
+    }
+
+    fun validate_subdomain_to_renew(
+        sign: &signer,
+        subdomain_name: String,
+        domain_name: String,
+    ) acquires CollectionCapabilityV2, NameRecordV2 {
+        assert!(name_is_registered(option::some(subdomain_name), domain_name), error::not_found(ESUBDOMAIN_NOT_EXIST));
+        // Ensure signer owns the domain we're registering a subdomain for
+        let signer_addr = signer::address_of(sign);
+        assert!(
+            is_owner_of_name(signer_addr, option::none(), domain_name),
+            error::permission_denied(ENOT_OWNER_OF_DOMAIN)
+        );
     }
 
     /// Checks for the name not existing, or being expired
@@ -548,7 +725,7 @@ module aptos_names_v2::domains {
     ): bool acquires CollectionCapabilityV2, NameRecordV2 {
         // If this is a subdomain, ensure the domain also exists, and is not expired: i.e not registerable
         // So if the domain name is registerable, we return false, as the subdomain is not registerable
-        if (option::is_some(&subdomain_name) && name_is_registerable(option::none(), domain_name)) {
+        if (is_subdomain(subdomain_name) && name_is_registerable(option::none(), domain_name)) {
             return false
         };
         // Check to see if the domain is registered, or expired
@@ -561,7 +738,19 @@ module aptos_names_v2::domains {
         subdomain_name: Option<String>,
         domain_name: String
     ): bool acquires CollectionCapabilityV2, NameRecordV2 {
+        if (!name_is_registered(subdomain_name, domain_name)) {
+            assert!(false, error::invalid_state(ENAME_NOT_EXIST));
+        };
         let record = get_record(domain_name, subdomain_name);
+        // check the auto-renew flag
+        if (option::is_some(&record.subdomain_ext)) {
+            let subdomain_ext = option::borrow(&record.subdomain_ext);
+            if (subdomain_ext.use_domain_expiration_sec) {
+                // refer to the expiration date of the domain
+                let domain_record = get_record(domain_name, option::none());
+                return time_is_expired(domain_record.expiration_time_sec)
+            }
+        };
         time_is_expired(record.expiration_time_sec)
     }
 
@@ -570,8 +759,9 @@ module aptos_names_v2::domains {
         subdomain_name: Option<String>,
         domain_name: String
     ): bool acquires CollectionCapabilityV2 {
+        // TODO: check if the name is registered in v1 and v2
         object::is_object(token_addr_inline(domain_name, subdomain_name)) &&
-        !object::is_owner(get_record_obj(domain_name, subdomain_name), get_token_signer_address())
+            !object::is_owner(get_record_obj(domain_name, subdomain_name), get_token_signer_address())
     }
 
     /// Check if the address is the owner of the given aptos_name
@@ -581,6 +771,7 @@ module aptos_names_v2::domains {
         subdomain_name: Option<String>,
         domain_name: String
     ): bool acquires CollectionCapabilityV2, NameRecordV2 {
+        // check if the name is registered in v1 and v2
         if (!name_is_registered(subdomain_name, domain_name) || name_is_expired(
             subdomain_name,
             domain_name
@@ -781,9 +972,15 @@ module aptos_names_v2::domains {
             domain_name,
             option::none(),
         );
-        let new_expiration_time_sec = expiration_time_sec + time_helper::years_to_seconds(1);
+
         let now = timestamp::now_seconds();
-        assert!(new_expiration_time_sec >= now, error::invalid_state(EMIGRATION_ALREADY_EXPIRED));
+        assert!(expiration_time_sec >= now, error::invalid_state(EMIGRATION_ALREADY_EXPIRED));
+
+        let new_expiration_time_sec = if (expiration_time_sec <= AUTO_RENEWAL_EXPIRATION_CUTOFF_SEC) {
+            expiration_time_sec + time_helper::years_to_seconds(1)
+        } else {
+            expiration_time_sec
+        };
         register_name_internal(
             user,
             option::none(),
@@ -795,6 +992,7 @@ module aptos_names_v2::domains {
         if (option::is_some(&target_addr)) {
             set_name_address_internal(option::none(), domain_name, *option::borrow(&target_addr));
         }
+        // TODO: If the name was a primary name in v1 we should make it a primary name in v2
     }
 
     fun set_reverse_lookup_internal(
