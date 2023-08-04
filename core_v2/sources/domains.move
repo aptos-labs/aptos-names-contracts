@@ -731,14 +731,21 @@ module aptos_names_v2::domains {
         );
     }
 
+    /// First checks v1 if the name is active. If active, return false
+    /// Otherwise, check v2
     /// Checks for the name not existing, or being expired
     /// Returns true if the name is available for registration
     /// if this is a subdomain, and the domain doesn't exist, returns false
-    /// Doesn't use the `name_is_expired` or `name_is_registered` internally to share the borrow
     public fun name_is_registerable(
         subdomain_name: Option<String>,
         domain_name: String
     ): bool acquires CollectionCapabilityV2, NameRecordV2 {
+        if (aptos_names::domains::name_is_registered(
+            subdomain_name,
+            domain_name
+        ) && !aptos_names::domains::name_is_expired(subdomain_name, domain_name)) {
+            return false
+        };
         // If this is a subdomain, ensure the domain also exists, and is not expired: i.e not registerable
         // So if the domain name is registerable, we return false, as the subdomain is not registerable
         if (is_subdomain(subdomain_name) && name_is_registerable(option::none(), domain_name)) {
@@ -748,7 +755,7 @@ module aptos_names_v2::domains {
         name_is_expired(subdomain_name, domain_name)
     }
 
-    /// Returns true if the is not registered OR (name is registered AND is expired)
+    /// Returns true if the name is not registered OR (name is registered AND is expired)
     public fun name_is_expired(
         subdomain_name: Option<String>,
         domain_name: String
@@ -775,7 +782,6 @@ module aptos_names_v2::domains {
         subdomain_name: Option<String>,
         domain_name: String
     ): bool acquires CollectionCapabilityV2 {
-        // TODO: check if the name is registered in v1 and v2
         object::is_object(token_addr_inline(domain_name, subdomain_name)) &&
             !object::is_owner(get_record_obj(domain_name, subdomain_name), get_token_signer_address())
     }
