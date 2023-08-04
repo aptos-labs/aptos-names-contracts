@@ -781,6 +781,26 @@ module aptos_names_v2::domain_e2e_tests {
         };
     }
 
+    #[test(myself = @aptos_names_v2, user = @0x077, aptos = @0x1, rando = @0x266f, foundation = @0xf01d)]
+    fun test_nonregistered_record_expiry(myself: &signer, user: signer, aptos: signer, rando: signer, foundation: signer) {
+        test_helper::e2e_test_setup(myself, user, &aptos, rando, &foundation);
+
+        // Non-registered domain should be expired
+        {
+            let is_expired = domains::name_is_expired(option::none(), test_helper::domain_name());
+            assert!(is_expired, 1);
+        };
+
+        // Non-registered subdomain should be expired
+        {
+            let is_expired = domains::name_is_expired(
+                option::some(test_helper::subdomain_name()),
+                test_helper::domain_name()
+            );
+            assert!(is_expired, 1);
+        };
+    }
+
     #[test(
         aptos_names = @aptos_names,
         aptos_names_v2 = @aptos_names_v2,

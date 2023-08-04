@@ -728,30 +728,30 @@ module aptos_names_v2::domains {
         if (is_subdomain(subdomain_name) && name_is_registerable(option::none(), domain_name)) {
             return false
         };
-        // Check to see if the domain is registered, or expired
-        !name_is_registered(subdomain_name, domain_name) || name_is_expired(subdomain_name, domain_name)
+        // Check to see if the domain expired
+        name_is_expired(subdomain_name, domain_name)
     }
 
-    /// Returns true if the name is registered, and is expired.
-    /// If the name does not exist, raises an error
+    /// Returns true if the is not registered OR (name is registered AND is expired)
     public fun name_is_expired(
         subdomain_name: Option<String>,
         domain_name: String
     ): bool acquires CollectionCapabilityV2, NameRecordV2 {
         if (!name_is_registered(subdomain_name, domain_name)) {
-            assert!(false, error::invalid_state(ENAME_NOT_EXIST));
-        };
-        let record = get_record(domain_name, subdomain_name);
-        // check the auto-renew flag
-        if (option::is_some(&record.subdomain_ext)) {
-            let subdomain_ext = option::borrow(&record.subdomain_ext);
-            if (subdomain_ext.use_domain_expiration_sec) {
-                // refer to the expiration date of the domain
-                let domain_record = get_record(domain_name, option::none());
-                return time_is_expired(domain_record.expiration_time_sec)
-            }
-        };
-        time_is_expired(record.expiration_time_sec)
+            true
+        } else {
+            let record = get_record(domain_name, subdomain_name);
+            // check the auto-renew flag
+            if (option::is_some(&record.subdomain_ext)) {
+                let subdomain_ext = option::borrow(&record.subdomain_ext);
+                if (subdomain_ext.use_domain_expiration_sec) {
+                    // refer to the expiration date of the domain
+                    let domain_record = get_record(domain_name, option::none());
+                    return time_is_expired(domain_record.expiration_time_sec)
+                }
+            };
+            time_is_expired(record.expiration_time_sec)
+        }
     }
 
     /// Returns true if the object exists AND the owner is not the `token_resource` account
