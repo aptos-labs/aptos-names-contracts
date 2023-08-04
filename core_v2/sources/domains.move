@@ -639,13 +639,13 @@ module aptos_names_v2::domains {
             error::out_of_range(EINVALID_NUMBER_YEARS)
         );
     }
-    public entry fun transfer_subdomain_owner(
+    public fun transfer_subdomain_owner(
         sign: &signer,
         subdomain_name: String,
         domain_name: String,
         new_owner_address: address,
-        new_target_address: address,
-    ) acquires CollectionCapabilityV2, NameRecordV2 {
+        new_target_address: Option<address>,
+    ) acquires CollectionCapabilityV2, NameRecordV2, ReverseRecord, SetReverseLookupEventsV1 {
         // validate user own the domain
         let signer_addr = signer::address_of(sign);
         assert!(
@@ -655,8 +655,10 @@ module aptos_names_v2::domains {
 
         let token_addr = token_addr_inline(domain_name, option::some(subdomain_name));
         let record = borrow_global_mut<NameRecordV2>(token_addr);
-        record.target_address = option::some(new_target_address);
+        record.target_address = new_target_address;
         object::transfer_with_ref(object::generate_linear_transfer_ref(&record.transfer_ref), new_owner_address);
+        // clear the primary name
+        clear_reverse_lookup_for_name(option::some(subdomain_name), domain_name);
     }
 
     fun validate_name_string(

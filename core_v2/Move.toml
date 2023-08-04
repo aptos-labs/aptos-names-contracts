@@ -3,11 +3,9 @@ name = 'aptos_names_v2'
 version = '1.0.0'
 
 [addresses]
-aptos_names_v2 = "0x123"
-aptos_names = "0x1234"
-aptos_names_admin = "0x234"
-aptos_names_funds = "0x345"
-
+aptos_names_v2 = "_"
+aptos_names_admin = "_"
+aptos_names_funds = "_"
 
 [dependencies.aptos_names]
 local = "../core"
