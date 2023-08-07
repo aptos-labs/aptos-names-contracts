@@ -1,16 +1,27 @@
 module aptos_names_v2::migrate_helper {
     friend aptos_names_v2::domains;
 
-    use std::option::Option;
-    use std::string::String;
     use aptos_token::token;
+    use std::option::{Self, Option};
+    use std::signer::address_of;
+    use std::string::String;
 
     public(friend) fun burn_token_v1(
         user: &signer,
         burn_signer: &signer,
         domain_name: String,
         subdomain_name: Option<String>,
-    ): (u64, Option<address>) {
+    ): (u64, Option<address>, bool) {
+        let maybe_primary_name = aptos_names::domains::get_reverse_lookup(address_of(user));
+        let is_primary_name = if(option::is_some(&maybe_primary_name)) {
+            let (primary_subdomain_name, primary_domain_name) = aptos_names::domains::get_name_record_key_v1_props(
+                &option::extract(&mut maybe_primary_name)
+            );
+            subdomain_name == primary_subdomain_name && domain_name == primary_domain_name
+        } else {
+            false
+        };
+
         // Clear the domain
         aptos_names::domains::clear_domain_address(user, domain_name);
 
@@ -38,6 +49,6 @@ module aptos_names_v2::migrate_helper {
             1,
         );
 
-        (expiration_time_sec, target_addr)
+        (expiration_time_sec, target_addr, is_primary_name)
     }
 }

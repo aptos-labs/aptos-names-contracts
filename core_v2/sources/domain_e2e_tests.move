@@ -898,6 +898,16 @@ module aptos_names_v2::domain_e2e_tests {
             assert!(time_helper::seconds_to_years(expiration_time_sec - timestamp::now_seconds()) == 2, 3);
             assert!(option::is_some(&target_addr), 4);
             assert!(*option::borrow(&target_addr) == user_addr, 5);
+
+            // Primary name should be migrated to v2
+            let maybe_reverse_record_addr = aptos_names_v2::domains::get_reverse_lookup(user_addr);
+            assert!(option::is_some(&maybe_reverse_record_addr), 6);
+            assert!(
+                aptos_names_v2::domains::token_addr(test_helper::domain_name(), option::none()) == option::extract(
+                    &mut maybe_reverse_record_addr
+                ),
+                7,
+            );
         }
     }
 
@@ -987,6 +997,16 @@ module aptos_names_v2::domain_e2e_tests {
             assert!(time_helper::seconds_to_years(expiration_time_sec - timestamp::now_seconds()) == 1, 3);
             assert!(option::is_some(&target_addr), 4);
             assert!(*option::borrow(&target_addr) == user_addr, 5);
+
+            // Primary name should be migrated to v2
+            let maybe_reverse_record_addr = aptos_names_v2::domains::get_reverse_lookup(user_addr);
+            assert!(option::is_some(&maybe_reverse_record_addr), 6);
+            assert!(
+                aptos_names_v2::domains::token_addr(test_helper::domain_name(), option::none()) == option::extract(
+                    &mut maybe_reverse_record_addr
+                ),
+                7,
+            );
         }
     }
 }

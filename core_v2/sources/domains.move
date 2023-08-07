@@ -1006,7 +1006,7 @@ module aptos_names_v2::domains {
         user: &signer,
         domain_name: String,
     ) acquires CollectionCapabilityV2, NameRecordV2, RegisterNameEventsV1, ReverseRecord, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
-        let (expiration_time_sec, target_addr) = migrate_helper::burn_token_v1(
+        let (expiration_time_sec, target_addr, is_primary_name) = migrate_helper::burn_token_v1(
             user,
             &get_burn_signer(),
             domain_name,
@@ -1030,9 +1030,11 @@ module aptos_names_v2::domains {
         );
         // TODO: `register_name_internal` should accept a `target_addr`
         if (option::is_some(&target_addr)) {
-            set_name_address_internal(option::none(), domain_name, *option::borrow(&target_addr));
+            set_name_address(user, option::none(), domain_name, *option::borrow(&target_addr));
+        };
+        if (is_primary_name) {
+            set_reverse_lookup(user, option::none(), domain_name)
         }
-        // TODO: If the name was a primary name in v1 we should make it a primary name in v2
     }
 
     fun set_reverse_lookup_internal(
