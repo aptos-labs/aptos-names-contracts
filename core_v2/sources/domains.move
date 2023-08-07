@@ -431,10 +431,7 @@ module aptos_names_v2::domains {
 
         let registration_duration_secs = expiration_time_sec - timestamp::now_seconds();
 
-        let price = price_model::price_for_subdomain_v1(registration_duration_secs);
-        coin::transfer<AptosCoin>(sign, config::fund_destination_address(), price);
-
-        register_name_internal(sign, option::some(subdomain_name), domain_name, registration_duration_secs, price);
+        register_name_internal(sign, option::some(subdomain_name), domain_name, registration_duration_secs, 0);
     }
 
     /// Register a name. Accepts an optional subdomain name, a required domain name, and a registration duration in seconds.
@@ -569,7 +566,15 @@ module aptos_names_v2::domains {
         register_name_internal(sign, subdomain_name, domain_name, registration_duration_secs, 0);
     }
 
-    // TODO: angie add force_renew_domain and force_renew_subdomain here.
+    public fun force_renew_domain(
+        sign: &signer,
+        domain_name: String,
+        registration_duration_secs: u64
+    ) acquires CollectionCapabilityV2, NameRecordV2, RenewNameEventsV1 {
+        config::assert_signer_is_admin(sign);
+        // Renew the name with no price paid and no validation made
+        renew_domain_internal(domain_name, registration_duration_secs, 0);
+    }
 
     #[legacy_entry_fun]
     /// This removes a name mapping from the registry; functionally this 'expires' it.
@@ -599,20 +604,19 @@ module aptos_names_v2::domains {
         validate_registration_duration(registration_duration_secs);
         assert!(is_domain_in_renewal_window(domain_name), error::invalid_state(EDOMAIN_NOT_AVAILABLE_TO_RENEW));
         let price = price_model::price_for_domain_v1(length, registration_duration_secs);
-        renew_domain_internal(sign, domain_name, registration_duration_secs, price);
+        // pay the price
+        coin::transfer<AptosCoin>(sign, config::fund_destination_address(), price);
+        renew_domain_internal(domain_name, registration_duration_secs, price);
     }
 
     fun renew_domain_internal(
-        sign: &signer,
         domain_name: String,
         registration_duration_secs: u64,
         price: u64,
     ) acquires CollectionCapabilityV2, NameRecordV2, RenewNameEventsV1 {
         let record = get_record_mut(domain_name, option::none());
-        record.expiration_time_sec = timestamp::now_seconds() + registration_duration_secs;
+        record.expiration_time_sec = record.expiration_time_sec + registration_duration_secs;
 
-        // pay the price
-        coin::transfer<AptosCoin>(sign, config::fund_destination_address(), price);
         // log the event
         event::emit_event<RenewNameEventV1>(
             &mut borrow_global_mut<RenewNameEventsV1>(@aptos_names_v2).renew_name_events,

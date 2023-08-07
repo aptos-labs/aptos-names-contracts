@@ -13,6 +13,8 @@ module aptos_names_v2::domain_e2e_tests {
     use std::string;
     use std::vector;
 
+    const MAX_REMAINING_TIME_FOR_RENEWAL_SEC: u64 = 15552000;
+
     #[test(
         aptos_names = @aptos_names,
         aptos_names_v2 = @aptos_names_v2,
@@ -21,7 +23,7 @@ module aptos_names_v2::domain_e2e_tests {
         rando = @0x266f,
         foundation = @0xf01d
     )]
-    fun happy_path_e2e_test(
+    fun test_happy_path_e2e(
         aptos_names: &signer,
         aptos_names_v2: &signer,
         user: signer,
@@ -60,7 +62,7 @@ module aptos_names_v2::domain_e2e_tests {
         rando = @0x266f,
         foundation = @0xf01d
     )]
-    fun e2e_test_with_valid_signature(
+    fun test_e2e_with_valid_signature(
         aptos_names: &signer,
         aptos_names_v2: &signer,
         user: signer,
@@ -84,7 +86,7 @@ module aptos_names_v2::domain_e2e_tests {
       */
 
         let signature: vector<u8> = x"c381226467371d5a5ca2408333b8f8c68d4c6f81d1f020c11402620ec47c1b74114c60a02bcb4798ee84df6e85be2c79e6f691962beecef1ab73b93a9dcaea03";
-        e2e_test_with_signature(aptos_names, aptos_names_v2, user, aptos, rando, foundation, signature);
+        test_e2e_with_signature(aptos_names, aptos_names_v2, user, aptos, rando, foundation, signature);
     }
 
     #[test(
@@ -96,7 +98,7 @@ module aptos_names_v2::domain_e2e_tests {
         foundation = @0xf01d
     )]
     #[expected_failure(abort_code = 65537, location = aptos_names_v2::verify)]
-    fun e2e_test_with_invalid_signature(
+    fun test_with_invalid_signature(
         aptos_names: &signer,
         aptos_names_v2: &signer,
         user: signer,
@@ -105,11 +107,11 @@ module aptos_names_v2::domain_e2e_tests {
         foundation: signer
     ) {
         let signature: vector<u8> = x"2b0340b4529e3f90f0b1af7364241c51172c1133f0c077b7836962c3f104115832ccec0b74382533c33d9bd14a6e68021e5c23439242ddd43047e7929084ac01";
-        e2e_test_with_signature(aptos_names, aptos_names_v2, user, aptos, rando, foundation, signature);
+        test_e2e_with_signature(aptos_names, aptos_names_v2, user, aptos, rando, foundation, signature);
     }
 
     #[test_only]
-    fun e2e_test_with_signature(
+    fun test_e2e_with_signature(
         aptos_names: &signer,
         aptos_names_v2: &signer,
         user: signer,
@@ -178,7 +180,7 @@ module aptos_names_v2::domain_e2e_tests {
         rando = @0x266f,
         foundation = @0xf01d
     )]
-    fun names_are_registerable_after_expiry_e2e_test(
+    fun test_names_are_registerable_after_expiry_e2e(
         aptos_names: &signer,
         aptos_names_v2: &signer,
         user: signer,
@@ -230,7 +232,7 @@ module aptos_names_v2::domain_e2e_tests {
         foundation = @0xf01d
     )]
     #[expected_failure(abort_code = 196611, location = aptos_names_v2::domains)]
-    fun dont_allow_double_domain_registrations_e2e_test(
+    fun test_dont_allow_double_domain_registrations(
         aptos_names: &signer,
         aptos_names_v2: &signer,
         user: signer,
@@ -256,7 +258,7 @@ module aptos_names_v2::domain_e2e_tests {
         foundation = @0xf01d
     )]
     #[expected_failure(abort_code = 327689, location = aptos_names_v2::domains)]
-    fun dont_allow_rando_to_set_domain_address_e2e_test(
+    fun test_dont_allow_rando_to_set_domain_address(
         aptos_names: &signer,
         aptos_names_v2: &signer,
         user: signer,
@@ -283,7 +285,7 @@ module aptos_names_v2::domain_e2e_tests {
         foundation = @0xf01d
     )]
     #[expected_failure(abort_code = 327682, location = aptos_names_v2::domains)]
-    fun dont_allow_rando_to_clear_domain_address_e2e_test(
+    fun test_dont_allow_rando_to_clear_domain_address_e2e(
         aptos_names: &signer,
         aptos_names_v2: &signer,
         user: signer,
@@ -311,7 +313,7 @@ module aptos_names_v2::domain_e2e_tests {
         rando = @0x266f,
         foundation = @0xf01d
     )]
-    fun owner_can_clear_domain_address_e2e_test(
+    fun test_owner_can_clear_domain_address(
         aptos_names: &signer,
         aptos_names_v2: &signer,
         user: signer,
@@ -339,7 +341,7 @@ module aptos_names_v2::domain_e2e_tests {
         rando = @0x266f,
         foundation = @0xf01d
     )]
-    fun admin_can_force_set_name_address_e2e_test(
+    fun test_admin_can_force_set_name_address(
         aptos_names: &signer,
         aptos_names_v2: &signer,
         user: signer,
@@ -382,7 +384,7 @@ module aptos_names_v2::domain_e2e_tests {
         foundation = @0xf01d
     )]
     #[expected_failure(abort_code = 327681, location = aptos_names_v2::config)]
-    fun rando_cant_force_set_name_address_e2e_test(
+    fun test_rando_cant_force_set_name_address(
         aptos_names: &signer,
         aptos_names_v2: &signer,
         user: signer,
@@ -412,7 +414,7 @@ module aptos_names_v2::domain_e2e_tests {
         rando = @0x266f,
         foundation = @0xf01d
     )]
-    fun admin_can_force_seize_domain_name_e2e_test(
+    fun test_admin_can_force_seize_domain_name(
         aptos_names: &signer,
         aptos_names_v2: &signer,
         user: signer,
@@ -450,7 +452,47 @@ module aptos_names_v2::domain_e2e_tests {
         rando = @0x266f,
         foundation = @0xf01d
     )]
-    fun admin_force_seize_domain_name_doesnt_clear_unrelated_primary_name_e2e_test(
+    fun test_admin_can_force_renew_domain_name(
+        aptos_names: &signer,
+        aptos_names_v2: &signer,
+        user: signer,
+        aptos: signer,
+        rando: signer,
+        foundation: signer
+    ) {
+        let users = test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user, &aptos, rando, &foundation);
+        let user = vector::borrow(&users, 0);
+
+        // Register the domain
+        test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>());
+        let is_owner = domains::is_owner_of_name(signer::address_of(user), option::none(), test_helper::domain_name());
+        assert!(is_owner, 1);
+
+        let (expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(option::none(), test_helper::domain_name());
+        assert!(time_helper::seconds_to_years(expiration_time_sec) == 1, time_helper::seconds_to_years(expiration_time_sec));
+
+        // renew the domain by admin outside of renewal window
+        domains::force_renew_domain(aptos_names_v2, test_helper::domain_name(), test_helper::one_year_secs());
+
+        let (expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(option::none(), test_helper::domain_name());
+        assert!(time_helper::seconds_to_years(expiration_time_sec) == 2, time_helper::seconds_to_years(expiration_time_sec));
+
+        // renew the domain longer than the time we are allowed to renew it for
+        domains::force_renew_domain(aptos_names_v2, test_helper::domain_name(), 2*test_helper::one_year_secs());
+
+        let (expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(option::none(), test_helper::domain_name());
+        assert!(time_helper::seconds_to_years(expiration_time_sec) == 4, time_helper::seconds_to_years(expiration_time_sec));
+    }
+
+    #[test(
+        aptos_names = @aptos_names,
+        aptos_names_v2 = @aptos_names_v2,
+        user = @0x077,
+        aptos = @0x1,
+        rando = @0x266f,
+        foundation = @0xf01d
+    )]
+    fun test_admin_force_seize_domain_name_doesnt_clear_unrelated_primary_name(
         aptos_names: &signer,
         aptos_names_v2: &signer,
         user: signer,
@@ -497,7 +539,7 @@ module aptos_names_v2::domain_e2e_tests {
         rando = @0x266f,
         foundation = @0xf01d
     )]
-    fun admin_can_force_create_domain_name_e2e_test(
+    fun test_admin_can_force_create_domain_name(
         aptos_names: &signer,
         aptos_names_v2: &signer,
         user: signer,
@@ -534,7 +576,7 @@ module aptos_names_v2::domain_e2e_tests {
         foundation = @0xf01d
     )]
     #[expected_failure(abort_code = 327681, location = aptos_names_v2::config)]
-    fun rando_cant_force_seize_domain_name_e2e_test(
+    fun test_rando_cant_force_seize_domain_name(
         aptos_names: &signer,
         aptos_names_v2: &signer,
         user: signer,
@@ -564,7 +606,7 @@ module aptos_names_v2::domain_e2e_tests {
         foundation = @0xf01d
     )]
     #[expected_failure(abort_code = 327681, location = aptos_names_v2::config)]
-    fun rando_cant_force_create_domain_name_e2e_test(
+    fun test_rando_cant_force_create_domain_name(
         aptos_names: &signer,
         aptos_names_v2: &signer,
         user: signer,
@@ -590,7 +632,51 @@ module aptos_names_v2::domain_e2e_tests {
         rando = @0x266f,
         foundation = @0xf01d
     )]
-    fun clear_name_happy_path_e2e_test(
+    fun test_renew_domain_e2e(
+        aptos_names: &signer,
+        aptos_names_v2: &signer,
+        user: signer,
+        aptos: signer,
+        rando: signer,
+        foundation: signer
+    ) {
+        let users = test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user, &aptos, rando, &foundation);
+        let user = vector::borrow(&users, 0);
+
+        // Register the domain
+        test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>());
+        let (expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(option::none(), test_helper::domain_name());
+
+        // Set the time is early than max remaining time for renewal from expiration time
+        timestamp::update_global_time_for_test_secs(expiration_time_sec - MAX_REMAINING_TIME_FOR_RENEWAL_SEC - 5);
+        assert!(!domains::is_domain_in_renewal_window(test_helper::domain_name()), 1);
+
+        timestamp::update_global_time_for_test_secs(expiration_time_sec - MAX_REMAINING_TIME_FOR_RENEWAL_SEC + 5);
+        assert!(domains::is_domain_in_renewal_window(test_helper::domain_name()), 2);
+
+        // Renew the domain
+        domains::renew_domain(user, test_helper::domain_name(), time_helper::years_to_seconds(1));
+
+        // Ensure the domain is still registered after the original expiration time
+        timestamp::update_global_time_for_test_secs(expiration_time_sec + 5);
+        assert!(domains::name_is_registered(option::none(), test_helper::domain_name()), 4);
+
+        let (new_expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(option::none(), test_helper::domain_name());
+        // Ensure the domain is still expired after the new expiration time
+        timestamp::update_global_time_for_test_secs(new_expiration_time_sec + 5);
+        assert!(domains::name_is_expired(option::none(), test_helper::domain_name()), 5);
+    }
+
+
+    #[test(
+        aptos_names = @aptos_names,
+        aptos_names_v2 = @aptos_names_v2,
+        user = @0x077,
+        aptos = @0x1,
+        rando = @0x266f,
+        foundation = @0xf01d
+    )]
+    fun test_clear_name_happy_path(
         aptos_names: &signer,
         aptos_names_v2: &signer,
         user: signer,
@@ -619,7 +705,7 @@ module aptos_names_v2::domain_e2e_tests {
         rando = @0x266f,
         foundation = @0xf01d
     )]
-    fun set_primary_name_after_transfer_clears_old_primary_name_e2e_test(
+    fun test_set_primary_name_after_transfer_clears_old_primary_name(
         aptos_names: &signer,
         aptos_names_v2: &signer,
         user: signer,
@@ -663,7 +749,7 @@ module aptos_names_v2::domain_e2e_tests {
         rando = @0x266f,
         foundation = @0xf01d
     )]
-    fun set_target_address_after_transfer_clears_old_primary_name_e2e_test(
+    fun test_set_target_address_after_transfer_clears_old_primary_name(
         aptos_names: &signer,
         aptos_names_v2: &signer,
         user: signer,
@@ -707,7 +793,7 @@ module aptos_names_v2::domain_e2e_tests {
         rando = @0x266f,
         foundation = @0xf01d
     )]
-    fun owner_of_expired_name_is_not_owner(
+    fun test_owner_of_expired_name_is_not_owner(
         aptos_names: &signer,
         aptos_names_v2: &signer,
         user: signer,

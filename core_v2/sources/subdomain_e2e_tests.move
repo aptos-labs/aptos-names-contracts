@@ -9,8 +9,6 @@ module aptos_names_v2::subdomain_e2e_tests {
     use std::vector;
     use aptos_names_v2::time_helper;
 
-    const MAX_REMAINING_TIME_FOR_RENEWAL_SEC: u64 = 15552000;
-
     #[test(
         aptos_names = @aptos_names,
         aptos_names_v2 = @aptos_names_v2,
@@ -61,49 +59,6 @@ module aptos_names_v2::subdomain_e2e_tests {
         // And also can clear if is registered address, but not owner
         test_helper::set_name_address(user, option::some(test_helper::subdomain_name()), test_helper::domain_name(), signer::address_of(rando));
         test_helper::clear_name_address(rando, option::some(test_helper::subdomain_name()), test_helper::domain_name());
-    }
-
-    #[test(
-        aptos_names = @aptos_names,
-        aptos_names_v2 = @aptos_names_v2,
-        user = @0x077,
-        aptos = @0x1,
-        rando = @0x266f,
-        foundation = @0xf01d
-    )]
-    fun renew_domain_e2e_test(
-        aptos_names: &signer,
-        aptos_names_v2: &signer,
-        user: signer,
-        aptos: signer,
-        rando: signer,
-        foundation: signer
-    ) {
-        let users = test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
-
-        // Register the domain
-        test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>());
-        let (expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(option::none(), test_helper::domain_name());
-
-        // Set the time is early than max remaining time for renewal from expiration time
-        timestamp::update_global_time_for_test_secs(expiration_time_sec - MAX_REMAINING_TIME_FOR_RENEWAL_SEC - 5);
-        assert!(!domains::is_domain_in_renewal_window(test_helper::domain_name()), 1);
-
-        timestamp::update_global_time_for_test_secs(expiration_time_sec - MAX_REMAINING_TIME_FOR_RENEWAL_SEC + 5);
-        assert!(domains::is_domain_in_renewal_window(test_helper::domain_name()), 2);
-
-        // Renew the domain
-        domains::renew_domain(user, test_helper::domain_name(), time_helper::years_to_seconds(1));
-
-        // Ensure the domain is still registered after the original expiration time
-        timestamp::update_global_time_for_test_secs(expiration_time_sec + 5);
-        assert!(domains::name_is_registered(option::none(), test_helper::domain_name()), 4);
-
-        let (new_expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(option::none(), test_helper::domain_name());
-        // Ensure the domain is still expired after the new expiration time
-        timestamp::update_global_time_for_test_secs(new_expiration_time_sec + 5);
-        assert!(domains::name_is_expired(option::none(), test_helper::domain_name()), 5);
     }
 
 
