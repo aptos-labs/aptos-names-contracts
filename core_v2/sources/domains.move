@@ -628,13 +628,37 @@ module aptos_names_v2::domains {
     fun validate_registration_duration(
         registration_duration_secs: u64,
     ) {
-        assert!(registration_duration_secs % SECONDS_PER_YEAR == 0, error::invalid_argument(EDURATION_MUST_BE_WHOLE_YEARS));
+        assert!(
+            registration_duration_secs % SECONDS_PER_YEAR == 0,
+            error::invalid_argument(EDURATION_MUST_BE_WHOLE_YEARS)
+        );
 
         let num_years = (time_helper::seconds_to_years(registration_duration_secs) as u8);
         assert!(
             num_years > 0 && num_years <= config::max_number_of_years_registered(),
             error::out_of_range(EINVALID_NUMBER_YEARS)
         );
+    }
+    public fun transfer_subdomain_owner(
+        sign: &signer,
+        subdomain_name: String,
+        domain_name: String,
+        new_owner_address: address,
+        new_target_address: Option<address>,
+    ) acquires CollectionCapabilityV2, NameRecordV2, ReverseRecord, SetReverseLookupEventsV1 {
+        // validate user own the domain
+        let signer_addr = signer::address_of(sign);
+        assert!(
+            is_owner_of_name(signer_addr, option::none(), domain_name),
+            error::permission_denied(ENOT_OWNER_OF_DOMAIN)
+        );
+
+        let token_addr = token_addr_inline(domain_name, option::some(subdomain_name));
+        let record = borrow_global_mut<NameRecordV2>(token_addr);
+        record.target_address = new_target_address;
+        object::transfer_with_ref(object::generate_linear_transfer_ref(&record.transfer_ref), new_owner_address);
+        // clear the primary name
+        clear_reverse_lookup_for_name(option::some(subdomain_name), domain_name);
     }
 
     fun validate_name_string(
@@ -1128,35 +1152,6 @@ module aptos_names_v2::domains {
     ): (Option<String>, String) acquires NameRecordV2 {
         let record = borrow_global<NameRecordV2>(token_addr);
         (extract_subdomain_name(record), record.domain_name)
-    }
-
-    #[view]
-    public fun get_domain_props(
-        domain: String,
-    ): (u64, Option<address>) acquires CollectionCapabilityV2, NameRecordV2 {
-        get_name_record_v1_props_for_name(option::none(), domain)
-    }
-
-    #[view]
-    public fun get_subdomain_props(
-        subdomain: String,
-        domain: String,
-    ): (u64, Option<address>) acquires CollectionCapabilityV2, NameRecordV2 {
-        get_name_record_v1_props_for_name(option::some(subdomain), domain)
-    }
-
-    #[view]
-    public fun get_reverse_lookup_name(
-        account_addr: address
-    ): (Option<String>, Option<String>) acquires ReverseRecord, NameRecordV2 {
-        let reverse_record_address = get_reverse_lookup(account_addr);
-        if (option::is_some(&reverse_record_address)) {
-            let address = option::borrow(&reverse_record_address);
-            let (subdomain_name, domain_name) = get_record_props_from_token_addr(*address);
-            (subdomain_name, option::some(domain_name))
-        } else {
-            (option::none(), option::none())
-        }
     }
 
     /// Given a time, returns true if that time is in the past, false otherwise
