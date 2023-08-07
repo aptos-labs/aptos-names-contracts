@@ -648,7 +648,7 @@ module aptos_names_v2::domain_e2e_tests {
 
         // |rando| sets his primary name
         let domain_name_str = string::utf8(b"test");
-        domains::set_reverse_lookup(rando, option::none(), domain_name_str);
+        domains::set_reverse_lookup(rando, option::none(), domain_name_str, signer::address_of(rando));
 
         // |user|'s primary name should be none.
         assert!(option::is_none(&domains::get_reverse_lookup(user_addr)), 1);

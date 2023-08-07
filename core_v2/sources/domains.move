@@ -18,7 +18,6 @@ module aptos_names_v2::domains {
     use std::error;
     use std::option::{Self, Option};
     use std::signer;
-    use std::signer::address_of;
     use std::string::{Self, String, utf8};
 
     const APP_SIGNER_CAPABILITY_SEED: vector<u8> = b"APP_SIGNER_CAPABILITY";
@@ -319,6 +318,7 @@ module aptos_names_v2::domains {
         domain_name: String,
         subdomain_name: Option<String>,
         expiration_time_sec: u64,
+        target_address: Option<address>,
     ) acquires CollectionCapabilityV2 {
         let name = token_helper::get_fully_qualified_domain_name(subdomain_name, domain_name);
         let description = config::tokendata_description();
@@ -351,7 +351,7 @@ module aptos_names_v2::domains {
         let record = NameRecordV2 {
             domain_name,
             expiration_time_sec,
-            target_address: option::none(),
+            target_address,
             transfer_ref: object::generate_transfer_ref(&constructor_ref),
             extend_ref: object::generate_extend_ref(&constructor_ref),
             subdomain_ext,
@@ -365,6 +365,8 @@ module aptos_names_v2::domains {
         sign: &signer,
         domain_name: String,
         registration_duration_secs: u64,
+        target_address: Option<address>,
+        transfer_to_address: address,
     ) acquires CollectionCapabilityV2, NameRecordV2, RegisterNameEventsV1, ReverseRecord, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
         validate_registration_duration(registration_duration_secs);
 
@@ -377,29 +379,140 @@ module aptos_names_v2::domains {
         let price = price_model::price_for_domain_v1(length, registration_duration_secs);
         coin::transfer<AptosCoin>(sign, config::fund_destination_address(), price);
 
-        register_name_internal(sign, subdomain_name, domain_name, registration_duration_secs, price);
+        register_name_internal(
+            sign,
+            subdomain_name,
+            domain_name,
+            registration_duration_secs,
+            price,
+            target_address,
+            option::some(transfer_to_address),
+        );
     }
 
-    /// A wrapper around `register_name` as an entry function.
+    /// A wrapper around `register_domain` as an entry function.
     /// Option<String> is not currently serializable, so we have these convenience methods
-    public entry fun register_domain(
+    public entry fun entry_register_domain_without_target_address(
         sign: &signer,
         domain_name: String,
         registration_duration_secs: u64,
+        transfer_to_address: address,
+    ) acquires CollectionCapabilityV2, NameRecordV2, RegisterNameEventsV1, ReverseRecord, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
+        register_domain(sign, domain_name, registration_duration_secs, option::none(), transfer_to_address);
+    }
+
+    /// A wrapper around `register_domain` as an entry function.
+    /// Option<String> is not currently serializable, so we have these convenience methods
+    public entry fun entry_register_domain_with_target_address(
+        sign: &signer,
+        domain_name: String,
+        registration_duration_secs: u64,
+        target_address: address,
+        transfer_to_address: address,
+    ) acquires CollectionCapabilityV2, NameRecordV2, RegisterNameEventsV1, ReverseRecord, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
+        register_domain(sign, domain_name, registration_duration_secs, option::some(target_address), transfer_to_address);
+    }
+
+    public fun register_domain(
+        sign: &signer,
+        domain_name: String,
+        registration_duration_secs: u64,
+        target_address: Option<address>,
+        transfer_to_address: address,
     ) acquires CollectionCapabilityV2, NameRecordV2, RegisterNameEventsV1, ReverseRecord, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
         assert!(config::unrestricted_mint_enabled(), error::permission_denied(EVALID_SIGNATURE_REQUIRED));
-        register_domain_generic(sign, domain_name, registration_duration_secs);
+        register_domain_generic(sign, domain_name, registration_duration_secs, target_address, transfer_to_address);
+    }
+
+    /// A wrapper around `register_domain_with_signature` as an entry function.
+    /// Option<String> is not currently serializable, so we have these convenience methods
+    public entry fun entry_register_domain_without_target_address_with_signature(
+        sign: &signer,
+        domain_name: String,
+        registration_duration_secs: u64,
+        signature: vector<u8>,
+        transfer_to_address: address,
+    ) acquires CollectionCapabilityV2, NameRecordV2, RegisterNameEventsV1, ReverseRecord, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
+        register_domain_with_signature(
+            sign,
+            domain_name,
+            registration_duration_secs,
+            signature,
+            option::none(),
+            transfer_to_address,
+        );
+    }
+
+    /// A wrapper around `register_domain_with_signature` as an entry function.
+    /// Option<String> is not currently serializable, so we have these convenience methods
+    public entry fun entry_register_domain_with_target_address_with_signature(
+        sign: &signer,
+        domain_name: String,
+        registration_duration_secs: u64,
+        signature: vector<u8>,
+        target_address: address,
+        transfer_to_address: address,
+    ) acquires CollectionCapabilityV2, NameRecordV2, RegisterNameEventsV1, ReverseRecord, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
+        register_domain_with_signature(
+            sign,
+            domain_name,
+            registration_duration_secs,
+            signature,
+            option::some(target_address),
+            transfer_to_address,
+        );
     }
 
     public entry fun register_domain_with_signature(
         sign: &signer,
         domain_name: String,
         registration_duration_secs: u64,
-        signature: vector<u8>
+        signature: vector<u8>,
+        target_address: Option<address>,
+        transfer_to_address: address,
     ) acquires CollectionCapabilityV2, NameRecordV2, RegisterNameEventsV1, ReverseRecord, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
         let account_address = signer::address_of(sign);
         verify::assert_register_domain_signature_verifies(signature, account_address, domain_name);
-        register_domain_generic(sign, domain_name, registration_duration_secs);
+        register_domain_generic(sign, domain_name, registration_duration_secs, target_address, transfer_to_address);
+    }
+
+    /// A wrapper around `register_subdomain` as an entry function.
+    /// Option<String> is not currently serializable, so we have these convenience methods
+    public entry fun entry_register_subdomain_without_target_address(
+        sign: &signer,
+        subdomain_name: String,
+        domain_name: String,
+        registration_duration_secs: u64,
+        transfer_to_address: address,
+    ) acquires CollectionCapabilityV2, NameRecordV2, RegisterNameEventsV1, ReverseRecord, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
+        register_subdomain(
+            sign,
+            subdomain_name,
+            domain_name,
+            registration_duration_secs,
+            option::none(),
+            transfer_to_address,
+        );
+    }
+
+    /// A wrapper around `register_subdomain` as an entry function.
+    /// Option<String> is not currently serializable, so we have these convenience methods
+    public entry fun entry_register_subdomain_with_target_address(
+        sign: &signer,
+        subdomain_name: String,
+        domain_name: String,
+        registration_duration_secs: u64,
+        target_address: address,
+        transfer_to_address: address,
+    ) acquires CollectionCapabilityV2, NameRecordV2, RegisterNameEventsV1, ReverseRecord, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
+        register_subdomain(
+            sign,
+            subdomain_name,
+            domain_name,
+            registration_duration_secs,
+            option::some(target_address),
+            transfer_to_address,
+        );
     }
 
     /// A wrapper around `register_name` as an entry function.
@@ -409,7 +522,9 @@ module aptos_names_v2::domains {
         sign: &signer,
         subdomain_name: String,
         domain_name: String,
-        expiration_time_sec: u64
+        expiration_time_sec: u64,
+        target_address: Option<address>,
+        transfer_to_address: address,
     ) acquires CollectionCapabilityV2, NameRecordV2, RegisterNameEventsV1, ReverseRecord, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
         assert!(config::is_enabled(), error::unavailable(ENOT_ENABLED));
 
@@ -434,7 +549,15 @@ module aptos_names_v2::domains {
         let price = price_model::price_for_subdomain_v1(registration_duration_secs);
         coin::transfer<AptosCoin>(sign, config::fund_destination_address(), price);
 
-        register_name_internal(sign, option::some(subdomain_name), domain_name, registration_duration_secs, price);
+        register_name_internal(
+            sign,
+            option::some(subdomain_name),
+            domain_name,
+            registration_duration_secs,
+            price,
+            target_address,
+            option::some(transfer_to_address),
+        );
     }
 
     /// Register a name. Accepts an optional subdomain name, a required domain name, and a registration duration in seconds.
@@ -443,12 +566,16 @@ module aptos_names_v2::domains {
     /// The maximum subdomain registration duration is limited to the duration of its parent domain registration
     ///
     /// NOTE: Registration validation already done. This function does not perform any validation on whether `sign` is allowed to register this name
+    /// If transfer_to_address is none, we transfer to signer
+    /// If target_address is unset, we do nothing
     fun register_name_internal(
         sign: &signer,
         subdomain_name: Option<String>,
         domain_name: String,
         registration_duration_secs: u64,
-        price: u64
+        price: u64,
+        target_address: Option<address>,
+        transfer_to_address: Option<address>,
     ) acquires CollectionCapabilityV2, NameRecordV2, RegisterNameEventsV1, ReverseRecord, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
         // If we're registering a name that exists but is expired, and the expired name is a primary name,
         // it should get removed from being a primary name.
@@ -466,31 +593,47 @@ module aptos_names_v2::domains {
             );
         };
 
-        // If the token already exists, transfer it to the signer
-        // Else, create a new one and transfer it to the signer
+        // If the token already exists, transfer it to to_addr
+        // Else, create a new one and transfer it to to_addr
         let account_addr = signer::address_of(sign);
         let token_addr = token_addr_inline(domain_name, subdomain_name);
+        // If transfer_to_address exists then to_addr is transfer_to_address
+        // Else to_addr is the singer
+        let to_addr = if (option::is_some(&transfer_to_address)) {
+            *option::borrow(&transfer_to_address)
+        } else {
+            account_addr
+        };
         if (object::is_object(token_addr)) {
             let record = borrow_global_mut<NameRecordV2>(token_addr);
             record.expiration_time_sec = name_expiration_time_secs;
-            record.target_address = option::none();
-            object::transfer_with_ref(object::generate_linear_transfer_ref(&record.transfer_ref), account_addr);
+            record.target_address = target_address;
+            object::transfer_with_ref(object::generate_linear_transfer_ref(&record.transfer_ref), to_addr);
         } else {
             create_token(
-                account_addr,
+                to_addr,
                 domain_name,
                 subdomain_name,
                 name_expiration_time_secs,
+                target_address,
             );
+        };
+
+        let target_address = if (option::is_some(&target_address)) {
+            *option::borrow(&target_address)
+        } else {
+            signer::address_of(sign)
         };
 
         let reverse_lookup_result = get_reverse_lookup(account_addr);
         if (option::is_none(&reverse_lookup_result)) {
             // If the user has no reverse lookup set, set the user's reverse lookup.
-            set_reverse_lookup(sign, subdomain_name, domain_name);
-        } else if (!is_subdomain(subdomain_name)) {
-            // Automatically set the name to point to the sender's address
-            set_name_address_internal(subdomain_name, domain_name, signer::address_of(sign));
+            set_reverse_lookup(sign, subdomain_name, domain_name, target_address);
+        } ;
+
+        if (!is_subdomain(subdomain_name)) {
+            // If user is registerering a domain, automatically set the name to point to the sender's address
+            set_name_address_internal(subdomain_name, domain_name, target_address);
         };
 
         event::emit_event<RegisterNameEventV1>(
@@ -566,7 +709,15 @@ module aptos_names_v2::domains {
     ) acquires CollectionCapabilityV2, NameRecordV2, RegisterNameEventsV1, ReverseRecord, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
         config::assert_signer_is_admin(sign);
         // Register the name
-        register_name_internal(sign, subdomain_name, domain_name, registration_duration_secs, 0);
+        register_name_internal(
+            sign,
+            subdomain_name,
+            domain_name,
+            registration_duration_secs,
+            0,
+            option::none(),
+            option::none(),
+        );
     }
 
     // TODO: angie add force_renew_domain and force_renew_subdomain here.
@@ -963,14 +1114,15 @@ module aptos_names_v2::domains {
     public entry fun set_reverse_lookup(
         account: &signer,
         subdomain_name: Option<String>,
-        domain_name: String
+        domain_name: String,
+        new_address: address
     ) acquires CollectionCapabilityV2, NameRecordV2, ReverseRecord, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
         // Name must be registered before assigning reverse lookup
         if (!name_is_registered(subdomain_name, domain_name)) {
             return
         };
         let token_addr = token_addr_inline(domain_name, subdomain_name);
-        set_name_address(account, subdomain_name, domain_name, address_of(account));
+        set_name_address(account, subdomain_name, domain_name, new_address);
         set_reverse_lookup_internal(account, token_addr);
     }
 
@@ -1027,6 +1179,8 @@ module aptos_names_v2::domains {
             domain_name,
             new_expiration_time_sec - now,
             0,
+            option::none(),
+            option::none(),
         );
         // TODO: `register_name_internal` should accept a `target_addr`
         if (option::is_some(&target_addr)) {
