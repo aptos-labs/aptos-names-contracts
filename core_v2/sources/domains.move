@@ -31,9 +31,10 @@ module aptos_names_v2::domains {
     const AUTO_RENEWAL_EXPIRATION_CUTOFF_SEC: u64 = 1709855999;
     const SECONDS_PER_YEAR: u64 = 60 * 60 * 24 * 365;
 
-    /// enums for subdomain expiration policy
+    /// enums for subdomain expiration policy. update validate_subdomain_expiration_policy() when adding more
     const SUBDOMAIN_POLICY_LOOKUP_DOMAIN_EXPIRATION: u8 = 0;
     const SUBDOMAIN_POLICY_MANUAL_SET_EXPIRATION: u8 = 1;
+    // const SUBDOMAIN_POLICY_NEXT_ENUM = 2
 
     /// The Naming Service contract is not enabled
     const ENOT_ENABLED: u64 = 1;
@@ -169,7 +170,7 @@ module aptos_names_v2::domains {
     struct RenewNameEventV1 has drop, store {
         domain_name: String,
         subdomain_name: Option<String>,
-        registration_fee_octas: u64,
+        renewal_fee_octas: u64,
         expiration_time_secs: u64,
     }
 
@@ -625,7 +626,7 @@ module aptos_names_v2::domains {
             RenewNameEventV1 {
                 domain_name,
                 subdomain_name: option::none(),
-                registration_fee_octas: price,
+                renewal_fee_octas: price,
                 expiration_time_secs: record.expiration_time_sec,
             },
         );
@@ -725,11 +726,13 @@ module aptos_names_v2::domains {
     }
 
     fun validate_subdomain_expiration_policy(
-        use_domain_expiration_sec: u8,
+        subdomain_expiration_policy: u8,
     ) {
+        // revise the function when adding more policies
+        // SUBDOMAIN_POLICY_NEXT_ENUM = 2
         assert!(
-            use_domain_expiration_sec == SUBDOMAIN_POLICY_LOOKUP_DOMAIN_EXPIRATION
-                || use_domain_expiration_sec == SUBDOMAIN_POLICY_MANUAL_SET_EXPIRATION,
+            subdomain_expiration_policy == SUBDOMAIN_POLICY_LOOKUP_DOMAIN_EXPIRATION
+                || subdomain_expiration_policy == SUBDOMAIN_POLICY_MANUAL_SET_EXPIRATION,
             error::invalid_argument(ESUBDOMAIN_EXPIRATION_POLICY_INVALID)
         );
     }
