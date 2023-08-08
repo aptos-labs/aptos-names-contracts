@@ -32,8 +32,8 @@ module aptos_names_v2::domains {
     const SECONDS_PER_YEAR: u64 = 60 * 60 * 24 * 365;
 
     /// enums for subdomain expiration policy. update validate_subdomain_expiration_policy() when adding more
-    const SUBDOMAIN_POLICY_LOOKUP_DOMAIN_EXPIRATION: u8 = 0;
-    const SUBDOMAIN_POLICY_MANUAL_SET_EXPIRATION: u8 = 1;
+    const SUBDOMAIN_POLICY_MANUAL_SET_EXPIRATION: u8 = 0;
+    const SUBDOMAIN_POLICY_LOOKUP_DOMAIN_EXPIRATION: u8 = 1;
     // const SUBDOMAIN_POLICY_NEXT_ENUM = 2
 
     /// The Naming Service contract is not enabled
