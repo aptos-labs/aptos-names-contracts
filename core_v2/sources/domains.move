@@ -31,6 +31,11 @@ module aptos_names_v2::domains {
     const AUTO_RENEWAL_EXPIRATION_CUTOFF_SEC: u64 = 1709855999;
     const SECONDS_PER_YEAR: u64 = 60 * 60 * 24 * 365;
 
+    /// enums for subdomain expiration policy. update validate_subdomain_expiration_policy() when adding more
+    const SUBDOMAIN_POLICY_MANUAL_SET_EXPIRATION: u8 = 0;
+    const SUBDOMAIN_POLICY_LOOKUP_DOMAIN_EXPIRATION: u8 = 1;
+    // const SUBDOMAIN_POLICY_NEXT_ENUM = 2
+
     /// The Naming Service contract is not enabled
     const ENOT_ENABLED: u64 = 1;
     /// The caller is not authorized to perform this operation
@@ -77,6 +82,8 @@ module aptos_names_v2::domains {
     const ESUBDOMAIN_EXPIRATION_PASS_DOMAIN_EXPIRATION: u64 = 24;
     /// The duration must be whole years
     const EDURATION_MUST_BE_WHOLE_YEARS: u64 = 25;
+    /// The subdomain expiration policy is included in the enum SUBDOMAIN_POLICY_*
+    const ESUBDOMAIN_EXPIRATION_POLICY_INVALID: u64 = 26;
 
     /// Tokens require a signer to create, so this is the signer for the collection
     struct CollectionCapabilityV2 has key, drop {
@@ -92,7 +99,7 @@ module aptos_names_v2::domains {
 
     struct SubdomainExt has store {
         subdomain_name: String,
-        use_domain_expiration_sec: bool,
+        subdomain_expiration_policy: u8,
     }
 
     #[resource_group_member(group = aptos_framework::object::ObjectGroup)]
@@ -163,7 +170,7 @@ module aptos_names_v2::domains {
     struct RenewNameEventV1 has drop, store {
         domain_name: String,
         subdomain_name: Option<String>,
-        registration_fee_octas: u64,
+        renewal_fee_octas: u64,
         expiration_time_secs: u64,
     }
 
@@ -341,7 +348,7 @@ module aptos_names_v2::domains {
                 subdomain_name: option::extract(&mut subdomain_name),
                 // TODO: use_domain_expiration_sec should be passed in as a param
                 // Now by default subdomain follow domain's expiration
-                use_domain_expiration_sec: true,
+                subdomain_expiration_policy: SUBDOMAIN_POLICY_LOOKUP_DOMAIN_EXPIRATION,
             });
         }
         // creating domain
@@ -619,7 +626,7 @@ module aptos_names_v2::domains {
             RenewNameEventV1 {
                 domain_name,
                 subdomain_name: option::none(),
-                registration_fee_octas: price,
+                renewal_fee_octas: price,
                 expiration_time_secs: record.expiration_time_sec,
             },
         );
@@ -703,7 +710,7 @@ module aptos_names_v2::domains {
         let record = get_record_mut(domain_name, option::some(subdomain_name));
         assert!(option::is_some(&record.subdomain_ext), error::invalid_state(ENOT_A_SUBDOMAIN));
             let subdomain_ext = option::borrow(&record.subdomain_ext);
-            if (subdomain_ext.use_domain_expiration_sec) {
+            if (subdomain_ext.subdomain_expiration_policy == SUBDOMAIN_POLICY_LOOKUP_DOMAIN_EXPIRATION) {
                 assert!(false, error::invalid_state(ESUBDOMAIN_IS_AUTO_RENEW));
             };
 
@@ -715,9 +722,10 @@ module aptos_names_v2::domains {
         sign: &signer,
         domain_name: String,
         subdomain_name: String,
-        use_domain_expiration_sec: bool,
+        subdomain_expiration_policy: u8,
     ) acquires CollectionCapabilityV2, NameRecordV2 {
         validate_subdomain_to_renew(sign, subdomain_name, domain_name);
+        validate_subdomain_expiration_policy(subdomain_expiration_policy);
         // if manually set the expiration date
         let record = get_record_mut(domain_name, option::some(subdomain_name));
         // check the auto-renew flag
@@ -725,20 +733,32 @@ module aptos_names_v2::domains {
             assert!(false, error::invalid_state(ENOT_A_SUBDOMAIN));
         };
         let subdomain_ext = option::borrow_mut(&mut record.subdomain_ext);
-        subdomain_ext.use_domain_expiration_sec = use_domain_expiration_sec;
+        subdomain_ext.subdomain_expiration_policy = subdomain_expiration_policy;
     }
 
     public fun get_subdomain_renewal_policy(
         domain_name: String,
         subdomain_name: String,
-    ): bool acquires CollectionCapabilityV2, NameRecordV2 {
+    ): u8 acquires CollectionCapabilityV2, NameRecordV2 {
         let record = get_record_mut(domain_name, option::some(subdomain_name));
         // check the auto-renew flag
         if (!option::is_some(&record.subdomain_ext)) {
             assert!(false, error::invalid_state(ESUBDOMAIN_NOT_EXIST));
         };
         let subdomain_ext = option::borrow_mut(&mut record.subdomain_ext);
-        subdomain_ext.use_domain_expiration_sec
+        subdomain_ext.subdomain_expiration_policy
+    }
+
+    fun validate_subdomain_expiration_policy(
+        subdomain_expiration_policy: u8,
+    ) {
+        // revise the function when adding more policies
+        // SUBDOMAIN_POLICY_NEXT_ENUM = 2
+        assert!(
+            subdomain_expiration_policy == SUBDOMAIN_POLICY_LOOKUP_DOMAIN_EXPIRATION
+                || subdomain_expiration_policy == SUBDOMAIN_POLICY_MANUAL_SET_EXPIRATION,
+            error::invalid_argument(ESUBDOMAIN_EXPIRATION_POLICY_INVALID)
+        );
     }
 
     fun validate_subdomain_to_renew(
@@ -784,7 +804,7 @@ module aptos_names_v2::domains {
             // check the auto-renew flag
             if (option::is_some(&record.subdomain_ext)) {
                 let subdomain_ext = option::borrow(&record.subdomain_ext);
-                if (subdomain_ext.use_domain_expiration_sec) {
+                if (subdomain_ext.subdomain_expiration_policy == SUBDOMAIN_POLICY_LOOKUP_DOMAIN_EXPIRATION) {
                     // refer to the expiration date of the domain
                     let domain_record = get_record(domain_name, option::none());
                     return time_is_expired(domain_record.expiration_time_sec)
