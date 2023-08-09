@@ -560,22 +560,6 @@ module aptos_names_v2::domains {
             set_name_address_internal(subdomain_name, domain_name, target_address);
         };
 
-        // // Else either signer mint a name for others (target address is other) or transfer the name to others (target address
-        //     {
-        //     // If target address is provided, set it
-        //     if (option::is_some(&target_address_copy)) {
-        //         set_name_address_internal(subdomain_name, domain_name, target_address);
-        //     }
-        //     else {
-        //         // If signer is registering a domain and target address is not provided, use itself
-        //         if (!is_subdomain(subdomain_name)) {
-        //             if ()
-        //             set_name_address_internal(subdomain_name, domain_name, target_address);
-        //         }
-        //         // Else we are not registering a domain and target address is not provided, leave the target address unset
-        //     };
-        // };
-
         event::emit_event<RegisterNameEventV1>(
             &mut borrow_global_mut<RegisterNameEventsV1>(@aptos_names_v2).register_name_events,
             RegisterNameEventV1 {

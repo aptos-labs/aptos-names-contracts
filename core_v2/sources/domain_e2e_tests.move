@@ -36,7 +36,7 @@ module aptos_names_v2::domain_e2e_tests {
         let user_addr = signer::address_of(user);
 
         // Register the domain
-        test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>());
+        test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>(), option::none(), option::none());
 
         // Set an address and verify it
         test_helper::set_target_address(user, option::none(), test_helper::domain_name(), user_addr);
@@ -128,7 +128,7 @@ module aptos_names_v2::domain_e2e_tests {
         config::set_unrestricted_mint_enabled(aptos_names_v2, false);
 
         // Register the domain
-        test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, signature);
+        test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, signature, option::none(), option::none());
 
         // Set an address and verify it
         test_helper::set_target_address(user, option::none(), test_helper::domain_name(), user_addr);
@@ -167,7 +167,7 @@ module aptos_names_v2::domain_e2e_tests {
         chain_id::initialize_for_test(&aptos, 4);
         config::set_unrestricted_mint_enabled(aptos_names_v2, false);
 
-        test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>());
+        test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>(), option::none(), option::none());
     }
 
     #[test(
@@ -191,7 +191,7 @@ module aptos_names_v2::domain_e2e_tests {
         let rando = vector::borrow(&users, 1);
 
         // Register the domain
-        test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>());
+        test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>(), option::none(), option::none());
 
         // Set the time past the domain's expiration time
         let (expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(option::none(), test_helper::domain_name());
@@ -203,7 +203,7 @@ module aptos_names_v2::domain_e2e_tests {
         assert!(domains::name_is_registerable(option::none(), test_helper::domain_name()), 82);
 
         // Lets try to register it again, now that it is expired
-        test_helper::register_name(rando, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 2, vector::empty<u8>());
+        test_helper::register_name(rando, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 2, vector::empty<u8>(), option::none(), option::none());
 
         // Reverse lookup for |user| should be none.
         assert!(option::is_none(&domains::get_reverse_lookup(signer::address_of(user))), 85);
@@ -218,7 +218,7 @@ module aptos_names_v2::domain_e2e_tests {
         assert!(domains::name_is_registerable(option::none(), test_helper::domain_name()), 82);
 
         // Lets try to register it again, now that it is expired
-        test_helper::register_name(rando, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 3, vector::empty<u8>());
+        test_helper::register_name(rando, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 3, vector::empty<u8>(), option::none(), option::none());
     }
 
     #[test(
@@ -242,9 +242,9 @@ module aptos_names_v2::domain_e2e_tests {
         let user = vector::borrow(&users, 0);
 
         // Register the domain
-        test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>());
+        test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>(), option::none(), option::none());
         // Ensure we can't register it again
-        test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>());
+        test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>(), option::none(), option::none());
     }
 
     #[test(
@@ -269,7 +269,7 @@ module aptos_names_v2::domain_e2e_tests {
         let rando = vector::borrow(&users, 1);
 
         // Register the domain
-        test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>());
+        test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>(), option::none(), option::none());
         // Ensure we can't set it as a rando. The expected target address doesn't matter as it won't get hit
         test_helper::set_target_address(rando, option::none(), test_helper::domain_name(), @aptos_names_v2);
     }
@@ -296,7 +296,7 @@ module aptos_names_v2::domain_e2e_tests {
         let rando = vector::borrow(&users, 1);
 
         // Register the domain, and set its address
-        test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>());
+        test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>(), option::none(), option::none());
         test_helper::set_target_address(user, option::none(), test_helper::domain_name(), signer::address_of(user));
 
         // Ensure we can't clear it as a rando
@@ -324,7 +324,7 @@ module aptos_names_v2::domain_e2e_tests {
         let rando = vector::borrow(&users, 1);
 
         // Register the domain, and set its address
-        test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>());
+        test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>(), option::none(), option::none());
         test_helper::set_target_address(user, option::none(), test_helper::domain_name(), signer::address_of(rando));
 
         // Ensure we can clear as owner
@@ -361,7 +361,9 @@ module aptos_names_v2::domain_e2e_tests {
             test_helper::one_year_secs(),
             test_helper::fq_domain_name(),
             1,
-            vector::empty<u8>()
+            vector::empty<u8>(),
+            option::none(),
+            option::none(),
         );
 
         domains::force_set_domain_address(aptos_names_v2, test_helper::domain_name(), rando_addr);
@@ -397,7 +399,7 @@ module aptos_names_v2::domain_e2e_tests {
         let rando_addr = signer::address_of(rando);
 
         // Register the domain
-        test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>());
+        test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>(), option::none(), option::none());
 
         // Rando is not allowed to do this
         domains::force_set_domain_address(rando, test_helper::domain_name(), rando_addr);
@@ -425,7 +427,7 @@ module aptos_names_v2::domain_e2e_tests {
         let user_addr = signer::address_of(user);
 
         // Register the domain
-        test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>());
+        test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>(), option::none(), option::none());
         let is_owner = domains::is_owner_of_name(signer::address_of(user), option::none(), test_helper::domain_name());
         assert!(is_owner, 1);
 
@@ -464,7 +466,7 @@ module aptos_names_v2::domain_e2e_tests {
 
         // Register the domain. This will be the user's reverse lookup
         {
-            test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>());
+            test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>(), option::none(), option::none());
             let is_owner = domains::is_owner_of_name(signer::address_of(user), option::none(), test_helper::domain_name());
             assert!(is_owner, 1);
         };
@@ -472,7 +474,7 @@ module aptos_names_v2::domain_e2e_tests {
         // Register another domain. This will **not** be the user's reverse lookup
         let domain_name = string::utf8(b"sets");
         let fq_domain_name = string::utf8(b"sets.apt");
-        test_helper::register_name(user, option::none(), domain_name, test_helper::one_year_secs(), fq_domain_name, 1, vector::empty<u8>());
+        test_helper::register_name(user, option::none(), domain_name, test_helper::one_year_secs(), fq_domain_name, 1, vector::empty<u8>(), option::none(), option::none());
         let is_owner = domains::is_owner_of_name(signer::address_of(user), option::none(), domain_name);
         assert!(is_owner, 1);
 
@@ -547,7 +549,7 @@ module aptos_names_v2::domain_e2e_tests {
         let rando = vector::borrow(&users, 1);
 
         // Register the domain
-        test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>());
+        test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>(), option::none(), option::none());
         let is_owner = domains::is_owner_of_name(signer::address_of(user), option::none(), test_helper::domain_name());
         assert!(is_owner, 1);
 
@@ -603,7 +605,7 @@ module aptos_names_v2::domain_e2e_tests {
         let user_addr = signer::address_of(user);
 
         // Register the domain
-        test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>());
+        test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>(), option::none(), option::none());
 
         // Clear my reverse lookup.
         domains::clear_reverse_lookup(user);
@@ -634,7 +636,7 @@ module aptos_names_v2::domain_e2e_tests {
         let rando_addr = signer::address_of(rando);
 
         // Register the domain
-        test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>());
+        test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>(), option::none(), option::none());
         let is_owner = domains::is_owner_of_name(user_addr, option::none(), test_helper::domain_name());
         assert!(is_owner, 1);
 
@@ -678,7 +680,7 @@ module aptos_names_v2::domain_e2e_tests {
         let rando_addr = signer::address_of(rando);
 
         // Register the domain
-        test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>());
+        test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>(), option::none(), option::none());
         let is_owner = domains::is_owner_of_name(user_addr, option::none(), test_helper::domain_name());
         assert!(is_owner, 1);
 
@@ -720,7 +722,7 @@ module aptos_names_v2::domain_e2e_tests {
         let user_addr = signer::address_of(user);
 
         // Register the domain
-        test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>());
+        test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>(), option::none(), option::none());
         let is_owner = domains::is_owner_of_name(user_addr, option::none(), test_helper::domain_name());
         assert!(is_owner, 1);
 
@@ -762,7 +764,9 @@ module aptos_names_v2::domain_e2e_tests {
             test_helper::one_year_secs(),
             test_helper::fq_domain_name(),
             1,
-            vector::empty<u8>()
+            vector::empty<u8>(),
+            option::none(),
+            option::none(),
         );
 
         // user is owner
@@ -780,6 +784,80 @@ module aptos_names_v2::domain_e2e_tests {
             assert!(is_owner, 1);
         };
     }
+    //
+    // #[test(
+    //     aptos_names = @aptos_names,
+    //     aptos_names_v2 = @aptos_names_v2,
+    //     user = @0x077,
+    //     aptos = @0x1,
+    //     rando = @0x266f,
+    //     foundation = @0xf01d
+    // )]
+    // fun test_mint_domain_and_set_target_address_to_rando_and_set_transfer_to_address_to_none(
+    //     aptos_names: &signer,
+    //     aptos_names_v2: &signer,
+    //     user: signer,
+    //     aptos: signer,
+    //     rando: signer,
+    //     foundation: signer
+    // ) {
+    //     let users = test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user, &aptos, rando, &foundation);
+    //     let user = vector::borrow(&users, 0);
+    //     let rando = vector::borrow(&users, 1);
+    //     let user_addr = signer::address_of(user);
+    //     let rando_addr = signer::address_of(rando);
+    //
+    //     // Register the domain and set target address to rando in 1 tx
+    //     test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>(), option::some(rando_addr), option::none());
+    //     let (_expiration_time_sec, target_address) = domains::get_name_record_v1_props_for_name(
+    //         option::none(),
+    //         test_helper::domain_name()
+    //     );
+    //     assert!(target_address == option::some(rando_addr), 2);
+    //     let is_owner = aptos_names_v2::domains::is_owner_of_name(
+    //         user_addr,
+    //         option::none(),
+    //         test_helper::domain_name(),
+    //     );
+    //     assert!(is_owner, 3);
+    // }
+    //
+    // #[test(
+    //     aptos_names = @aptos_names,
+    //     aptos_names_v2 = @aptos_names_v2,
+    //     user = @0x077,
+    //     aptos = @0x1,
+    //     rando = @0x266f,
+    //     foundation = @0xf01d
+    // )]
+    // fun test_mint_domain_and_set_target_address_to_none_and_set_transfer_to_rando(
+    //     aptos_names: &signer,
+    //     aptos_names_v2: &signer,
+    //     user: signer,
+    //     aptos: signer,
+    //     rando: signer,
+    //     foundation: signer
+    // ) {
+    //     let users = test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user, &aptos, rando, &foundation);
+    //     let user = vector::borrow(&users, 0);
+    //     let rando = vector::borrow(&users, 1);
+    //     // let user_addr = signer::address_of(user);
+    //     let rando_addr = signer::address_of(rando);
+    //
+    //     // Register the domain and set target address to rando in 1 tx
+    //     test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>(), option::none(), option::some(rando_addr));
+    //     let (_expiration_time_sec, target_address) = domains::get_name_record_v1_props_for_name(
+    //         option::none(),
+    //         test_helper::domain_name()
+    //     );
+    //     assert!(target_address == option::some(rando_addr), 2);
+    //     let is_owner = aptos_names_v2::domains::is_owner_of_name(
+    //         rando_addr,
+    //         option::none(),
+    //         test_helper::domain_name(),
+    //     );
+    //     assert!(is_owner, 3);
+    // }
 
     #[test(
         aptos_names = @aptos_names,

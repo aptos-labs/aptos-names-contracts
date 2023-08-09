@@ -67,7 +67,17 @@ module aptos_names_v2::test_helper {
     }
 
     /// Register the domain, and verify the registration was done correctly
-    public fun register_name(user: &signer, subdomain_name: Option<String>, domain_name: String, registration_duration_secs: u64, _expected_fq_domain_name: String, _expected_property_version: u64, signature: vector<u8>) {
+    public fun register_name(
+        user: &signer,
+        subdomain_name: Option<String>,
+        domain_name: String,
+        registration_duration_secs: u64,
+        _expected_fq_domain_name: String,
+        _expected_property_version: u64,
+        signature: vector<u8>,
+        target_address: Option<address>,
+        transfer_to_address: Option<address>,
+    ) {
         let user_addr = signer::address_of(user);
 
         let is_subdomain = option::is_some(&subdomain_name);
@@ -91,8 +101,8 @@ module aptos_names_v2::test_helper {
                     user,
                     domain_name,
                     registration_duration_secs,
-                    option::none(),
-                    option::none(),
+                    target_address,
+                    transfer_to_address,
                 );
             } else {
                 domains::register_domain_with_signature(
@@ -100,8 +110,8 @@ module aptos_names_v2::test_helper {
                     domain_name,
                     registration_duration_secs,
                     signature,
-                    option::none(),
-                    option::none(),
+                    target_address,
+                    transfer_to_address,
                 );
             };
         } else {
@@ -110,8 +120,8 @@ module aptos_names_v2::test_helper {
                 *option::borrow(&subdomain_name),
                 domain_name,
                 registration_duration_secs,
-                option::none(),
-                option::none(),
+                target_address,
+                transfer_to_address,
             );
         };
 
@@ -130,7 +140,19 @@ module aptos_names_v2::test_helper {
             assert!(query_helper::domain_name_is_registered(domain_name), 113);
         };
 
-        let is_owner = domains::is_owner_of_name(user_addr, subdomain_name, domain_name);
+        let expected_owner = if (option::is_some(&transfer_to_address)) {
+            *option::borrow(&transfer_to_address)
+        } else {
+            user_addr
+        };
+
+        let expected_target_address = if (option::is_some(&target_address)) {
+            *option::borrow(&target_address)
+        } else {
+            user_addr
+        };
+
+        let is_owner = domains::is_owner_of_name(expected_owner, subdomain_name, domain_name);
         // TODO: Re-enable / Re-write
         // let (tdi_creator, tdi_collection, tdi_name, tdi_property_version) = token::get_token_id_fields(&token_id);
 
@@ -138,9 +160,9 @@ module aptos_names_v2::test_helper {
         if (is_subdomain) {
             let subdomain_name_copy = subdomain_name;
             let subdomain_name_extracted = option::borrow(&subdomain_name_copy);
-            assert!(query_helper::is_owner_of_subdomain_name(user_addr, *subdomain_name_extracted, domain_name), 103);
+            assert!(query_helper::is_owner_of_subdomain_name(expected_owner, *subdomain_name_extracted, domain_name), 103);
         } else {
-            assert!(query_helper::is_owner_of_domain_name(user_addr, domain_name), 103);
+            assert!(query_helper::is_owner_of_domain_name(expected_owner, domain_name), 103);
         };
         // assert!(tdi_creator == domains::get_token_signer_address(), 4);
         // assert!(tdi_collection == config::collection_name_v1(), 5);
@@ -174,8 +196,8 @@ module aptos_names_v2::test_helper {
 
             if (option::is_none(&user_reverse_lookup_before)) {
                 // Should automatically point to the users address
-                assert!(target_address == option::some(user_addr), 11);
-                assert!(target_address_lookup_result == option::some(user_addr), 111);
+                assert!(target_address == option::some(expected_target_address), 11);
+                assert!(target_address_lookup_result == option::some(expected_target_address), 111);
             } else {
                 // We haven't set a target address yet!
                 assert!(target_address == option::none(), 11);
@@ -186,8 +208,8 @@ module aptos_names_v2::test_helper {
             assert!(time_helper::seconds_to_days(expiration_time_sec_lookup_result - timestamp::now_seconds()) == 365, 100);
 
             // Should automatically point to the users address
-            assert!(target_address == option::some(user_addr), 11);
-            assert!(target_address_lookup_result == option::some(user_addr), 111);
+            assert!(target_address == option::some(expected_target_address), 11);
+            assert!(target_address_lookup_result == option::some(expected_target_address), 111);
         };
 
         // TODO: Re-enable / Re-write
