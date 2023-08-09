@@ -169,8 +169,6 @@ module aptos_names_v2::subdomain_e2e_tests {
         // Register a subdomain!
         test_helper::register_name(user, option::some(test_helper::subdomain_name()), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_subdomain_name(), 1, vector::empty<u8>(), option::none(), option::none());
         assert!(domains::get_subdomain_renewal_policy(test_helper::domain_name(), test_helper::subdomain_name()) == 0, 2);
-        test_helper::register_name(user, option::some(test_helper::subdomain_name()), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_subdomain_name(), 1, vector::empty<u8>(), option::none(), option::none());
-        assert!(domains::get_subdomain_renewal_policy(test_helper::domain_name(), test_helper::subdomain_name()) == 1, 2);
         // test set the policy to auto-renewal
         domains::set_subdomain_renewal_policy(user, test_helper::domain_name(), test_helper::subdomain_name(), 1);
         assert!(domains::get_subdomain_renewal_policy(test_helper::domain_name(), test_helper::subdomain_name()) == 1, 3);
