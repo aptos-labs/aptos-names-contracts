@@ -6,7 +6,7 @@ module router::router_tests {
     use std::option;
     use std::signer::address_of;
 
-    const MAX_MODE: u8 = 2;
+    const MAX_MODE: u8 = 1;
 
     #[test(
         router = @router,
@@ -144,7 +144,7 @@ module router::router_tests {
         test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user, &aptos, rando, &foundation);
 
         let i = 0;
-        while (i <= 2) {
+        while (i <= MAX_MODE) {
             router::set_mode(router, i);
             assert!(router::get_mode() == i, 0);
             i = i + 1
