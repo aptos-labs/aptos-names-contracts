@@ -163,6 +163,8 @@ module aptos_names_v2::domains {
         subdomain_name: Option<String>,
         registration_fee_octas: u64,
         expiration_time_secs: u64,
+        target_address: Option<address>,
+        transfer_to_address: address,
     }
 
     /// A name (potentially subdomain) has been renewed on chain
@@ -370,7 +372,9 @@ module aptos_names_v2::domains {
         sign: &signer,
         domain_name: String,
         registration_duration_secs: u64,
-    ) acquires CollectionCapability, NameRecord, RegisterNameEvents, ReverseRecord, SetTargetAddressEvents, SetReverseLookupEvents {
+        target_address: Option<address>,
+        transfer_to_address: Option<address>,
+    ) acquires CollectionCapabilityV2, NameRecordV2, RegisterNameEventsV1, ReverseRecord, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
         validate_registration_duration(registration_duration_secs);
 
         let subdomain_name = option::none<String>();
@@ -382,7 +386,15 @@ module aptos_names_v2::domains {
         let price = price_model::price_for_domain_v1(length, registration_duration_secs);
         coin::transfer<AptosCoin>(sign, config::fund_destination_address(), price);
 
-        register_name_internal(sign, subdomain_name, domain_name, registration_duration_secs, price);
+        register_name_internal(
+            sign,
+            subdomain_name,
+            domain_name,
+            registration_duration_secs,
+            price,
+            target_address,
+            transfer_to_address,
+        );
     }
 
     /// A wrapper around `register_name` as an entry function.
@@ -391,20 +403,24 @@ module aptos_names_v2::domains {
         sign: &signer,
         domain_name: String,
         registration_duration_secs: u64,
-    ) acquires CollectionCapability, NameRecord, RegisterNameEvents, ReverseRecord, SetTargetAddressEvents, SetReverseLookupEvents {
+        target_address: Option<address>,
+        transfer_to_address: Option<address>,
+    ) acquires CollectionCapabilityV2, NameRecordV2, RegisterNameEventsV1, ReverseRecord, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
         assert!(config::unrestricted_mint_enabled(), error::permission_denied(EVALID_SIGNATURE_REQUIRED));
-        register_domain_generic(sign, domain_name, registration_duration_secs);
+        register_domain_generic(sign, domain_name, registration_duration_secs, target_address, transfer_to_address);
     }
 
     public entry fun register_domain_with_signature(
         sign: &signer,
         domain_name: String,
         registration_duration_secs: u64,
-        signature: vector<u8>
-    ) acquires CollectionCapability, NameRecord, RegisterNameEvents, ReverseRecord, SetTargetAddressEvents, SetReverseLookupEvents {
+        signature: vector<u8>,
+        target_address: Option<address>,
+        transfer_to_address: Option<address>,
+    ) acquires CollectionCapabilityV2, NameRecordV2, RegisterNameEventsV1, ReverseRecord, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
         let account_address = signer::address_of(sign);
         verify::assert_register_domain_signature_verifies(signature, account_address, domain_name);
-        register_domain_generic(sign, domain_name, registration_duration_secs);
+        register_domain_generic(sign, domain_name, registration_duration_secs, target_address, transfer_to_address);
     }
 
     /// A wrapper around `register_name` as an entry function.
@@ -414,8 +430,10 @@ module aptos_names_v2::domains {
         sign: &signer,
         subdomain_name: String,
         domain_name: String,
-        expiration_time_sec: u64
-    ) acquires CollectionCapability, NameRecord, RegisterNameEvents, ReverseRecord, SetTargetAddressEvents, SetReverseLookupEvents {
+        expiration_time_sec: u64,
+        target_address: Option<address>,
+        transfer_to_address: Option<address>,
+    ) acquires CollectionCapabilityV2, NameRecordV2, RegisterNameEventsV1, ReverseRecord, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
         assert!(config::is_enabled(), error::unavailable(ENOT_ENABLED));
 
         assert!(
@@ -439,7 +457,15 @@ module aptos_names_v2::domains {
         let price = price_model::price_for_subdomain_v1(registration_duration_secs);
         coin::transfer<AptosCoin>(sign, config::fund_destination_address(), price);
 
-        register_name_internal(sign, option::some(subdomain_name), domain_name, registration_duration_secs, price);
+        register_name_internal(
+            sign,
+            option::some(subdomain_name),
+            domain_name,
+            registration_duration_secs,
+            price,
+            target_address,
+            transfer_to_address,
+        );
     }
 
     /// Register a name. Accepts an optional subdomain name, a required domain name, and a registration duration in seconds.
@@ -453,8 +479,10 @@ module aptos_names_v2::domains {
         subdomain_name: Option<String>,
         domain_name: String,
         registration_duration_secs: u64,
-        price: u64
-    ) acquires CollectionCapability, NameRecord, RegisterNameEvents, ReverseRecord, SetTargetAddressEvents, SetReverseLookupEvents {
+        price: u64,
+        target_address: Option<address>,
+        transfer_to_address: Option<address>,
+    ) acquires CollectionCapabilityV2, NameRecordV2, RegisterNameEventsV1, ReverseRecord, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
         // If we're registering a name that exists but is expired, and the expired name is a primary name,
         // it should get removed from being a primary name.
         clear_reverse_lookup_for_name(subdomain_name, domain_name);
@@ -474,37 +502,89 @@ module aptos_names_v2::domains {
         // If the token already exists, transfer it to the signer
         // Else, create a new one and transfer it to the signer
         let account_addr = signer::address_of(sign);
+        let transfer_to_address = if (option::is_some(&transfer_to_address)) {
+            *option::borrow(&transfer_to_address)
+        } else {
+            account_addr
+        };
         let token_addr = token_addr_inline(domain_name, subdomain_name);
         if (object::is_object(token_addr)) {
             let record = borrow_global_mut<NameRecord>(token_addr);
             record.expiration_time_sec = name_expiration_time_secs;
             record.target_address = option::none();
-            object::transfer_with_ref(object::generate_linear_transfer_ref(&record.transfer_ref), account_addr);
+            object::transfer_with_ref(object::generate_linear_transfer_ref(&record.transfer_ref), transfer_to_address);
         } else {
             create_token(
-                account_addr,
+                transfer_to_address,
                 domain_name,
                 subdomain_name,
                 name_expiration_time_secs,
             );
         };
 
-        let reverse_lookup_result = get_reverse_lookup(account_addr);
-        if (option::is_none(&reverse_lookup_result)) {
-            // If the user has no reverse lookup set, set the user's reverse lookup.
-            set_reverse_lookup(sign, subdomain_name, domain_name);
-        } else if (!is_subdomain(subdomain_name)) {
-            // Automatically set the name to point to the sender's address
-            set_target_address_internal(subdomain_name, domain_name, signer::address_of(sign));
+        let target_address_copy = target_address;
+        let target_address = if (option::is_some(&target_address)) {
+            *option::borrow(&target_address)
+        } else {
+            // default to use signer's address as target address
+            account_addr
         };
 
-        event::emit_event<RegisterNameEvent>(
-            &mut borrow_global_mut<RegisterNameEvents>(@aptos_names_v2).register_name_events,
-            RegisterNameEvent {
+        // Only attempt to set primary name if signer is registering name for itself
+        if (transfer_to_address == account_addr && target_address == account_addr) {
+            let reverse_lookup_result = get_reverse_lookup(account_addr);
+            // If the signer has no reverse lookup set, set the signer's reverse lookup and use the name as primary name
+            if (option::is_none(&reverse_lookup_result)) {
+                set_name_address_and_reverse_lookup(sign, subdomain_name, domain_name);
+            }
+            // Else if signer is regiserting a name for itself, we set the target address to signer
+            else if (!is_subdomain(subdomain_name)) {
+                set_name_address_internal(subdomain_name, domain_name, account_addr);
+            }
+        }
+        // Else if signer is minting for others (target address is other) but keep the name to itself
+        else if (transfer_to_address == account_addr) {
+            set_name_address_internal(subdomain_name, domain_name, target_address);
+        }
+        // Else if signer is minting for itself or not set the target address but transfer the name to others
+        else if (target_address == account_addr) {
+            if (option::is_none(&target_address_copy) && !is_subdomain(subdomain_name)) {
+                // We should set target address to transfer to address if it's a domain name and target address unset
+                // In reality we should avoid doing it this way, if signer wants to mint a name for others and set the target address to other
+                // it should set both transfer to address and target address to other explicitly
+                set_name_address_internal(subdomain_name, domain_name, transfer_to_address);
+            };
+        }
+        // Else signer is minting the name for others (target address is other) and transfer it to others
+        else {
+            set_name_address_internal(subdomain_name, domain_name, target_address);
+        };
+
+        // // Else either signer mint a name for others (target address is other) or transfer the name to others (target address
+        //     {
+        //     // If target address is provided, set it
+        //     if (option::is_some(&target_address_copy)) {
+        //         set_name_address_internal(subdomain_name, domain_name, target_address);
+        //     }
+        //     else {
+        //         // If signer is registering a domain and target address is not provided, use itself
+        //         if (!is_subdomain(subdomain_name)) {
+        //             if ()
+        //             set_name_address_internal(subdomain_name, domain_name, target_address);
+        //         }
+        //         // Else we are not registering a domain and target address is not provided, leave the target address unset
+        //     };
+        // };
+
+        event::emit_event<RegisterNameEventV1>(
+            &mut borrow_global_mut<RegisterNameEventsV1>(@aptos_names_v2).register_name_events,
+            RegisterNameEventV1 {
                 domain_name,
                 subdomain_name,
                 registration_fee_octas: price,
                 expiration_time_secs: name_expiration_time_secs,
+                target_address: target_address_copy,
+                transfer_to_address,
             },
         );
     }
@@ -571,7 +651,15 @@ module aptos_names_v2::domains {
     ) acquires CollectionCapability, NameRecord, RegisterNameEvents, ReverseRecord, SetTargetAddressEvents, SetReverseLookupEvents {
         config::assert_signer_is_admin(sign);
         // Register the name
-        register_name_internal(sign, subdomain_name, domain_name, registration_duration_secs, 0);
+        register_name_internal(
+            sign,
+            subdomain_name,
+            domain_name,
+            registration_duration_secs,
+            0,
+            option::none(),
+            option::none(),
+        );
     }
 
     // TODO: angie add force_renew_domain and force_renew_subdomain here.
@@ -978,7 +1066,7 @@ module aptos_names_v2::domains {
 
     /// Sets the |account|'s reverse lookup, aka "primary name". This allows a user to specify which of their Aptos Names
     /// is their "primary", so that dapps can display the user's primary name rather than their address.
-    public entry fun set_reverse_lookup(
+    public entry fun set_name_address_and_reverse_lookup(
         account: &signer,
         subdomain_name: Option<String>,
         domain_name: String
@@ -1045,6 +1133,8 @@ module aptos_names_v2::domains {
             domain_name,
             new_expiration_time_sec - now,
             0,
+            option::none(),
+            option::none(),
         );
         // TODO: `register_name_internal` should accept a `target_addr`
         if (option::is_some(&target_addr)) {
