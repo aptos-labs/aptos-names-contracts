@@ -95,7 +95,7 @@ module aptos_names_v2::test_helper {
         let set_target_address_event_v1_event_count_before = domains::get_set_target_address_event_v1_count();
         let set_reverse_lookup_event_v1_event_count_before = domains::get_set_reverse_lookup_event_v1_count();
 
-        let should_set_reverse_lookup_and_target_address_result_result = domains::should_set_reverse_lookup_and_target_address(
+        let should_set_reverse_lookup_and_target_address_result = domains::should_set_reverse_lookup_and_target_address(
             user_addr,
             target_address,
             transfer_to_address,
@@ -235,7 +235,7 @@ module aptos_names_v2::test_helper {
                 assert!(subdomain_name_lookup_result == subdomain_name, 136);
                 assert!(domain_name_lookup_result == option::some(domain_name), 137);
             } else {
-                if (should_set_reverse_lookup_and_target_address_result_result) {
+                if (should_set_reverse_lookup_and_target_address_result) {
                     // Reverse lookup is not set, even though it should be set.
                     assert!(false, 37);
                 }
@@ -245,7 +245,7 @@ module aptos_names_v2::test_helper {
             if (option::is_some(&name_reverse_lookup_before) && is_expired_before) {
                 assert!(set_reverse_lookup_event_v1_num_emitted == 2, set_reverse_lookup_event_v1_num_emitted);
             } else {
-                if (should_set_reverse_lookup_and_target_address_result_result) {
+                if (should_set_reverse_lookup_and_target_address_result) {
                     assert!(set_reverse_lookup_event_v1_num_emitted == 1, set_reverse_lookup_event_v1_num_emitted);
                 } else {
                     assert!(set_reverse_lookup_event_v1_num_emitted == 0, set_reverse_lookup_event_v1_num_emitted);
