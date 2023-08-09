@@ -374,7 +374,7 @@ module aptos_names_v2::domains {
         registration_duration_secs: u64,
         target_address: Option<address>,
         transfer_to_address: Option<address>,
-    ) acquires CollectionCapabilityV2, NameRecordV2, RegisterNameEventsV1, ReverseRecord, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
+    ) acquires CollectionCapabilityV2, NameRecordV2, RegisterNameEventsV1, ReverseRecord, SetTargetAddressEventsV1, SetReverseLookupEventsV1 {
         validate_registration_duration(registration_duration_secs);
 
         let subdomain_name = option::none<String>();
@@ -405,7 +405,7 @@ module aptos_names_v2::domains {
         registration_duration_secs: u64,
         target_address: Option<address>,
         transfer_to_address: Option<address>,
-    ) acquires CollectionCapabilityV2, NameRecordV2, RegisterNameEventsV1, ReverseRecord, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
+    ) acquires CollectionCapabilityV2, NameRecordV2, RegisterNameEventsV1, ReverseRecord, SetTargetAddressEventsV1, SetReverseLookupEventsV1 {
         assert!(config::unrestricted_mint_enabled(), error::permission_denied(EVALID_SIGNATURE_REQUIRED));
         register_domain_generic(sign, domain_name, registration_duration_secs, target_address, transfer_to_address);
     }
@@ -417,7 +417,7 @@ module aptos_names_v2::domains {
         signature: vector<u8>,
         target_address: Option<address>,
         transfer_to_address: Option<address>,
-    ) acquires CollectionCapabilityV2, NameRecordV2, RegisterNameEventsV1, ReverseRecord, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
+    ) acquires CollectionCapabilityV2, NameRecordV2, RegisterNameEventsV1, ReverseRecord, SetTargetAddressEventsV1, SetReverseLookupEventsV1 {
         let account_address = signer::address_of(sign);
         verify::assert_register_domain_signature_verifies(signature, account_address, domain_name);
         register_domain_generic(sign, domain_name, registration_duration_secs, target_address, transfer_to_address);
@@ -433,7 +433,7 @@ module aptos_names_v2::domains {
         expiration_time_sec: u64,
         target_address: Option<address>,
         transfer_to_address: Option<address>,
-    ) acquires CollectionCapabilityV2, NameRecordV2, RegisterNameEventsV1, ReverseRecord, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
+    ) acquires CollectionCapabilityV2, NameRecordV2, RegisterNameEventsV1, ReverseRecord, SetTargetAddressEventsV1, SetReverseLookupEventsV1 {
         assert!(config::is_enabled(), error::unavailable(ENOT_ENABLED));
 
         assert!(
@@ -482,7 +482,7 @@ module aptos_names_v2::domains {
         price: u64,
         target_address: Option<address>,
         transfer_to_address: Option<address>,
-    ) acquires CollectionCapabilityV2, NameRecordV2, RegisterNameEventsV1, ReverseRecord, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
+    ) acquires CollectionCapabilityV2, NameRecordV2, RegisterNameEventsV1, ReverseRecord, SetTargetAddressEventsV1, SetReverseLookupEventsV1 {
         // If we're registering a name that exists but is expired, and the expired name is a primary name,
         // it should get removed from being a primary name.
         clear_reverse_lookup_for_name(subdomain_name, domain_name);
@@ -523,23 +523,23 @@ module aptos_names_v2::domains {
             );
         };
 
-        let is_name_address_unset = true;
+        let is_target_address_unset = true;
         let reverse_lookup_result = get_reverse_lookup(account_addr);
         if (option::is_none(&reverse_lookup_result)) {
             // If the signer has no reverse lookup set and signer is minting for itself, set the user's reverse lookup and target address.
             if (should_set_reverse_lookup_and_target_address_result) {
-                set_name_address_and_reverse_lookup(sign, subdomain_name, domain_name);
-                is_name_address_unset = false;
+                set_target_address_and_reverse_lookup(sign, subdomain_name, domain_name);
+                is_target_address_unset = false;
             };
         };
-        if (is_name_address_unset) {
+        if (is_target_address_unset) {
             // If signer is registering a domain, automatically set the name to point to target address, if not set use signer address
             if (!is_subdomain(subdomain_name)) {
-                set_name_address_internal(subdomain_name, domain_name, target_address);
+                set_target_address_internal(subdomain_name, domain_name, target_address);
             }
             // Else if target address is explicitly provided, set it
             else if (option::is_some(&target_address_copy)) {
-                set_name_address_internal(subdomain_name, domain_name, target_address);
+                set_target_address_internal(subdomain_name, domain_name, target_address);
             }
             // Else signer is registering a subdomain and target address not explicitly set, leave it as none
         };
@@ -1034,7 +1034,7 @@ module aptos_names_v2::domains {
 
     /// Sets the |account|'s reverse lookup, aka "primary name". This allows a user to specify which of their Aptos Names
     /// is their "primary", so that dapps can display the user's primary name rather than their address.
-    public entry fun set_name_address_and_reverse_lookup(
+    public entry fun set_target_address_and_reverse_lookup(
         account: &signer,
         subdomain_name: Option<String>,
         domain_name: String
