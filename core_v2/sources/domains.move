@@ -346,9 +346,7 @@ module aptos_names_v2::domains {
         if (is_subdomain(subdomain_name)) {
             subdomain_ext = option::some(SubdomainExt {
                 subdomain_name: option::extract(&mut subdomain_name),
-                // TODO: use_domain_expiration_sec should be passed in as a param
-                // Now by default subdomain follow domain's expiration
-                subdomain_expiration_policy: SUBDOMAIN_POLICY_LOOKUP_DOMAIN_EXPIRATION,
+                subdomain_expiration_policy: SUBDOMAIN_POLICY_MANUAL_SET_EXPIRATION,
             });
         }
         // creating domain
