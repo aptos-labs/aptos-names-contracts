@@ -95,6 +95,12 @@ module aptos_names_v2::test_helper {
         let set_target_address_event_v1_event_count_before = domains::get_set_target_address_event_v1_count();
         let set_reverse_lookup_event_v1_event_count_before = domains::get_set_reverse_lookup_event_v1_count();
 
+        let should_set_reverse_lookup_and_target_addres_result_result = domains::should_set_reverse_lookup_and_target_address(
+            user_addr,
+            target_address,
+            transfer_to_address,
+        );
+
         if (option::is_none(&subdomain_name)) {
             if (vector::length(&signature)== 0) {
                 domains::register_domain(
@@ -140,17 +146,8 @@ module aptos_names_v2::test_helper {
             assert!(query_helper::domain_name_is_registered(domain_name), 113);
         };
 
-        let expected_owner = if (option::is_some(&transfer_to_address)) {
-            *option::borrow(&transfer_to_address)
-        } else {
-            user_addr
-        };
-
-        let expected_target_address = if (option::is_some(&target_address)) {
-            *option::borrow(&target_address)
-        } else {
-            user_addr
-        };
+        let expected_owner = option::get_with_default(&transfer_to_address, user_addr);
+        let expected_target_address = option::get_with_default(&target_address, user_addr);
 
         let is_owner = domains::is_owner_of_name(expected_owner, subdomain_name, domain_name);
         // TODO: Re-enable / Re-write
@@ -238,15 +235,21 @@ module aptos_names_v2::test_helper {
                 assert!(subdomain_name_lookup_result == subdomain_name, 136);
                 assert!(domain_name_lookup_result == option::some(domain_name), 137);
             } else {
-                // Reverse lookup is not set, even though user did not have a reverse lookup before.
-                assert!(false, 37);
+                if (should_set_reverse_lookup_and_target_addres_result_result) {
+                    // Reverse lookup is not set, even though it should be set.
+                    assert!(false, 37);
+                }
             };
             // If we are registering over a name that is already registered but expired and was a primary name,
             // that name should be removed from being a primary name.
             if (option::is_some(&name_reverse_lookup_before) && is_expired_before) {
                 assert!(set_reverse_lookup_event_v1_num_emitted == 2, set_reverse_lookup_event_v1_num_emitted);
             } else {
-                assert!(set_reverse_lookup_event_v1_num_emitted == 1, set_reverse_lookup_event_v1_num_emitted);
+                if (should_set_reverse_lookup_and_target_addres_result_result) {
+                    assert!(set_reverse_lookup_event_v1_num_emitted == 1, set_reverse_lookup_event_v1_num_emitted);
+                } else {
+                    assert!(set_reverse_lookup_event_v1_num_emitted == 0, set_reverse_lookup_event_v1_num_emitted);
+                }
             }
         } else {
             // If we are registering over a name that is already registered but expired and was the user's primary name,

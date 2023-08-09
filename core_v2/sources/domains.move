@@ -499,14 +499,15 @@ module aptos_names_v2::domains {
             );
         };
 
+        let account_addr = signer::address_of(sign);
+        let target_address_copy = target_address;
+        let should_set_reverse_lookup_and_target_addres_result = should_set_reverse_lookup_and_target_address(account_addr, target_address, transfer_to_address);
+        let transfer_to_address = option::get_with_default(&transfer_to_address, account_addr);
+        let target_address = option::get_with_default(&target_address, account_addr);
+
         // If the token already exists, transfer it to the signer
         // Else, create a new one and transfer it to the signer
-        let account_addr = signer::address_of(sign);
-        let transfer_to_address = if (option::is_some(&transfer_to_address)) {
-            *option::borrow(&transfer_to_address)
-        } else {
-            account_addr
-        };
+        // NOTE we don't set target address at this step, we do it after this.
         let token_addr = token_addr_inline(domain_name, subdomain_name);
         if (object::is_object(token_addr)) {
             let record = borrow_global_mut<NameRecord>(token_addr);
@@ -522,42 +523,25 @@ module aptos_names_v2::domains {
             );
         };
 
-        let target_address_copy = target_address;
-        let target_address = if (option::is_some(&target_address)) {
-            *option::borrow(&target_address)
-        } else {
-            // default to use signer's address as target address
-            account_addr
-        };
-
-        // Only attempt to set primary name if signer is registering name for itself
-        if (transfer_to_address == account_addr && target_address == account_addr) {
-            let reverse_lookup_result = get_reverse_lookup(account_addr);
-            // If the signer has no reverse lookup set, set the signer's reverse lookup and use the name as primary name
-            if (option::is_none(&reverse_lookup_result)) {
+        let is_name_address_unset = true;
+        let reverse_lookup_result = get_reverse_lookup(account_addr);
+        if (option::is_none(&reverse_lookup_result)) {
+            // If the signer has no reverse lookup set and signer is minting for itself, set the user's reverse lookup and target address.
+            if (should_set_reverse_lookup_and_target_addres_result) {
                 set_name_address_and_reverse_lookup(sign, subdomain_name, domain_name);
-            }
-            // Else if signer is regiserting a name for itself, we set the target address to signer
-            else if (!is_subdomain(subdomain_name)) {
-                set_name_address_internal(subdomain_name, domain_name, account_addr);
-            }
-        }
-        // Else if signer is minting for others (target address is other) but keep the name to itself
-        else if (transfer_to_address == account_addr) {
-            set_name_address_internal(subdomain_name, domain_name, target_address);
-        }
-        // Else if signer is minting for itself or not set the target address but transfer the name to others
-        else if (target_address == account_addr) {
-            if (option::is_none(&target_address_copy) && !is_subdomain(subdomain_name)) {
-                // We should set target address to transfer to address if it's a domain name and target address unset
-                // In reality we should avoid doing it this way, if signer wants to mint a name for others and set the target address to other
-                // it should set both transfer to address and target address to other explicitly
-                set_name_address_internal(subdomain_name, domain_name, transfer_to_address);
+                is_name_address_unset = false;
             };
-        }
-        // Else signer is minting the name for others (target address is other) and transfer it to others
-        else {
-            set_name_address_internal(subdomain_name, domain_name, target_address);
+        };
+        if (is_name_address_unset) {
+            // If signer is registering a domain, automatically set the name to point to target address, if not set use signer address
+            if (!is_subdomain(subdomain_name)) {
+                set_name_address_internal(subdomain_name, domain_name, target_address);
+            }
+            // Else if target address is explicitly provided, set it
+            else if (option::is_some(&target_address_copy)) {
+                set_name_address_internal(subdomain_name, domain_name, target_address);
+            }
+            // Else signer is registering a subdomain and target address not explicitly set, leave it as none
         };
 
         event::emit_event<RegisterNameEventV1>(
@@ -1243,6 +1227,22 @@ module aptos_names_v2::domains {
     /// Given a time, returns true if that time is in the past, false otherwise
     public fun time_is_expired(expiration_time_sec: u64): bool {
         timestamp::now_seconds() >= expiration_time_sec
+    }
+
+    /// Given signer, target address and transfer to address, return true if minting for signer, false otherwise
+    public fun should_set_reverse_lookup_and_target_address(
+        signer_address: address,
+        target_address: Option<address>,
+        transfer_to_address: Option<address>,
+    ): bool {
+        let transfer_to_address = option::get_with_default(&transfer_to_address, signer_address);
+        let target_address = option::get_with_default(&target_address, signer_address);
+
+        if (target_address == signer_address && transfer_to_address == signer_address) {
+            true
+        } else {
+            false
+        }
     }
 
     #[test_only]
