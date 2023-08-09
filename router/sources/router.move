@@ -11,15 +11,20 @@ module router::router {
     // NOTE: New enums must update is_valid_mode(mode: u8)
     const MODE_V1: u8 = 0;
     const MODE_V1_AND_V2: u8 = 1;
-    const MODE_V2: u8 = 2;
-    // const MODE_NEXT: u8 = 3;
+    // const MODE_NEXT: u8 = 2;
 
     // == ERROR CODES ==
 
+    /// Caller is not the admin
     const ENOT_ADMIN: u64 = 0;
+    /// There is no pending admin
     const ENO_PENDING_ADMIN: u64 = 1;
+    /// Caller is not the pending admin
     const ENOT_PENDING_ADMIN: u64 = 2;
+    /// Provided  mode is not supported
     const EINVALID_MODE: u64 = 3;
+    /// Function is not implemented in the current mode
+    const ENOT_IMPLEMENTED_IN_MODE: u64 = 4;
 
     // == OTHER CONSTANTS ==
 
@@ -86,7 +91,7 @@ module router::router {
     }
 
     inline fun is_valid_mode(mode: u8): bool {
-        mode <= MODE_V2
+        mode <= MODE_V1_AND_V2
     }
 
     public fun get_admin_addr(): address acquires RouterConfig {
