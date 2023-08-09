@@ -501,7 +501,7 @@ module aptos_names_v2::domains {
 
         let account_addr = signer::address_of(sign);
         let target_address_copy = target_address;
-        let should_set_reverse_lookup_and_target_addres_result = should_set_reverse_lookup_and_target_address(account_addr, target_address, transfer_to_address);
+        let should_set_reverse_lookup_and_target_address_result = should_set_reverse_lookup_and_target_address(account_addr, target_address, transfer_to_address);
         let transfer_to_address = option::get_with_default(&transfer_to_address, account_addr);
         let target_address = option::get_with_default(&target_address, account_addr);
 
@@ -527,7 +527,7 @@ module aptos_names_v2::domains {
         let reverse_lookup_result = get_reverse_lookup(account_addr);
         if (option::is_none(&reverse_lookup_result)) {
             // If the signer has no reverse lookup set and signer is minting for itself, set the user's reverse lookup and target address.
-            if (should_set_reverse_lookup_and_target_addres_result) {
+            if (should_set_reverse_lookup_and_target_address_result) {
                 set_name_address_and_reverse_lookup(sign, subdomain_name, domain_name);
                 is_name_address_unset = false;
             };
@@ -1229,7 +1229,7 @@ module aptos_names_v2::domains {
         timestamp::now_seconds() >= expiration_time_sec
     }
 
-    /// Given signer, target address and transfer to address, return true if minting for signer, false otherwise
+    /// Given signer, target address and transfer to address, return true if we should set name address and reverse lookup, false otherwise
     public fun should_set_reverse_lookup_and_target_address(
         signer_address: address,
         target_address: Option<address>,
