@@ -21,6 +21,15 @@ module router::router {
         _subdomain_name: Option<String>,
     ) {}
 
+    // ==== TRANSFER ====
+
+    public entry fun transfer_name(
+        _user: &signer,
+        _domain_name: String,
+        _subdomain_name: Option<String>,
+        _to_addr: address
+    ) {}
+
     // ==== EXPIRATION ====
 
     public entry fun renew_domain(
