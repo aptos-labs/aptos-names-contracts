@@ -18,7 +18,6 @@ module aptos_names_v2::domains {
     use std::error;
     use std::option::{Self, Option};
     use std::signer;
-    use std::signer::address_of;
     use std::string::{Self, String, utf8};
 
     const APP_SIGNER_CAPABILITY_SEED: vector<u8> = b"APP_SIGNER_CAPABILITY";
@@ -491,11 +490,12 @@ module aptos_names_v2::domains {
 
         let reverse_lookup_result = get_reverse_lookup(account_addr);
         if (option::is_none(&reverse_lookup_result)) {
-            // If the user has no reverse lookup set, set the user's reverse lookup.
-            set_reverse_lookup(sign, subdomain_name, domain_name);
+            // If the user has no reverse lookup set, set the user's reverse lookup and target address.
+            set_target_address(sign, subdomain_name, domain_name, account_addr);
+            set_reverse_lookup_internal(sign, token_addr);
         } else if (!is_subdomain(subdomain_name)) {
             // Automatically set the name to point to the sender's address
-            set_target_address_internal(subdomain_name, domain_name, signer::address_of(sign));
+            set_target_address(sign, subdomain_name, domain_name, account_addr);
         };
 
         event::emit_event<RegisterNameEvent>(
@@ -536,7 +536,6 @@ module aptos_names_v2::domains {
         new_owner: address
     ) acquires CollectionCapability, NameRecord, ReverseRecord, SetTargetAddressEvents, SetReverseLookupEvents {
         config::assert_signer_is_admin(sign);
-        // If the domain name is a primary name, clear it.
         clear_reverse_lookup_for_name(subdomain_name, domain_name);
         set_target_address_internal(subdomain_name, domain_name, new_owner);
     }
@@ -988,7 +987,7 @@ module aptos_names_v2::domains {
             return
         };
         let token_addr = token_addr_inline(domain_name, subdomain_name);
-        set_target_address(account, subdomain_name, domain_name, address_of(account));
+        set_target_address(account, subdomain_name, domain_name, signer::address_of(account));
         set_reverse_lookup_internal(account, token_addr);
     }
 
@@ -1096,13 +1095,13 @@ module aptos_names_v2::domains {
         );
     }
 
-    fun clear_reverse_lookup_for_name(
+    // If the name is a primary name, clear it
+    public fun clear_reverse_lookup_for_name(
         subdomain_name: Option<String>,
         domain_name: String
     ) acquires CollectionCapability, NameRecord, ReverseRecord, SetReverseLookupEvents {
         if (!name_is_registered(subdomain_name, domain_name)) return;
 
-        // If the name is a primary name, clear it
         let record = get_record(domain_name, subdomain_name);
         if (option::is_none(&record.target_address)) return;
         let target_address = *option::borrow(&record.target_address);
