@@ -1095,13 +1095,13 @@ module aptos_names_v2::domains {
         );
     }
 
-    // If the name is a primary name, clear it
-    public fun clear_reverse_lookup_for_name(
+    fun clear_reverse_lookup_for_name(
         subdomain_name: Option<String>,
         domain_name: String
     ) acquires CollectionCapability, NameRecord, ReverseRecord, SetReverseLookupEvents {
         if (!name_is_registered(subdomain_name, domain_name)) return;
 
+        // If the name is a primary name, clear it
         let record = get_record(domain_name, subdomain_name);
         if (option::is_none(&record.target_address)) return;
         let target_address = *option::borrow(&record.target_address);
