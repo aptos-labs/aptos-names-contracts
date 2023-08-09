@@ -1,12 +1,12 @@
 #[test_only]
 module router::router_tests {
+    use aptos_names_v2::test_helper;
+    use std::vector;
     use router::router;
-    use router::test_helper;
     use std::option;
     use std::signer::address_of;
-    use std::vector;
 
-    const MAX_MODE: u8 = 1;
+    const MAX_MODE: u8 = 2;
 
     #[test(
         router = @router,
@@ -144,7 +144,7 @@ module router::router_tests {
         test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user, &aptos, rando, &foundation);
 
         let i = 0;
-        while (i <= MAX_MODE) {
+        while (i <= 2) {
             router::set_mode(router, i);
             assert!(router::get_mode() == i, 0);
             i = i + 1
