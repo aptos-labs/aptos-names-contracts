@@ -374,7 +374,7 @@ module aptos_names_v2::domains {
         registration_duration_secs: u64,
         target_address: Option<address>,
         transfer_to_address: Option<address>,
-    ) acquires CollectionCapabilityV2, NameRecordV2, RegisterNameEventsV1, ReverseRecord, SetTargetAddressEventsV1, SetReverseLookupEventsV1 {
+    ) acquires CollectionCapability, NameRecord, RegisterNameEvents, ReverseRecord, SetTargetAddressEvents, SetReverseLookupEvents {
         validate_registration_duration(registration_duration_secs);
 
         let subdomain_name = option::none<String>();
@@ -405,7 +405,7 @@ module aptos_names_v2::domains {
         registration_duration_secs: u64,
         target_address: Option<address>,
         transfer_to_address: Option<address>,
-    ) acquires CollectionCapabilityV2, NameRecordV2, RegisterNameEventsV1, ReverseRecord, SetTargetAddressEventsV1, SetReverseLookupEventsV1 {
+    ) acquires CollectionCapability, NameRecord, RegisterNameEvents, ReverseRecord, SetTargetAddressEvents, SetReverseLookupEvents {
         assert!(config::unrestricted_mint_enabled(), error::permission_denied(EVALID_SIGNATURE_REQUIRED));
         register_domain_generic(sign, domain_name, registration_duration_secs, target_address, transfer_to_address);
     }
@@ -417,7 +417,7 @@ module aptos_names_v2::domains {
         signature: vector<u8>,
         target_address: Option<address>,
         transfer_to_address: Option<address>,
-    ) acquires CollectionCapabilityV2, NameRecordV2, RegisterNameEventsV1, ReverseRecord, SetTargetAddressEventsV1, SetReverseLookupEventsV1 {
+    ) acquires CollectionCapability, NameRecord, RegisterNameEvents, ReverseRecord, SetTargetAddressEvents, SetReverseLookupEvents {
         let account_address = signer::address_of(sign);
         verify::assert_register_domain_signature_verifies(signature, account_address, domain_name);
         register_domain_generic(sign, domain_name, registration_duration_secs, target_address, transfer_to_address);
@@ -433,7 +433,7 @@ module aptos_names_v2::domains {
         expiration_time_sec: u64,
         target_address: Option<address>,
         transfer_to_address: Option<address>,
-    ) acquires CollectionCapabilityV2, NameRecordV2, RegisterNameEventsV1, ReverseRecord, SetTargetAddressEventsV1, SetReverseLookupEventsV1 {
+    ) acquires CollectionCapability, NameRecord, RegisterNameEvents, ReverseRecord, SetTargetAddressEvents, SetReverseLookupEvents {
         assert!(config::is_enabled(), error::unavailable(ENOT_ENABLED));
 
         assert!(
@@ -482,7 +482,7 @@ module aptos_names_v2::domains {
         price: u64,
         target_address: Option<address>,
         transfer_to_address: Option<address>,
-    ) acquires CollectionCapabilityV2, NameRecordV2, RegisterNameEventsV1, ReverseRecord, SetTargetAddressEventsV1, SetReverseLookupEventsV1 {
+    ) acquires CollectionCapability, NameRecord, RegisterNameEvents, ReverseRecord, SetTargetAddressEvents, SetReverseLookupEvents {
         // If we're registering a name that exists but is expired, and the expired name is a primary name,
         // it should get removed from being a primary name.
         clear_reverse_lookup_for_name(subdomain_name, domain_name);
@@ -548,9 +548,9 @@ module aptos_names_v2::domains {
             };
         };
 
-        event::emit_event<RegisterNameEventV1>(
-            &mut borrow_global_mut<RegisterNameEventsV1>(@aptos_names_v2).register_name_events,
-            RegisterNameEventV1 {
+        event::emit_event<RegisterNameEvent>(
+            &mut borrow_global_mut<RegisterNameEvents>(@aptos_names_v2).register_name_events,
+            RegisterNameEvent {
                 domain_name,
                 subdomain_name,
                 registration_fee_octas: price,
@@ -1108,7 +1108,6 @@ module aptos_names_v2::domains {
             option::none(),
             option::none(),
         );
-        // TODO: `register_name_internal` should accept a `target_addr`
         if (option::is_some(&target_addr)) {
             set_target_address_internal(option::none(), domain_name, *option::borrow(&target_addr));
         }
