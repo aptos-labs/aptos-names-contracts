@@ -205,9 +205,6 @@ module aptos_names_v2::subdomain_e2e_tests {
         test_helper::register_name(user, option::some(test_helper::subdomain_name()), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_subdomain_name(), 1, vector::empty<u8>());
         domains::set_subdomain_renewal_policy(user, test_helper::domain_name(), test_helper::subdomain_name(), 0);
         assert!(domains::get_subdomain_renewal_policy(test_helper::domain_name(), test_helper::subdomain_name()) == 0, 2);
-        test_helper::register_name(user, option::some(test_helper::subdomain_name()), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_subdomain_name(), 1, vector::empty<u8>(), option::none(), option::none());
-        domains::set_subdomain_renewal_policy(user, test_helper::domain_name(), test_helper::subdomain_name(), false);
-        assert!(!domains::get_subdomain_renewal_policy(test_helper::domain_name(), test_helper::subdomain_name()), 2);
 
         // Set the time past the domain's expiration time
         let (expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(option::some(test_helper::subdomain_name()), test_helper::domain_name());
