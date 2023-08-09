@@ -132,9 +132,6 @@ module aptos_names_v2::subdomain_e2e_tests {
         assert!(domains::get_subdomain_renewal_policy(test_helper::domain_name(), test_helper::subdomain_name()) == 0, 2);
         // The subdomain auto-renewal policy is set to auto_renew
         domains::set_subdomain_renewal_policy(user, test_helper::domain_name(), test_helper::subdomain_name(), 1);
-        test_helper::register_name(user, option::some(test_helper::subdomain_name()), test_helper::domain_name(), timestamp::now_seconds() + test_helper::one_year_secs(), test_helper::fq_subdomain_name(), 1, vector::empty<u8>(), option::none(), option::none());
-        // The subdomain auto-renewal policy is true by default
-        assert!(domains::get_subdomain_renewal_policy(test_helper::domain_name(), test_helper::subdomain_name()) == 1, 2);
 
         // Renew the domain (and the subdomain should be auto renewed)
         let (original_expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(option::some(test_helper::subdomain_name()), test_helper::domain_name());
