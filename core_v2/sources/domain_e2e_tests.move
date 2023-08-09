@@ -846,7 +846,7 @@ module aptos_names_v2::domain_e2e_tests {
             1,
             vector::empty<u8>()
         );
-        aptos_names::test_helper::set_target_address(
+        aptos_names::test_helper::set_name_address(
             user,
             option::none(),
             test_helper::domain_name(),
@@ -935,7 +935,7 @@ module aptos_names_v2::domain_e2e_tests {
             1,
             vector::empty<u8>()
         );
-        aptos_names::test_helper::set_target_address(
+        aptos_names::test_helper::set_name_address(
             user,
             option::none(),
             test_helper::domain_name(),
