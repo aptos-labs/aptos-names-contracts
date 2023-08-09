@@ -781,4 +781,145 @@ module aptos_names_v2::subdomain_e2e_tests {
         // Attempt (and fail) to take the subdomain name for much longer than users are allowed to register it for
         domains::force_create_or_seize_name(rando, option::some(test_helper::subdomain_name()), test_helper::domain_name(), test_helper::two_hundred_year_secs());
     }
+
+    #[test(
+        aptos_names = @aptos_names,
+        aptos_names_v2 = @aptos_names_v2,
+        user = @0x077,
+        aptos = @0x1,
+        rando = @0x266f,
+        foundation = @0xf01d
+    )]
+    fun test_register_subdomain_set_target_address_to_rando_and_not_set_transfer_to_address(
+        aptos_names: &signer,
+        aptos_names_v2: &signer,
+        user: signer,
+        aptos: signer,
+        rando: signer,
+        foundation: signer
+    ) {
+        let users = test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user, &aptos, rando, &foundation);
+        let user = vector::borrow(&users, 0);
+
+        let rando = vector::borrow(&users, 1);
+        let rando_addr = signer::address_of(rando);
+
+        test_helper::register_name(
+            user,
+            option::none(),
+            test_helper::domain_name(),
+            test_helper::one_year_secs(),
+            test_helper::fq_domain_name(),
+            1,
+            vector::empty<u8>(),
+            option::none(),
+            option::none()
+        );
+        // Register the subdomain and set target address to rando
+        test_helper::register_name(
+            user,
+            option::some(test_helper::subdomain_name()),
+            test_helper::domain_name(),
+            test_helper::one_year_secs(),
+            test_helper::fq_domain_name(),
+            1,
+            vector::empty<u8>(),
+            option::some(rando_addr),
+            option::none()
+        );
+    }
+
+    #[test(
+        aptos_names = @aptos_names,
+        aptos_names_v2 = @aptos_names_v2,
+        user = @0x077,
+        aptos = @0x1,
+        rando = @0x266f,
+        foundation = @0xf01d
+    )]
+    fun test_register_subdomain_not_set_target_address_and_set_transfer_to_address_to_rando(
+        aptos_names: &signer,
+        aptos_names_v2: &signer,
+        user: signer,
+        aptos: signer,
+        rando: signer,
+        foundation: signer
+    ) {
+        let users = test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user, &aptos, rando, &foundation);
+        let user = vector::borrow(&users, 0);
+
+        let rando = vector::borrow(&users, 1);
+        let rando_addr = signer::address_of(rando);
+
+        test_helper::register_name(
+            user,
+            option::none(),
+            test_helper::domain_name(),
+            test_helper::one_year_secs(),
+            test_helper::fq_domain_name(),
+            1,
+            vector::empty<u8>(),
+            option::none(),
+            option::none()
+        );
+        // Register the subdomain and set transfer to address to rando
+        test_helper::register_name(
+            user,
+            option::some(test_helper::subdomain_name()),
+            test_helper::domain_name(),
+            test_helper::one_year_secs(),
+            test_helper::fq_domain_name(),
+            1,
+            vector::empty<u8>(),
+            option::none(),
+            option::some(rando_addr)
+        );
+    }
+
+    #[test(
+        aptos_names = @aptos_names,
+        aptos_names_v2 = @aptos_names_v2,
+        user = @0x077,
+        aptos = @0x1,
+        rando = @0x266f,
+        foundation = @0xf01d
+    )]
+    fun test_register_subdomain_set_target_address_to_rando_and_set_transfer_to_address_to_rando(
+        aptos_names: &signer,
+        aptos_names_v2: &signer,
+        user: signer,
+        aptos: signer,
+        rando: signer,
+        foundation: signer
+    ) {
+        let users = test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user, &aptos, rando, &foundation);
+        let user = vector::borrow(&users, 0);
+
+        let rando = vector::borrow(&users, 1);
+        let rando_addr = signer::address_of(rando);
+
+        test_helper::register_name(
+            user,
+            option::none(),
+            test_helper::domain_name(),
+            test_helper::one_year_secs(),
+            test_helper::fq_domain_name(),
+            1,
+            vector::empty<u8>(),
+            option::none(),
+            option::none()
+        );
+        // Register the subdomain and set both target address and tranfer to address to rando
+        test_helper::register_name(
+            user,
+            option::some(test_helper::subdomain_name()),
+            test_helper::domain_name(),
+            test_helper::one_year_secs(),
+            test_helper::fq_domain_name(),
+            1,
+            vector::empty<u8>(),
+            option::some(rando_addr),
+            option::some(rando_addr)
+        );
+    }
 }

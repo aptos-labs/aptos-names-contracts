@@ -95,10 +95,14 @@ module aptos_names_v2::test_helper {
         let set_target_address_event_v1_event_count_before = domains::get_set_target_address_event_v1_count();
         let set_reverse_lookup_event_v1_event_count_before = domains::get_set_reverse_lookup_event_v1_count();
 
-        let should_set_reverse_lookup_and_target_address_result = domains::should_set_reverse_lookup_and_target_address(
+        let result_of_should_set_reverse_lookup_and_target_address = domains::should_set_reverse_lookup_and_target_address_in_register_name(
             user_addr,
             target_address,
             transfer_to_address,
+        );
+        let result_of_should_set_target_address = domains::should_set_target_address_in_register_name(
+            subdomain_name,
+            target_address,
         );
 
         if (option::is_none(&subdomain_name)) {
@@ -196,9 +200,11 @@ module aptos_names_v2::test_helper {
                 assert!(target_address == option::some(expected_target_address), 11);
                 assert!(target_address_lookup_result == option::some(expected_target_address), 111);
             } else {
-                // We haven't set a target address yet!
-                assert!(target_address == option::none(), 11);
-                assert!(target_address_lookup_result == option::none(), 111);
+                if (!result_of_should_set_target_address) {
+                    // We haven't set a target address yet!
+                    assert!(target_address == option::none(), 11);
+                    assert!(target_address_lookup_result == option::none(), 111);
+                }
             }
         } else {
             let (expiration_time_sec_lookup_result, target_address_lookup_result) = query_helper::get_domain_props(domain_name);
@@ -235,7 +241,7 @@ module aptos_names_v2::test_helper {
                 assert!(subdomain_name_lookup_result == subdomain_name, 136);
                 assert!(domain_name_lookup_result == option::some(domain_name), 137);
             } else {
-                if (should_set_reverse_lookup_and_target_address_result) {
+                if (result_of_should_set_reverse_lookup_and_target_address) {
                     // Reverse lookup is not set, even though it should be set.
                     assert!(false, 37);
                 }
@@ -245,7 +251,7 @@ module aptos_names_v2::test_helper {
             if (option::is_some(&name_reverse_lookup_before) && is_expired_before) {
                 assert!(set_reverse_lookup_event_v1_num_emitted == 2, set_reverse_lookup_event_v1_num_emitted);
             } else {
-                if (should_set_reverse_lookup_and_target_address_result) {
+                if (result_of_should_set_reverse_lookup_and_target_address) {
                     assert!(set_reverse_lookup_event_v1_num_emitted == 1, set_reverse_lookup_event_v1_num_emitted);
                 } else {
                     assert!(set_reverse_lookup_event_v1_num_emitted == 0, set_reverse_lookup_event_v1_num_emitted);
@@ -275,9 +281,11 @@ module aptos_names_v2::test_helper {
                 test_utils::print_actual_expected(b"set_target_address_event_v1_num_emitted: ", set_target_address_event_v1_num_emitted, 1, false);
                 assert!(set_target_address_event_v1_num_emitted == 1, set_target_address_event_v1_num_emitted);
             } else {
-                // We haven't set a target address yet!
-                test_utils::print_actual_expected(b"set_target_address_event_v1_num_emitted: ", set_target_address_event_v1_num_emitted, 0, false);
-                assert!(set_target_address_event_v1_num_emitted == 0, set_target_address_event_v1_num_emitted);
+                if (!result_of_should_set_target_address) {
+                    // We haven't set a target address yet!
+                    test_utils::print_actual_expected(b"set_target_address_event_v1_num_emitted: ", set_target_address_event_v1_num_emitted, 0, false);
+                    assert!(set_target_address_event_v1_num_emitted == 0, set_target_address_event_v1_num_emitted);
+                }
             }
         } else {
             // Should automatically point to the users address

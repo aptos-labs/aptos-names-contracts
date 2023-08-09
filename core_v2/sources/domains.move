@@ -501,7 +501,15 @@ module aptos_names_v2::domains {
 
         let account_addr = signer::address_of(sign);
         let target_address_copy = target_address;
-        let should_set_reverse_lookup_and_target_address_result = should_set_reverse_lookup_and_target_address(account_addr, target_address, transfer_to_address);
+        let result_of_should_set_reverse_lookup_and_target_address = should_set_reverse_lookup_and_target_address_in_register_name(
+            account_addr,
+            target_address,
+            transfer_to_address
+        );
+        let result_of_should_set_target_address = should_set_target_address_in_register_name(
+            subdomain_name,
+            target_address
+        );
         let transfer_to_address = option::get_with_default(&transfer_to_address, account_addr);
         let target_address = option::get_with_default(&target_address, account_addr);
 
@@ -527,21 +535,17 @@ module aptos_names_v2::domains {
         let reverse_lookup_result = get_reverse_lookup(account_addr);
         if (option::is_none(&reverse_lookup_result)) {
             // If the signer has no reverse lookup set and signer is minting for itself, set the user's reverse lookup and target address.
-            if (should_set_reverse_lookup_and_target_address_result) {
+            if (result_of_should_set_reverse_lookup_and_target_address) {
                 set_target_address_and_reverse_lookup(sign, subdomain_name, domain_name);
                 is_target_address_unset = false;
             };
         };
         if (is_target_address_unset) {
             // If signer is registering a domain, automatically set the name to point to target address, if not set use signer address
-            if (!is_subdomain(subdomain_name)) {
+            // Or target address is explicitly provided, set it
+            if (result_of_should_set_target_address) {
                 set_target_address_internal(subdomain_name, domain_name, target_address);
-            }
-            // Else if target address is explicitly provided, set it
-            else if (option::is_some(&target_address_copy)) {
-                set_target_address_internal(subdomain_name, domain_name, target_address);
-            }
-            // Else signer is registering a subdomain and target address not explicitly set, leave it as none
+            };
         };
 
         event::emit_event<RegisterNameEventV1>(
@@ -1229,8 +1233,8 @@ module aptos_names_v2::domains {
         timestamp::now_seconds() >= expiration_time_sec
     }
 
-    /// Given signer, target address and transfer to address, return true if we should set name address and reverse lookup, false otherwise
-    public fun should_set_reverse_lookup_and_target_address(
+    /// Given signer, target address and transfer to address, return true if we should set target address and reverse lookup, false otherwise
+    public fun should_set_reverse_lookup_and_target_address_in_register_name(
         signer_address: address,
         target_address: Option<address>,
         transfer_to_address: Option<address>,
@@ -1240,6 +1244,25 @@ module aptos_names_v2::domains {
         if (target_address == signer_address && transfer_to_address == signer_address) {
             true
         } else {
+            false
+        }
+    }
+
+    /// Given signer, target address and transfer to address, return true if we should set target address, false otherwise
+    public fun should_set_target_address_in_register_name(
+        subdomain_name: Option<String>,
+        target_address: Option<address>,
+    ): bool {
+        if (!is_subdomain(subdomain_name)) {
+            // If signer is registering a domain, automatically set the name to point to target address, if not set use signer address
+            true
+        }
+        else if (option::is_some(&target_address)) {
+            // Else if target address is explicitly provided, set it
+            true
+        }
+        else {
+            // Else signer is registering a subdomain and target address not explicitly set, leave it as none
             false
         }
     }

@@ -819,7 +819,6 @@ module aptos_names_v2::domain_e2e_tests {
         };
     }
 
-
     #[test(
         aptos_names = @aptos_names,
         aptos_names_v2 = @aptos_names_v2,
@@ -843,7 +842,17 @@ module aptos_names_v2::domain_e2e_tests {
         let rando_addr = signer::address_of(rando);
 
         // Register the domain and set target address to rando
-        test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>(), option::some(rando_addr), option::none());
+        test_helper::register_name(
+            user,
+            option::none(),
+            test_helper::domain_name(),
+            test_helper::one_year_secs(),
+            test_helper::fq_domain_name(),
+            1,
+            vector::empty<u8>(),
+            option::some(rando_addr),
+            option::none()
+        );
     }
 
     #[test(
@@ -869,7 +878,17 @@ module aptos_names_v2::domain_e2e_tests {
         let rando_addr = signer::address_of(rando);
 
         // Register the domain and set transfer to address to rando
-        test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>(), option::none(), option::some(rando_addr));
+        test_helper::register_name(
+            user,
+            option::none(),
+            test_helper::domain_name(),
+            test_helper::one_year_secs(),
+            test_helper::fq_domain_name(),
+            1,
+            vector::empty<u8>(),
+            option::none(),
+            option::some(rando_addr)
+        );
     }
 
     #[test(
@@ -895,7 +914,17 @@ module aptos_names_v2::domain_e2e_tests {
         let rando_addr = signer::address_of(rando);
 
         // Register the domain and set both target address and tranfer to address to rando
-        test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>(), option::some(rando_addr), option::some(rando_addr));
+        test_helper::register_name(
+            user,
+            option::none(),
+            test_helper::domain_name(),
+            test_helper::one_year_secs(),
+            test_helper::fq_domain_name(),
+            1,
+            vector::empty<u8>(),
+            option::some(rando_addr),
+            option::some(rando_addr)
+        );
     }
 
     #[test(
