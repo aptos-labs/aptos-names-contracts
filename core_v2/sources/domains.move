@@ -1237,7 +1237,6 @@ module aptos_names_v2::domains {
     ): bool {
         let transfer_to_address = option::get_with_default(&transfer_to_address, signer_address);
         let target_address = option::get_with_default(&target_address, signer_address);
-
         if (target_address == signer_address && transfer_to_address == signer_address) {
             true
         } else {
