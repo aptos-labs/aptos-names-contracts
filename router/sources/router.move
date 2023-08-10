@@ -38,7 +38,7 @@ module router::router {
 
     // == OTHER CONSTANTS ==
 
-    const ROUTER_SIGNER_SEED: vector<u8>  = b"ANS ROUTER";
+    const ROUTER_SIGNER_SEED: vector<u8> = b"ANS ROUTER";
     const SECONDS_PER_YEAR: u64 = 60 * 60 * 24 * 365;
     /// 2024/03/07 23:59:59
     const AUTO_RENEWAL_EXPIRATION_CUTOFF_SEC: u64 = 1709855999;
@@ -106,8 +106,8 @@ module router::router {
     }
 
     inline fun router_signer_addr(): address acquires RouterConfig {
-         let router_config = borrow_global<RouterConfig>(@router);
-         account::get_signer_capability_address(&router_config.signer_cap)
+        let router_config = borrow_global<RouterConfig>(@router);
+        account::get_signer_capability_address(&router_config.signer_cap)
     }
 
     inline fun is_valid_mode(mode: u8): bool {
@@ -229,7 +229,7 @@ module router::router {
 
             // Check primary name status
             let maybe_primary_name = aptos_names::domains::get_reverse_lookup(user_addr);
-            let is_primary_name = if(option::is_some(&maybe_primary_name)) {
+            let is_primary_name = if (option::is_some(&maybe_primary_name)) {
                 let (primary_subdomain_name, primary_domain_name) = aptos_names::domains::get_name_record_key_v1_props(
                     &option::extract(&mut maybe_primary_name)
                 );
@@ -475,11 +475,40 @@ module router::router {
 
     // ==== DOMAIN ADMIN ====
 
+    /// Not available in MODE_V1
     public entry fun domain_admin_transfer_subdomain(
         _domain_admin: &signer,
         _domain_name: String,
         _subdomain_name: String,
-    ) {}
+    ) acquires RouterConfig {
+        let mode = get_mode();
+        if (mode == MODE_V1) {
+            abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
+        } else if (mode == MODE_V1_AND_V2) {
+            // TODO: Implement
+            abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
+        } else {
+            abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
+        }
+    }
+
+    /// Not available in MODE_V1
+    public entry fun domain_admin_set_subdomain_transferability(
+        _domain_admin: &signer,
+        _domain_name: String,
+        _subdomain_name: String,
+        _transferable: bool,
+    ) acquires RouterConfig {
+        let mode = get_mode();
+        if (mode == MODE_V1) {
+            abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
+        } else if (mode == MODE_V1_AND_V2) {
+            // TODO: Implement
+            abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
+        } else {
+            abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
+        }
+    }
 
     // == ROUTER READ FUNCTIONS ==
 
