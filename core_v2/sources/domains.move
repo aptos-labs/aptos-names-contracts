@@ -1253,7 +1253,7 @@ module aptos_names_v2::domains {
         target_address: Option<address>,
     ): bool {
         if (!is_subdomain(subdomain_name)) {
-            // If signer is registering a domain, automatically set the name to point to target address, if not set use signer address
+            // If signer is registering a domain, we always set the target address of the domain to signer
             true
         }
         else if (option::is_some(&target_address)) {
