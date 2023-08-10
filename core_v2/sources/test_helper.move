@@ -47,6 +47,10 @@ module aptos_names_v2::test_helper {
         string::utf8(b"sub.test.apt")
     }
 
+    public fun invalid_subdomain_name(): String {
+        string::utf8(b"a")
+    }
+
     /// Sets up test by initializing ANS v2
     public fun e2e_test_setup(
         aptos_names_v2: &signer,

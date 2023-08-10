@@ -424,7 +424,7 @@ module aptos_names_v2::domains {
 
         // We are registering a subdomain name: this has no cost, but is only doable by the owner of the domain
 
-        validate_name_string(domain_name);
+        validate_name_string(subdomain_name);
 
         // Ensure signer owns the domain we're registering a subdomain for
         let signer_addr = signer::address_of(sign);
