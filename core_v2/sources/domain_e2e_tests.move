@@ -147,14 +147,13 @@ module aptos_names_v2::domain_e2e_tests {
         foundation = @0xf01d
     )]
     fun test_renew_domain_e2e(
-        aptos_names: &signer,
         aptos_names_v2: &signer,
         user: signer,
         aptos: signer,
         rando: signer,
         foundation: signer
     ) {
-        let users = test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user, &aptos, rando, &foundation);
+        let users = test_helper::e2e_test_setup(aptos_names_v2, user, &aptos, rando, &foundation);
         let user = vector::borrow(&users, 0);
 
         // Register the domain
@@ -426,7 +425,6 @@ module aptos_names_v2::domain_e2e_tests {
     }
 
     #[test(
-        aptos_names = @aptos_names,
         aptos_names_v2 = @aptos_names_v2,
         user = @0x077,
         aptos = @0x1,
@@ -434,14 +432,13 @@ module aptos_names_v2::domain_e2e_tests {
         foundation = @0xf01d
     )]
     fun test_admin_can_force_renew_domain_name(
-        aptos_names: &signer,
         aptos_names_v2: &signer,
         user: signer,
         aptos: signer,
         rando: signer,
         foundation: signer
     ) {
-        let users = test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user, &aptos, rando, &foundation);
+        let users = test_helper::e2e_test_setup(aptos_names_v2, user, &aptos, rando, &foundation);
         let user = vector::borrow(&users, 0);
 
         // Register the domain
@@ -453,16 +450,10 @@ module aptos_names_v2::domain_e2e_tests {
         assert!(time_helper::seconds_to_years(expiration_time_sec) == 1, time_helper::seconds_to_years(expiration_time_sec));
 
         // renew the domain by admin outside of renewal window
-        domains::force_renew_domain(aptos_names_v2, test_helper::domain_name(), test_helper::one_year_secs());
+        domains::force_set_name_expiration(aptos_names_v2, test_helper::domain_name(), option::none(), timestamp::now_seconds() + 2 * test_helper::one_year_secs());
 
         let (expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(option::none(), test_helper::domain_name());
         assert!(time_helper::seconds_to_years(expiration_time_sec) == 2, time_helper::seconds_to_years(expiration_time_sec));
-
-        // renew the domain longer than the time we are allowed to renew it for
-        domains::force_renew_domain(aptos_names_v2, test_helper::domain_name(), 2*test_helper::one_year_secs());
-
-        let (expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(option::none(), test_helper::domain_name());
-        assert!(time_helper::seconds_to_years(expiration_time_sec) == 4, time_helper::seconds_to_years(expiration_time_sec));
     }
 
 

@@ -562,8 +562,6 @@ module aptos_names_v2::domains {
         register_name_internal(sign, subdomain_name, domain_name, registration_duration_secs, 0);
     }
 
-    // TODO: angie add force_renew_domain and force_renew_subdomain here.
-
     #[legacy_entry_fun]
     /// This removes a name mapping from the registry; functionally this 'expires' it.
     /// This is a privileged operation, used via governance.
@@ -581,14 +579,17 @@ module aptos_names_v2::domains {
         record.target_address = option::none();
     }
 
-    public fun force_renew_domain(
+    public entry fun force_set_name_expiration(
         sign: &signer,
         domain_name: String,
-        registration_duration_secs: u64
-    ) acquires CollectionCapabilityV2, NameRecordV2, RenewNameEventsV1 {
+        subdomain_name: Option<String>,
+        new_expiration_secs: u64
+    ) acquires CollectionCapability, NameRecord {
+        // check the signer eligibility
         config::assert_signer_is_admin(sign);
-        // Renew the name with no price paid and no validation made
-        renew_domain_internal(domain_name, registration_duration_secs, 0);
+
+        let record = get_record_mut(domain_name, subdomain_name);
+        record.expiration_time_sec = new_expiration_secs;
     }
 
     public entry fun renew_domain(
