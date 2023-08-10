@@ -537,6 +537,7 @@ module aptos_names_v2::domains {
         new_owner: address
     ) acquires CollectionCapability, NameRecord, ReverseRecord, SetTargetAddressEvents, SetReverseLookupEvents {
         config::assert_signer_is_admin(sign);
+        // If the domain name is a primary name, clear it.
         clear_reverse_lookup_for_name(subdomain_name, domain_name);
         set_target_address_internal(subdomain_name, domain_name, new_owner);
     }
