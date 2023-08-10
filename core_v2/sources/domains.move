@@ -488,14 +488,15 @@ module aptos_names_v2::domains {
             );
         };
 
-        let reverse_lookup_result = get_reverse_lookup(account_addr);
-        if (option::is_none(&reverse_lookup_result)) {
-            // If the user has no reverse lookup set, set the user's reverse lookup and target address.
+        let (should_set_target_address, should_set_reverse_lookup) = should_set_target_address_and_reverse_lookup_in_registration(
+            account_addr,
+            subdomain_name,
+        );
+        if (should_set_target_address) {
             set_target_address(sign, subdomain_name, domain_name, account_addr);
+        };
+        if (should_set_reverse_lookup) {
             set_reverse_lookup_internal(sign, token_addr);
-        } else if (!is_subdomain(subdomain_name)) {
-            // Automatically set the name to point to the sender's address
-            set_target_address(sign, subdomain_name, domain_name, account_addr);
         };
 
         event::emit_event<RegisterNameEvent>(
@@ -1168,6 +1169,24 @@ module aptos_names_v2::domains {
     /// Given a time, returns true if that time is in the past, false otherwise
     public fun time_is_expired(expiration_time_sec: u64): bool {
         timestamp::now_seconds() >= expiration_time_sec
+    }
+
+    fun should_set_target_address_and_reverse_lookup_in_registration(
+        account_addr: address,
+        subdomain_name: Option<String>,
+    ): (bool, bool) acquires ReverseRecord {
+        let (should_set_target_address, should_set_reverse_lookup) = (false, false);
+        let reverse_lookup_result = get_reverse_lookup(account_addr);
+        if (option::is_none(&reverse_lookup_result)) {
+            // If the user has no reverse lookup set, set the user's reverse lookup and target address.
+            should_set_target_address = true;
+            should_set_reverse_lookup = true;
+        };
+        if (!is_subdomain(subdomain_name)) {
+            // Always setup target address for domain
+            should_set_target_address = true;
+        };
+        (should_set_target_address, should_set_reverse_lookup)
     }
 
     #[test_only]
