@@ -230,8 +230,8 @@ module router::router {
             aptos_names_v2::domains::register_subdomain(
                 &get_router_signer(),
                 user,
-                subdomain_name,
                 domain_name,
+                subdomain_name,
                 expiration_time_sec,
             )
         } else {

@@ -111,8 +111,8 @@ module aptos_names_v2::test_helper {
             domains::register_subdomain(
                 router_signer,
                 user,
-                *option::borrow(&subdomain_name),
                 domain_name,
+                *option::borrow(&subdomain_name),
                 registration_duration_secs
             );
         };

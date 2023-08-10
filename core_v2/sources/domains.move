@@ -132,16 +132,16 @@ module aptos_names_v2::domains {
     /// the reverse lookup has been cleared (in which case |target_address|
     /// will be none)
     struct SetReverseLookupEvent has drop, store {
-        subdomain_name: Option<String>,
         domain_name: String,
+        subdomain_name: Option<String>,
         target_address: Option<address>,
     }
 
     /// A name (potentially subdomain) has had it's address changed
     /// This could be to a new address, or it could have been cleared
     struct SetTargetAddressEvent has drop, store {
-        subdomain_name: Option<String>,
         domain_name: String,
+        subdomain_name: Option<String>,
         expiration_time_secs: u64,
         new_address: Option<address>,
     }
@@ -417,8 +417,8 @@ module aptos_names_v2::domains {
     public fun register_subdomain(
         router_signer: &signer,
         sign: &signer,
-        subdomain_name: String,
         domain_name: String,
+        subdomain_name: String,
         expiration_time_sec: u64
     ) acquires CollectionCapability, NameRecord, RegisterNameEvents, ReverseRecord, SetTargetAddressEvents, SetReverseLookupEvents {
         assert!(address_of(router_signer) == @router_signer, error::permission_denied(ENOT_ROUTER));
@@ -546,22 +546,22 @@ module aptos_names_v2::domains {
         domain_name: String,
         new_owner: address
     ) acquires CollectionCapability, NameRecord, ReverseRecord, SetTargetAddressEvents, SetReverseLookupEvents {
-        force_set_target_address(sign, option::none(), domain_name, new_owner);
+        force_set_target_address(sign, domain_name, option::none(), new_owner);
     }
 
     public entry fun force_set_subdomain_address(
         sign: &signer,
-        subdomain_name: String,
         domain_name: String,
+        subdomain_name: String,
         new_owner: address
     ) acquires CollectionCapability, NameRecord, ReverseRecord, SetTargetAddressEvents, SetReverseLookupEvents {
-        force_set_target_address(sign, option::some(subdomain_name), domain_name, new_owner);
+        force_set_target_address(sign, domain_name,option::some(subdomain_name), new_owner);
     }
 
     fun force_set_target_address(
         sign: &signer,
-        subdomain_name: Option<String>,
         domain_name: String,
+        subdomain_name: Option<String>,
         new_owner: address
     ) acquires CollectionCapability, NameRecord, ReverseRecord, SetTargetAddressEvents, SetReverseLookupEvents {
         config::assert_signer_is_admin(sign);
@@ -580,22 +580,22 @@ module aptos_names_v2::domains {
         domain_name: String,
         registration_duration_secs: u64
     ) acquires CollectionCapability, NameRecord, RegisterNameEvents, ReverseRecord, SetReverseLookupEvents {
-        force_create_or_seize_name(sign, option::none(), domain_name, registration_duration_secs);
+        force_create_or_seize_name(sign, domain_name, option::none(), registration_duration_secs);
     }
 
     public entry fun force_create_or_seize_subdomain_name(
         sign: &signer,
-        subdomain_name: String,
         domain_name: String,
+        subdomain_name: String,
         registration_duration_secs: u64
     ) acquires CollectionCapability, NameRecord, RegisterNameEvents, ReverseRecord, SetReverseLookupEvents {
-        force_create_or_seize_name(sign, option::some(subdomain_name), domain_name, registration_duration_secs);
+        force_create_or_seize_name(sign, domain_name, option::some(subdomain_name), registration_duration_secs);
     }
 
     public fun force_create_or_seize_name(
         sign: &signer,
-        subdomain_name: Option<String>,
         domain_name: String,
+        subdomain_name: Option<String>,
         registration_duration_secs: u64
     ) acquires CollectionCapability, NameRecord, RegisterNameEvents, ReverseRecord, SetReverseLookupEvents {
         config::assert_signer_is_admin(sign);
@@ -608,8 +608,8 @@ module aptos_names_v2::domains {
     /// This is a privileged operation, used via governance.
     public entry fun force_clear_registration(
         sign: &signer,
+        domain_name: String,
         subdomain_name: Option<String>,
-        domain_name: String
     ) acquires CollectionCapability, NameRecord {
         config::assert_signer_is_admin(sign);
         let record = get_record_mut(domain_name, subdomain_name);
@@ -1144,8 +1144,8 @@ module aptos_names_v2::domains {
         new_address: Option<address>
     ) acquires SetTargetAddressEvents {
         let event = SetTargetAddressEvent {
-            subdomain_name,
             domain_name,
+            subdomain_name,
             expiration_time_secs,
             new_address,
         };
@@ -1162,8 +1162,8 @@ module aptos_names_v2::domains {
         target_address: Option<address>
     ) acquires SetReverseLookupEvents {
         let event = SetReverseLookupEvent {
-            subdomain_name,
             domain_name,
+            subdomain_name,
             target_address,
         };
 
