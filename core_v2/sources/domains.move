@@ -72,6 +72,8 @@ module aptos_names_v2::domains {
     const EDURATION_MUST_BE_WHOLE_YEARS: u64 = 25;
     /// The subdomain expiration policy is included in the enum SUBDOMAIN_POLICY_*
     const ESUBDOMAIN_EXPIRATION_POLICY_INVALID: u64 = 26;
+    /// Caller must be the router
+    const ENOT_ROUTER: u64 = 26;
 
     /// Tokens require a signer to create, so this is the signer for the collection
     struct CollectionCapability has key, drop {
@@ -371,25 +373,39 @@ module aptos_names_v2::domains {
         coin::transfer<AptosCoin>(sign, config::fund_destination_address(), price);
 
         register_name_internal(sign, subdomain_name, domain_name, registration_duration_secs, price);
+
+        // Automatically assign primary name if not exists. If exists, just assign target_addr
+        let reverse_lookup_result = get_reverse_lookup(address_of(sign));
+        if (option::is_none(&reverse_lookup_result)) {
+            // If the user has no reverse lookup set, set the user's reverse lookup.
+            set_reverse_lookup(sign, subdomain_name, domain_name);
+        } else {
+            // Automatically set the name to point to the sender's address
+            set_name_address_internal(subdomain_name, domain_name, signer::address_of(sign));
+        };
     }
 
     /// A wrapper around `register_name` as an entry function.
     /// Option<String> is not currently serializable, so we have these convenience methods
     public entry fun register_domain(
+        router_signer: &signer,
         sign: &signer,
         domain_name: String,
         registration_duration_secs: u64,
     ) acquires CollectionCapability, NameRecord, RegisterNameEvents, ReverseRecord, SetTargetAddressEvents, SetReverseLookupEvents {
+        assert!(address_of(router_signer) == @router_signer, error::permission_denied(ENOT_ROUTER));
         assert!(config::unrestricted_mint_enabled(), error::permission_denied(EVALID_SIGNATURE_REQUIRED));
         register_domain_generic(sign, domain_name, registration_duration_secs);
     }
 
     public entry fun register_domain_with_signature(
+        router_signer: &signer,
         sign: &signer,
         domain_name: String,
         registration_duration_secs: u64,
         signature: vector<u8>
     ) acquires CollectionCapability, NameRecord, RegisterNameEvents, ReverseRecord, SetTargetAddressEvents, SetReverseLookupEvents {
+        assert!(address_of(router_signer) == @router_signer, error::permission_denied(ENOT_ROUTER));
         let account_address = signer::address_of(sign);
         verify::assert_register_domain_signature_verifies(signature, account_address, domain_name);
         register_domain_generic(sign, domain_name, registration_duration_secs);
@@ -399,11 +415,13 @@ module aptos_names_v2::domains {
     /// Option<String> is not currently serializable, so we have these convenience method
     /// `expiration_time_sec` is the timestamp, in seconds, when the name expires
     public entry fun register_subdomain(
+        router_signer: &signer,
         sign: &signer,
         subdomain_name: String,
         domain_name: String,
         expiration_time_sec: u64
     ) acquires CollectionCapability, NameRecord, RegisterNameEvents, ReverseRecord, SetTargetAddressEvents, SetReverseLookupEvents {
+        assert!(address_of(router_signer) == @router_signer, error::permission_denied(ENOT_ROUTER));
         assert!(config::is_enabled(), error::unavailable(ENOT_ENABLED));
 
         assert!(
@@ -412,7 +430,6 @@ module aptos_names_v2::domains {
         );
 
         // We are registering a subdomain name: this has no cost, but is only doable by the owner of the domain
-
         validate_name_string(subdomain_name);
 
         // Ensure signer owns the domain we're registering a subdomain for
@@ -428,6 +445,38 @@ module aptos_names_v2::domains {
         coin::transfer<AptosCoin>(sign, config::fund_destination_address(), price);
 
         register_name_internal(sign, option::some(subdomain_name), domain_name, registration_duration_secs, price);
+
+        // Automatically assign primary name if not exists. If exists, just assign target_addr
+        let reverse_lookup_result = get_reverse_lookup(address_of(sign));
+        if (option::is_none(&reverse_lookup_result)) {
+            // If the user has no reverse lookup set, set the user's reverse lookup.
+            set_reverse_lookup(sign, option::some(subdomain_name), domain_name);
+        } else {
+            // TODO: Investigate why we don't do target_addr auto assignments for subdomains
+            // Automatically set the name to point to the sender's address
+            // set_name_address_internal(option::some(subdomain_name), domain_name, signer::address_of(sign));
+        };
+    }
+
+    /// Router-only registration that does not take registration fees. Should only be used for v1=>v2 migrations.
+    /// We skip checking registration duration because it is not necessarily a whole number year
+    public fun register_name_with_router(
+        router_signer: &signer,
+        sign: &signer,
+        domain_name: String,
+        subdomain_name: Option<String>,
+        registration_duration_secs: u64,
+    ) acquires CollectionCapabilityV2, NameRecordV2, RegisterNameEventsV1, ReverseRecord, SetReverseLookupEventsV1 {
+        assert!(address_of(router_signer) == @router_signer, error::permission_denied(ENOT_ROUTER));
+        // For subdomains, this will check that the domain exists first
+        assert!(name_is_registerable(subdomain_name, domain_name), error::invalid_state(ENAME_NOT_AVAILABLE));
+        if (option::is_some(&subdomain_name)) {
+            validate_name_string(*option::borrow(&subdomain_name));
+        } else {
+            validate_name_string(domain_name);
+        };
+        register_name_internal(sign, subdomain_name, domain_name, registration_duration_secs, 0);
+        // No automatic assignment of primary name / target_addr. These are handled by the router
     }
 
     /// Register a name. Accepts an optional subdomain name, a required domain name, and a registration duration in seconds.
@@ -477,18 +526,9 @@ module aptos_names_v2::domains {
             );
         };
 
-        let reverse_lookup_result = get_reverse_lookup(account_addr);
-        if (option::is_none(&reverse_lookup_result)) {
-            // If the user has no reverse lookup set, set the user's reverse lookup.
-            set_reverse_lookup(sign, subdomain_name, domain_name);
-        } else if (!is_subdomain(subdomain_name)) {
-            // Automatically set the name to point to the sender's address
-            set_target_address_internal(subdomain_name, domain_name, signer::address_of(sign));
-        };
-
-        event::emit_event<RegisterNameEvent>(
-            &mut borrow_global_mut<RegisterNameEvents>(@aptos_names_v2).register_name_events,
-            RegisterNameEvent {
+        event::emit_event<RegisterNameEventV1>(
+            &mut borrow_global_mut<RegisterNameEventsV1>(@aptos_names_v2).register_name_events,
+            RegisterNameEventV1 {
                 domain_name,
                 subdomain_name,
                 registration_fee_octas: price,
@@ -827,13 +867,27 @@ module aptos_names_v2::domains {
         subdomain_name: Option<String>,
         domain_name: String
     ): bool acquires CollectionCapability, NameRecord {
-        // check if the name is registered in v1 and v2
+        // check if the name is registered
         if (!name_is_registered(subdomain_name, domain_name) || name_is_expired(
             subdomain_name,
             domain_name
         )) return false;
         let record_obj = object::address_to_object<NameRecord>(token_addr_inline(domain_name, subdomain_name));
         object::owns(record_obj, owner_addr)
+    }
+
+    /// Returns a name's owner address. Returns option::none() if there is no owner.
+    public fun name_owner_addr(
+        subdomain_name: Option<String>,
+        domain_name: String,
+    ): Option<address> acquires CollectionCapabilityV2, NameRecordV2 {
+        // check if the name is registered
+        if (!name_is_registered(subdomain_name, domain_name) || name_is_expired(
+            subdomain_name,
+            domain_name
+        )) return option::none();
+        let record_obj = object::address_to_object<NameRecordV2>(token_addr_inline(domain_name, subdomain_name));
+        option::some(object::owner(record_obj))
     }
 
     /// gets the address pointed to by a given name
@@ -1015,6 +1069,11 @@ module aptos_names_v2::domains {
         } else {
             option::none()
         }
+    }
+
+    /// Returns whether a ReverseRecord exists at `account_addr`
+    public fun reverse_record_exists(account_addr: address): bool {
+        exists<ReverseRecord>(account_addr)
     }
 
     fun set_reverse_lookup_internal(

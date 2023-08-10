@@ -1,5 +1,5 @@
 #[test_only]
-module router::router_tests {
+module router::router_management_tests {
     use router::router;
     use router::test_helper;
     use std::option;

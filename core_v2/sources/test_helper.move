@@ -68,7 +68,16 @@ module aptos_names_v2::test_helper {
     }
 
     /// Register the domain, and verify the registration was done correctly
-    public fun register_name(user: &signer, subdomain_name: Option<String>, domain_name: String, registration_duration_secs: u64, _expected_fq_domain_name: String, _expected_property_version: u64, signature: vector<u8>) {
+    public fun register_name(
+        router_signer: &signer,
+        user: &signer,
+        subdomain_name: Option<String>,
+        domain_name: String,
+        registration_duration_secs: u64,
+        _expected_fq_domain_name: String,
+        _expected_property_version: u64,
+        signature: vector<u8>
+    ) {
         let user_addr = signer::address_of(user);
 
         let is_subdomain = option::is_some(&subdomain_name);
@@ -88,12 +97,24 @@ module aptos_names_v2::test_helper {
 
         if (option::is_none(&subdomain_name)) {
             if (vector::length(&signature)== 0) {
-                domains::register_domain(user, domain_name, registration_duration_secs);
+                domains::register_domain(router_signer, user, domain_name, registration_duration_secs);
             } else {
-                domains::register_domain_with_signature(user, domain_name, registration_duration_secs, signature);
+                domains::register_domain_with_signature(
+                    router_signer,
+                    user,
+                    domain_name,
+                    registration_duration_secs,
+                    signature
+                );
             };
         } else {
-            domains::register_subdomain(user, *option::borrow(&subdomain_name), domain_name, registration_duration_secs);
+            domains::register_subdomain(
+                router_signer,
+                user,
+                *option::borrow(&subdomain_name),
+                domain_name,
+                registration_duration_secs
+            );
         };
 
         // It should now be: not expired, registered, and not registerable
