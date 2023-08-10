@@ -7,7 +7,6 @@ module aptos_names_v2::domains {
     use aptos_framework::object::{Self, Object};
     use aptos_framework::timestamp;
     use aptos_names_v2::config;
-    use aptos_names_v2::migrate_helper;
     use aptos_names_v2::price_model;
     use aptos_names_v2::time_helper;
     use aptos_names_v2::token_helper;
@@ -1017,40 +1016,6 @@ module aptos_names_v2::domains {
         } else {
             option::none()
         }
-    }
-
-    /// Burns the ANS token v1, mints ANS token v2, and extends the expiration by a year.
-    public entry fun migrate_domain_from_v1(
-        user: &signer,
-        domain_name: String,
-    ) acquires CollectionCapability, NameRecord, RegisterNameEvents, ReverseRecord, SetTargetAddressEvents, SetReverseLookupEvents {
-        let (expiration_time_sec, target_addr) = migrate_helper::burn_token_v1(
-            user,
-            &get_burn_signer(),
-            domain_name,
-            option::none(),
-        );
-
-        let now = timestamp::now_seconds();
-        assert!(expiration_time_sec >= now, error::invalid_state(EMIGRATION_ALREADY_EXPIRED));
-
-        let new_expiration_time_sec = if (expiration_time_sec <= AUTO_RENEWAL_EXPIRATION_CUTOFF_SEC) {
-            expiration_time_sec + time_helper::years_to_seconds(1)
-        } else {
-            expiration_time_sec
-        };
-        register_name_internal(
-            user,
-            option::none(),
-            domain_name,
-            new_expiration_time_sec - now,
-            0,
-        );
-        // TODO: `register_name_internal` should accept a `target_addr`
-        if (option::is_some(&target_addr)) {
-            set_target_address_internal(option::none(), domain_name, *option::borrow(&target_addr));
-        }
-        // TODO: If the name was a primary name in v1 we should make it a primary name in v2
     }
 
     fun set_reverse_lookup_internal(

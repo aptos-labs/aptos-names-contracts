@@ -1,9 +1,115 @@
 module router::router {
+    use aptos_framework::object::ExtendRef;
+    use aptos_framework::object;
     use std::error;
     use std::option::{Self, Option};
+    use std::signer::address_of;
     use std::string::{String};
 
-    // == WRITE ==
+    // == ROUTER MODE ENUMS ==
+
+    // NOTE: New enums must update is_valid_mode(mode: u8)
+    const MODE_V1: u8 = 0;
+    const MODE_V1_AND_V2: u8 = 1;
+    // const MODE_NEXT: u8 = 2;
+
+    // == ERROR CODES ==
+
+    /// Caller is not the admin
+    const ENOT_ADMIN: u64 = 0;
+    /// There is no pending admin
+    const ENO_PENDING_ADMIN: u64 = 1;
+    /// Caller is not the pending admin
+    const ENOT_PENDING_ADMIN: u64 = 2;
+    /// Provided  mode is not supported
+    const EINVALID_MODE: u64 = 3;
+    /// Function is not implemented in the current mode
+    const ENOT_IMPLEMENTED_IN_MODE: u64 = 4;
+
+    // == OTHER CONSTANTS ==
+
+    const ROUTER_OBJECT_SEED: vector<u8>  = b"ANS ROUTER";
+
+    // == STRUCTS ==
+
+    #[resource_group_member(group = aptos_framework::object::ObjectGroup)]
+    struct RouterConfig has key {
+        pending_admin_addr: Option<address>,
+        admin_addr: address,
+        mode: u8,
+        extend_ref: ExtendRef,
+    }
+
+    fun init_module(deployer: &signer) {
+        let constructor_ref = object::create_named_object(deployer, ROUTER_OBJECT_SEED);
+        let module_signer = object::generate_signer(&constructor_ref);
+        move_to(&module_signer, RouterConfig {
+            pending_admin_addr: option::none(),
+            admin_addr: address_of(deployer),
+            mode: MODE_V1,
+            extend_ref: object::generate_extend_ref(&constructor_ref),
+        });
+    }
+
+    // == ROUTER MANAGEMENT WRITE FUNCTIONS ==
+
+    public entry fun set_pending_admin(
+        router_admin: &signer,
+        pending_admin_addr: address,
+    ) acquires RouterConfig {
+        let router_config = borrow_global_mut<RouterConfig>(router_config_addr());
+        assert!(router_config.admin_addr == address_of(router_admin), error::permission_denied(ENOT_ADMIN));
+        router_config.pending_admin_addr = option::some(pending_admin_addr);
+    }
+
+    public entry fun accept_pending_admin(pending_admin: &signer) acquires RouterConfig {
+        let router_config = borrow_global_mut<RouterConfig>(router_config_addr());
+        assert!(option::is_some(&router_config.pending_admin_addr), error::invalid_state(ENO_PENDING_ADMIN));
+        let pending_admin_addr = address_of(pending_admin);
+        assert!(
+            option::extract(&mut router_config.pending_admin_addr) == pending_admin_addr,
+            error::permission_denied(ENOT_PENDING_ADMIN)
+        );
+        router_config.admin_addr = pending_admin_addr;
+        router_config.pending_admin_addr = option::none();
+    }
+
+    public entry fun set_mode(
+        router_admin: &signer,
+        mode: u8,
+    ) acquires RouterConfig {
+        assert!(is_valid_mode(mode), error::invalid_argument(EINVALID_MODE));
+        let router_config = borrow_global_mut<RouterConfig>(router_config_addr());
+        assert!(router_config.admin_addr == address_of(router_admin), error::permission_denied(ENOT_ADMIN));
+        router_config.mode = mode;
+    }
+
+    // == ROUTER MANAGEMENT READ FUNCTIONS ==
+
+    inline fun router_config_addr(): address {
+        object::create_object_address(&@router, ROUTER_OBJECT_SEED)
+    }
+
+    inline fun is_valid_mode(mode: u8): bool {
+        mode <= MODE_V1_AND_V2
+    }
+
+    public fun get_admin_addr(): address acquires RouterConfig {
+        let router_config = borrow_global<RouterConfig>(router_config_addr());
+        router_config.admin_addr
+    }
+
+    public fun get_pending_admin_addr(): Option<address> acquires RouterConfig {
+        let router_config = borrow_global<RouterConfig>(router_config_addr());
+        router_config.pending_admin_addr
+    }
+
+    public fun get_mode(): u8 acquires RouterConfig {
+        let router_config = borrow_global<RouterConfig>(router_config_addr());
+        router_config.mode
+    }
+
+    // == ROUTER WRITE FUNCTIONS ==
 
     // ==== REGISTRATION ====
 
@@ -75,7 +181,7 @@ module router::router {
         _subdomain_name: String,
     ) {}
 
-    // ==== READ ====
+    // == ROUTER READ FUNCTIONS ==
 
     public fun get_target_addr(
         _domain_name: String,
@@ -113,5 +219,12 @@ module router::router {
     public fun get_primary_name(_user_addr: address): (Option<String>, Option<String>) {
         assert!(true, error::not_implemented(0));
         (option::none(), option::none())
+    }
+
+    // == TEST ==
+
+    #[test_only]
+    public fun init_module_for_test(deployer: &signer) {
+        init_module(deployer);
     }
 }
