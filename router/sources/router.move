@@ -356,22 +356,57 @@ module router::router {
 
     // ==== EXPIRATION ====
 
+    // Not available in MODE_V1
     public entry fun renew_domain(
         _user: &signer,
         _domain_name: String
-    ) {}
+    ) acquires RouterConfig {
+        let mode = get_mode();
+        if (mode == MODE_V1) {
+            // Will not be implemented in v1
+            abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
+        } else if (mode == MODE_V1_AND_V2) {
+            // TODO: Implement
+            abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
+        } else {
+            abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
+        }
+    }
 
+    // Not available in MODE_V1
     public entry fun set_subdomain_expiration_policy(
         _user: &signer,
         _domain_name: String,
         _subdomain_name: String,
-    ) {}
+    ) acquires RouterConfig {
+        let mode = get_mode();
+        if (mode == MODE_V1) {
+            // Will not be implemented in v1
+            abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
+        } else if (mode == MODE_V1_AND_V2) {
+            // TODO: Implement
+            abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
+        } else {
+            abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
+        }
+    }
 
     public entry fun set_subdomain_expiration(
         _user: &signer,
         _subdomain_name: String,
         _domain_name: String,
-    ) {}
+    ) acquires RouterConfig {
+        let mode = get_mode();
+        if (mode == MODE_V1) {
+            // Will not be implemented in v1
+            abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
+        } else if (mode == MODE_V1_AND_V2) {
+            // TODO: Implement
+            abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
+        } else {
+            abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
+        }
+    }
 
     // ==== REVERSE REGISTRATION ====
 
@@ -398,7 +433,16 @@ module router::router {
         }
     }
 
-    public entry fun clear_primary_name(_user: &signer) {}
+    public entry fun clear_primary_name(user: &signer) acquires RouterConfig {
+        let mode = get_mode();
+        if (mode == MODE_V1) {
+            aptos_names::domains::clear_reverse_lookup(user);
+        } else if (mode == MODE_V1_AND_V2) {
+            aptos_names_v2::domains::clear_reverse_lookup(user);
+        } else {
+            abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
+        }
+    }
 
     // ==== METADATA ====
 
