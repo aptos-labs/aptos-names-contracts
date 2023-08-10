@@ -37,17 +37,17 @@ module aptos_names_v2::domain_e2e_tests {
         test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>());
 
         // Set an address and verify it
-        test_helper::set_name_address(user, option::none(), test_helper::domain_name(), user_addr);
+        test_helper::set_target_address(user, option::none(), test_helper::domain_name(), user_addr);
 
         // Ensure the owner can clear the address
-        test_helper::clear_name_address(user, option::none(), test_helper::domain_name());
+        test_helper::clear_target_address(user, option::none(), test_helper::domain_name());
 
         // And also can clear if the user is the registered address, but not owner
-        test_helper::set_name_address(user, option::none(), test_helper::domain_name(), signer::address_of(rando));
-        test_helper::clear_name_address(rando, option::none(), test_helper::domain_name());
+        test_helper::set_target_address(user, option::none(), test_helper::domain_name(), signer::address_of(rando));
+        test_helper::clear_target_address(rando, option::none(), test_helper::domain_name());
 
         // Set it back for following tests
-        test_helper::set_name_address(user, option::none(), test_helper::domain_name(), user_addr);
+        test_helper::set_target_address(user, option::none(), test_helper::domain_name(), user_addr);
     }
 
     #[test(
@@ -124,17 +124,17 @@ module aptos_names_v2::domain_e2e_tests {
         test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, signature);
 
         // Set an address and verify it
-        test_helper::set_name_address(user, option::none(), test_helper::domain_name(), user_addr);
+        test_helper::set_target_address(user, option::none(), test_helper::domain_name(), user_addr);
 
         // Ensure the owner can clear the address
-        test_helper::clear_name_address(user, option::none(), test_helper::domain_name());
+        test_helper::clear_target_address(user, option::none(), test_helper::domain_name());
 
         // And also can clear if the user is the registered address, but not owner
-        test_helper::set_name_address(user, option::none(), test_helper::domain_name(), signer::address_of(rando));
-        test_helper::clear_name_address(rando, option::none(), test_helper::domain_name());
+        test_helper::set_target_address(user, option::none(), test_helper::domain_name(), signer::address_of(rando));
+        test_helper::clear_target_address(rando, option::none(), test_helper::domain_name());
 
         // Set it back for following tests
-        test_helper::set_name_address(user, option::none(), test_helper::domain_name(), user_addr);
+        test_helper::set_target_address(user, option::none(), test_helper::domain_name(), user_addr);
     }
 
     #[test(
@@ -256,7 +256,7 @@ module aptos_names_v2::domain_e2e_tests {
         // Register the domain
         test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>());
         // Ensure we can't set it as a rando. The expected target address doesn't matter as it won't get hit
-        test_helper::set_name_address(rando, option::none(), test_helper::domain_name(), @aptos_names_v2);
+        test_helper::set_target_address(rando, option::none(), test_helper::domain_name(), @aptos_names_v2);
     }
 
     #[test(
@@ -280,10 +280,10 @@ module aptos_names_v2::domain_e2e_tests {
 
         // Register the domain, and set its address
         test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>());
-        test_helper::set_name_address(user, option::none(), test_helper::domain_name(), signer::address_of(user));
+        test_helper::set_target_address(user, option::none(), test_helper::domain_name(), signer::address_of(user));
 
         // Ensure we can't clear it as a rando
-        test_helper::clear_name_address(rando, option::none(), test_helper::domain_name());
+        test_helper::clear_target_address(rando, option::none(), test_helper::domain_name());
     }
 
     #[test(
@@ -306,10 +306,10 @@ module aptos_names_v2::domain_e2e_tests {
 
         // Register the domain, and set its address
         test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>());
-        test_helper::set_name_address(user, option::none(), test_helper::domain_name(), signer::address_of(rando));
+        test_helper::set_target_address(user, option::none(), test_helper::domain_name(), signer::address_of(rando));
 
         // Ensure we can clear as owner
-        test_helper::clear_name_address(user, option::none(), test_helper::domain_name());
+        test_helper::clear_target_address(user, option::none(), test_helper::domain_name());
     }
 
     #[test(
@@ -319,7 +319,7 @@ module aptos_names_v2::domain_e2e_tests {
         rando = @0x266f,
         foundation = @0xf01d
     )]
-    fun admin_can_force_set_name_address_e2e_test(
+    fun test_admin_can_force_set_target_address_e2e(
         aptos_names_v2: &signer,
         user: signer,
         aptos: signer,
@@ -360,7 +360,7 @@ module aptos_names_v2::domain_e2e_tests {
         foundation = @0xf01d
     )]
     #[expected_failure(abort_code = 327681, location = aptos_names_v2::config)]
-    fun rando_cant_force_set_name_address_e2e_test(
+    fun rando_cant_force_set_target_address_e2e_test(
         aptos_names_v2: &signer,
         user: signer,
         aptos: signer,
