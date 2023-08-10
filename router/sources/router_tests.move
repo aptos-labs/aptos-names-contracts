@@ -1,10 +1,10 @@
 #[test_only]
 module router::router_tests {
-    use aptos_names_v2::test_helper;
-    use std::vector;
     use router::router;
+    use router::test_helper;
     use std::option;
     use std::signer::address_of;
+    use std::vector;
 
     const MAX_MODE: u8 = 1;
 
