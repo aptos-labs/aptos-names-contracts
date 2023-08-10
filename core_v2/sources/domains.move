@@ -393,7 +393,7 @@ module aptos_names_v2::domains {
 
     /// A wrapper around `register_name` as an entry function.
     /// Option<String> is not currently serializable, so we have these convenience methods
-    public entry fun register_domain(
+    public fun register_domain(
         router_signer: &signer,
         sign: &signer,
         domain_name: String,
@@ -404,7 +404,7 @@ module aptos_names_v2::domains {
         register_domain_generic(sign, domain_name, registration_duration_secs);
     }
 
-    public entry fun register_domain_with_signature(
+    public fun register_domain_with_signature(
         router_signer: &signer,
         sign: &signer,
         domain_name: String,
@@ -420,7 +420,7 @@ module aptos_names_v2::domains {
     /// A wrapper around `register_name` as an entry function.
     /// Option<String> is not currently serializable, so we have these convenience method
     /// `expiration_time_sec` is the timestamp, in seconds, when the name expires
-    public entry fun register_subdomain(
+    public fun register_subdomain(
         router_signer: &signer,
         sign: &signer,
         subdomain_name: String,
