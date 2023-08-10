@@ -27,7 +27,6 @@ module aptos_names_v2::domains {
     /// current MAX_REMAINING_TIME_FOR_RENEWAL_SEC is 6 months
     const MAX_REMAINING_TIME_FOR_RENEWAL_SEC: u64 = 15552000;
     /// 2024/03/07 23:59:59
-    const AUTO_RENEWAL_EXPIRATION_CUTOFF_SEC: u64 = 1709855999;
     const SECONDS_PER_YEAR: u64 = 60 * 60 * 24 * 365;
 
     /// enums for subdomain expiration policy. update validate_subdomain_expiration_policy() when adding more
@@ -50,21 +49,13 @@ module aptos_names_v2::domains {
     /// The caller is not the owner of the name, and is not authorized to perform the action
     const ENOT_OWNER_OF_NAME: u64 = 9;
     /// The domain name is too long- it exceeds the configured maximum number of utf8 glyphs
-    const EDOMAIN_TOO_LONG: u64 = 10;
-    /// The subdomain name is too long- it exceeds the configured maximum number of utf8 glyphs
-    const ESUBDOMAIN_TOO_LONG: u64 = 11;
+    const ENAME_TOO_LONG: u64 = 10;
+    /// The domain is too short.
+    const ENAME_TOO_SHORT: u64 = 11;
     /// The domain name contains invalid characters: it is not a valid domain name
-    const EDOMAIN_HAS_INVALID_CHARACTERS: u64 = 12;
-    /// The subdomain name contains invalid characters: it is not a valid domain name
-    const ESUBDOMAIN_HAS_INVALID_CHARACTERS: u64 = 13;
-    /// The subdomain registration duration can not be longer than its parent domain
-    const ESUBDOMAIN_CAN_NOT_EXCEED_DOMAIN_REGISTRATION: u64 = 14;
-    /// The subdomain name is too short (must be >= 3)
-    const ESUBDOMAIN_TOO_SHORT: u64 = 15;
+    const ENAME_HAS_INVALID_CHARACTERS: u64 = 12;
     /// The required `register_domain_signature` for `register_domain` is missing
     const EVALID_SIGNATURE_REQUIRED: u64 = 16;
-    /// The domain is too short.
-    const EDOMAIN_TOO_SHORT: u64 = 17;
     /// The name is not expired in 6 months, thus not eligible for renewal
     const EDOMAIN_NOT_AVAILABLE_TO_RENEW: u64 = 18;
     /// The subdomain is not eligible for renewal
@@ -75,8 +66,6 @@ module aptos_names_v2::domains {
     const ESUBDOMAIN_NOT_EXIST: u64 = 21;
     /// The name is not a subdomain
     const ENOT_A_SUBDOMAIN: u64 = 22;
-    /// The domain expiration, even after migration extension, is past now.
-    const EMIGRATION_ALREADY_EXPIRED: u64 = 23;
     /// The subdomain expiration can be set any date before the domain expiration
     const ESUBDOMAIN_EXPIRATION_PASS_DOMAIN_EXPIRATION: u64 = 24;
     /// The duration must be whole years
@@ -466,7 +455,7 @@ module aptos_names_v2::domains {
             let domain_record = get_record(domain_name, option::none());
             assert!(
                 name_expiration_time_secs <= domain_record.expiration_time_sec,
-                error::out_of_range(ESUBDOMAIN_CAN_NOT_EXCEED_DOMAIN_REGISTRATION)
+                error::out_of_range(ESUBDOMAIN_EXPIRATION_PASS_DOMAIN_EXPIRATION)
             );
         };
 
@@ -669,9 +658,9 @@ module aptos_names_v2::domains {
         name: String,
     ): u64 {
         let (is_valid, length) = utf8_utils::string_is_allowed(&name);
-        assert!(is_valid, error::invalid_argument(EDOMAIN_HAS_INVALID_CHARACTERS));
-        assert!(length <= config::max_domain_length(), error::out_of_range(EDOMAIN_TOO_LONG));
-        assert!(length >= config::min_domain_length(), error::out_of_range(EDOMAIN_TOO_SHORT));
+        assert!(is_valid, error::invalid_argument(ENAME_HAS_INVALID_CHARACTERS));
+        assert!(length <= config::max_domain_length(), error::out_of_range(ENAME_TOO_LONG));
+        assert!(length >= config::min_domain_length(), error::out_of_range(ENAME_TOO_SHORT));
 
         return length
     }

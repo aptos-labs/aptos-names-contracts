@@ -687,7 +687,7 @@ module aptos_names_v2::subdomain_e2e_tests {
         rando = @0x266f,
         foundation = @0xf01d
     )]
-    #[expected_failure(abort_code = 131086, location = aptos_names_v2::domains)]
+    #[expected_failure(abort_code = 131096, location = aptos_names_v2::domains)]
     fun test_admin_cant_force_create_subdomain_more_than_domain_time_e2e(
         aptos_names_v2: &signer,
         user: signer,
