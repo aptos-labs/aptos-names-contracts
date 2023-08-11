@@ -1,5 +1,5 @@
 [package]
-name = 'aptos_names_register'
+name = 'bulk_migrate'
 version = '1.0.0'
 
 [addresses]
