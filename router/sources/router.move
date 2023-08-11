@@ -154,10 +154,17 @@ module router::router {
         }
     }
 
+    /// @param user The user who is paying for the registration
+    /// @param domain_name The domain name to register
+    /// @param registration_duration_secs The duration of the registration in seconds
+    /// @param target_addr The address the registered name will point to
+    /// @param to_addr The address to send the token to. If none, then the user will be the owner. Not available in MODE_V1 because token transfers are unreliable (receiver must already have token store)
     public entry fun register_domain(
         user: &signer,
         domain_name: String,
-        registration_duration_secs: u64
+        registration_duration_secs: u64,
+        target_addr: Option<address>,
+        to_addr: Option<address>,
     ) acquires RouterConfig {
         let mode = get_mode();
         if (mode == MODE_V1) {
@@ -165,6 +172,7 @@ module router::router {
                 registration_duration_secs % SECONDS_PER_YEAR == 0,
                 error::invalid_argument(ENOT_MULTIPLE_OF_SECONDS_PER_YEAR)
             );
+            assert!(option::is_none(&to_addr), error::not_implemented(ENOT_IMPLEMENTED_IN_MODE));
             aptos_names::domains::register_domain(
                 user,
                 domain_name,
@@ -177,25 +185,50 @@ module router::router {
                 user,
                 domain_name,
                 registration_duration_secs,
-            )
+            );
         } else {
             abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
-        }
+        };
+
+        // Common operations that handle modes via the router
+        if (option::is_some(&target_addr)) {
+            set_target_addr(
+                user,
+                domain_name,
+                option::none(),
+                *option::borrow(&target_addr)
+            );
+        };
+        if (option::is_some(&to_addr)) {
+            transfer_name(user, domain_name, option::none(), *option::borrow(&to_addr));
+        };
     }
 
+    /// @param user The user who is paying for the registration
+    /// @param domain_name The domain name to register
+    /// @param subdomain_name The subdomain name to register
+    /// @param expiration_time_sec The expiration time of the registration in seconds
+    /// @param _expiration_policy The expiration policy of the registration. Unused in MODE_V1
+    /// @param target_addr The address the registered name will point to
+    /// @param to_addr The address to send the token to. If none, then the user will be the owner. Not available in MODE_V1 because token transfers are unreliable (receiver must already have token store)
     public entry fun register_subdomain(
         user: &signer,
         domain_name: String,
         subdomain_name: String,
         expiration_time_sec: u64,
         _expiration_policy: u8,
+        target_addr: Option<address>,
+        to_addr: Option<address>,
     ) acquires RouterConfig {
         let mode = get_mode();
         if (mode == MODE_V1) {
+            assert!(option::is_none(&to_addr), error::not_implemented(ENOT_IMPLEMENTED_IN_MODE));
             aptos_names::domains::register_subdomain(user, subdomain_name, domain_name, expiration_time_sec);
         } else if (mode == MODE_V1_AND_V2) {
             assert!(
-                can_register_in_v2(domain_name, option::some(subdomain_name)), error::unavailable(ENAME_NOT_AVAILABLE));
+                can_register_in_v2(domain_name, option::some(subdomain_name)),
+                error::unavailable(ENAME_NOT_AVAILABLE)
+            );
             aptos_names_v2::domains::register_subdomain(
                 &get_router_signer(),
                 user,
@@ -205,7 +238,20 @@ module router::router {
             )
         } else {
             abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
-        }
+        };
+
+        // Common operations that handle modes via the router
+        if (option::is_some(&target_addr)) {
+            set_target_addr(
+                user,
+                domain_name,
+                option::some(subdomain_name),
+                *option::borrow(&target_addr)
+            );
+        };
+        if (option::is_some(&to_addr)) {
+            transfer_name(user, domain_name, option::some(subdomain_name), *option::borrow(&to_addr));
+        };
     }
 
     // ==== MIGRATION ====
