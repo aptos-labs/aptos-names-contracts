@@ -45,7 +45,8 @@ module router::primary_name_tests {
             0,
             false,
             option::none(),
-            option::none()
+            option::none(),
+            option::none(),
         );
 
         // Set domain as primary

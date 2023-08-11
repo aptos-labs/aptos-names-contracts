@@ -258,12 +258,14 @@ module router::router {
             if (mode == MODE_V1) {
                 abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
             };
-            aptos_names_v2::domains::disable_subdomain_owner_transfer_as_domain_owner(
-                &get_router_signer(),
-                user,
-                subdomain_name,
-                domain_name,
-            )
+            if (option::get_with_default(&disable_owner_transfer, false)) {
+                aptos_names_v2::domains::disable_subdomain_owner_transfer_as_domain_owner(
+                    &get_router_signer(),
+                    user,
+                    subdomain_name,
+                    domain_name,
+                )
+            }
         };
     }
 

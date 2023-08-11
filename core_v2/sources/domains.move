@@ -544,7 +544,7 @@ module aptos_names_v2::domains {
         sign: &signer,
         domain_name: String,
         subdomain_name: String,
-    ) acquires CollectionCapability, NameRecord, RegisterNameEvents, ReverseRecord, SetTargetAddressEvents, SetReverseLookupEvents {
+    ) acquires CollectionCapability, NameRecord {
         assert!(address_of(router_signer) == @router_signer, error::permission_denied(ENOT_ROUTER));
         validate_subdomain_registered_and_domain_owned_by_signer(sign, domain_name, subdomain_name);
         let name_record_address = token_addr(domain_name, option::some(subdomain_name));
@@ -558,7 +558,7 @@ module aptos_names_v2::domains {
         sign: &signer,
         domain_name: String,
         subdomain_name: String,
-    ) acquires CollectionCapability, NameRecord, RegisterNameEvents, ReverseRecord, SetTargetAddressEvents, SetReverseLookupEvents {
+    ) acquires CollectionCapability, NameRecord {
         assert!(address_of(router_signer) == @router_signer, error::permission_denied(ENOT_ROUTER));
         validate_subdomain_registered_and_domain_owned_by_signer(sign, domain_name, subdomain_name);
         let name_record_address = token_addr(domain_name, option::some(subdomain_name));
