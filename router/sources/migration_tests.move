@@ -37,7 +37,7 @@ module router::migration_tests {
 
         // Register with v1
         let now = timestamp::now_seconds();
-        router::register_domain(user, domain_name, SECONDS_PER_YEAR);
+        router::register_domain(user, domain_name, SECONDS_PER_YEAR, option::none(), option::none());
         assert!(router::is_name_owner(user_addr, domain_name, option::none()), 1);
         assert!(*option::borrow(&router::get_target_addr(domain_name, option::none())) == user_addr, 2);
         assert!(router::get_expiration(domain_name, option::none()) == now + SECONDS_PER_YEAR, 3);
@@ -99,7 +99,7 @@ module router::migration_tests {
         let domain_name = utf8(b"test");
 
         // Register with v1
-        router::register_domain(user1, domain_name, SECONDS_PER_YEAR);
+        router::register_domain(user1, domain_name, SECONDS_PER_YEAR, option::none(), option::none());
 
         // Bump mode
         router::set_mode(router, 1);
@@ -136,7 +136,7 @@ module router::migration_tests {
         let now = timestamp::now_seconds();
 
         // Register with v1
-        router::register_domain(user, domain_name, SECONDS_PER_YEAR);
+        router::register_domain(user, domain_name, SECONDS_PER_YEAR, option::none(), option::none());
 
         // Bump mode
         router::set_mode(router, 1);
@@ -176,8 +176,16 @@ module router::migration_tests {
 
         // Register with v1
         let now = timestamp::now_seconds();
-        router::register_domain(user, domain_name, SECONDS_PER_YEAR);
-        router::register_subdomain(user, domain_name, subdomain_name, SECONDS_PER_YEAR, 0);
+        router::register_domain(user, domain_name, SECONDS_PER_YEAR, option::none(), option::none());
+        router::register_subdomain(
+            user,
+            domain_name,
+            subdomain_name,
+            SECONDS_PER_YEAR,
+            0,
+            option::none(),
+            option::none()
+        );
         router::set_primary_name(user, domain_name, subdomain_name_opt);
         assert!(router::is_name_owner(user_addr, domain_name, subdomain_name_opt), 7);
         assert!(*option::borrow(&router::get_target_addr(domain_name, subdomain_name_opt)) == user_addr, 8);
@@ -243,8 +251,16 @@ module router::migration_tests {
         let subdomain_name_opt = option::some(subdomain_name);
 
         // Register with v1
-        router::register_domain(user1, domain_name, SECONDS_PER_YEAR);
-        router::register_subdomain(user1, domain_name, subdomain_name, SECONDS_PER_YEAR, 0);
+        router::register_domain(user1, domain_name, SECONDS_PER_YEAR, option::none(), option::none());
+        router::register_subdomain(
+            user1,
+            domain_name,
+            subdomain_name,
+            SECONDS_PER_YEAR,
+            0,
+            option::none(),
+            option::none()
+        );
 
         // Bump mode
         router::set_mode(router, 1);

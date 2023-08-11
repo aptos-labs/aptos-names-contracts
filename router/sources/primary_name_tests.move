@@ -36,8 +36,16 @@ module router::primary_name_tests {
         let subdomain_name_opt = option::some(subdomain_name);
 
         // Register with v1
-        router::register_domain(user, domain_name, SECONDS_PER_YEAR);
-        router::register_subdomain(user, domain_name, subdomain_name, SECONDS_PER_YEAR, 0);
+        router::register_domain(user, domain_name, SECONDS_PER_YEAR, option::none(), option::none());
+        router::register_subdomain(
+            user,
+            domain_name,
+            subdomain_name,
+            SECONDS_PER_YEAR,
+            0,
+            option::none(),
+            option::none()
+        );
 
         // Set domain as primary
         router::set_primary_name(user, domain_name, option::none());
