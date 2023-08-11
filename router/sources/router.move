@@ -218,10 +218,9 @@ module router::router {
         subdomain_name: String,
         expiration_time_sec: u64,
         _expiration_policy: u8,
-        _transferrable: bool,
+        transferrable: Option<bool>,
         target_addr: Option<address>,
         to_addr: Option<address>,
-        transferrable: Option<bool>,
     ) acquires RouterConfig {
         let mode = get_mode();
         if (mode == MODE_V1) {

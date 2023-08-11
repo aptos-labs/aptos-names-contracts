@@ -50,9 +50,9 @@ module router::subdomain_transfer_tests {
             subdomain_name,
             SECONDS_PER_YEAR,
             0,
-            option::some(user2_addr),
-            option::some(user2_addr),
             option::some(false),
+            option::some(user2_addr),
+            option::some(user2_addr),
         );
         // Subdomain owner should not be able to transfer it now
         router::transfer_name(user2, domain_name, subdomain_name_opt, user1_addr);
@@ -98,9 +98,9 @@ module router::subdomain_transfer_tests {
             subdomain_name,
             SECONDS_PER_YEAR,
             0,
-            option::some(user2_addr),
-            option::some(user2_addr),
             option::none(),
+            option::some(user2_addr),
+            option::some(user2_addr),
         );
         // Disable owner transfer as domain admin
         router::domain_admin_set_subdomain_transferability(user1, domain_name, subdomain_name, false);
@@ -147,9 +147,9 @@ module router::subdomain_transfer_tests {
             subdomain_name,
             SECONDS_PER_YEAR,
             0,
-            option::some(user2_addr),
-            option::some(user2_addr),
             option::some(false),
+            option::some(user2_addr),
+            option::some(user2_addr),
         );
         assert!(router::is_name_owner(user2_addr, domain_name, subdomain_name_opt), 0);
         // Enable owner transfer as domain admin
@@ -198,9 +198,9 @@ module router::subdomain_transfer_tests {
             subdomain_name,
             SECONDS_PER_YEAR,
             0,
-            option::some(user2_addr),
-            option::some(user2_addr),
             option::some(false),
+            option::some(user2_addr),
+            option::some(user2_addr),
         );
         assert!(router::is_name_owner(user2_addr, domain_name, subdomain_name_opt), 0);
         // Domain admin should still be able to transfer subdomain
