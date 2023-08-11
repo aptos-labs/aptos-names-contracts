@@ -45,6 +45,7 @@ module router::router {
 
     // == STRUCTS ==
 
+    #[resource_group_member(group = aptos_framework::object::ObjectGroup)]
     struct RouterConfig has key {
         pending_admin_addr: Option<address>,
         admin_addr: address,
@@ -62,7 +63,7 @@ module router::router {
             admin_addr: address_of(deployer),
             mode: MODE_V1,
             signer_cap,
-        });
+        })
     }
 
     // == ROUTER MANAGEMENT WRITE FUNCTIONS ==
@@ -295,7 +296,7 @@ module router::router {
             if (is_primary_name) {
                 aptos_names_v2::domains::set_reverse_lookup(user, subdomain_name, domain_name)
             } else if (option::is_some(&target_addr)) {
-                aptos_names_v2::domains::set_name_address(
+                aptos_names_v2::domains::set_target_address(
                     user,
                     subdomain_name,
                     domain_name,
@@ -346,7 +347,7 @@ module router::router {
             let token_addr = aptos_names_v2::domains::token_addr(domain_name, subdomain_name);
             object::transfer(
                 user,
-                object::address_to_object<aptos_names_v2::domains::NameRecordV2>(token_addr),
+                object::address_to_object<aptos_names_v2::domains::NameRecord>(token_addr),
                 to_addr,
             );
         } else {
@@ -417,7 +418,7 @@ module router::router {
                 target_addr,
             )
         } else if (mode == MODE_V1_AND_V2) {
-            aptos_names_v2::domains::set_name_address(
+            aptos_names_v2::domains::set_target_address(
                 user,
                 subdomain_name,
                 domain_name,
