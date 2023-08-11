@@ -45,7 +45,6 @@ module router::router {
 
     // == STRUCTS ==
 
-    #[resource_group_member(group = aptos_framework::object::ObjectGroup)]
     struct RouterConfig has key {
         pending_admin_addr: Option<address>,
         admin_addr: address,
@@ -63,7 +62,7 @@ module router::router {
             admin_addr: address_of(deployer),
             mode: MODE_V1,
             signer_cap,
-        })
+        });
     }
 
     // == ROUTER MANAGEMENT WRITE FUNCTIONS ==
@@ -357,11 +356,24 @@ module router::router {
 
     // ==== EXPIRATION ====
 
+    // Not available in MODE_V1
     public entry fun renew_domain(
         _user: &signer,
         _domain_name: String
-    ) {}
+    ) acquires RouterConfig {
+        let mode = get_mode();
+        if (mode == MODE_V1) {
+            // Will not be implemented in v1
+            abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
+        } else if (mode == MODE_V1_AND_V2) {
+            // TODO: Implement
+            abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
+        } else {
+            abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
+        }
+    }
 
+    // Not available in MODE_V1
     // ==== REVERSE REGISTRATION ====
 
     public entry fun set_primary_name(
@@ -387,7 +399,16 @@ module router::router {
         }
     }
 
-    public entry fun clear_primary_name(_user: &signer) {}
+    public entry fun clear_primary_name(user: &signer) acquires RouterConfig {
+        let mode = get_mode();
+        if (mode == MODE_V1) {
+            aptos_names::domains::clear_reverse_lookup(user);
+        } else if (mode == MODE_V1_AND_V2) {
+            aptos_names_v2::domains::clear_reverse_lookup(user);
+        } else {
+            abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
+        }
+    }
 
     // ==== METADATA ====
 
@@ -432,15 +453,36 @@ module router::router {
         _domain_name: String,
         _subdomain_name: String,
         _expiration_policy: u8,
-    ) {}
+    ) acquires RouterConfig {
+        let mode = get_mode();
+        if (mode == MODE_V1) {
+            // Will not be implemented in v1
+            abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
+        } else if (mode == MODE_V1_AND_V2) {
+            // TODO: Implement
+            abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
+        } else {
+            abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
+        }
+    }
 
     public entry fun set_subdomain_expiration(
         _domain_admin: &signer,
         _domain_name: String,
         _subdomain_name: String,
         _expiration_time_sec: u64,
-    ) {}
-
+    ) acquires RouterConfig {
+        let mode = get_mode();
+        if (mode == MODE_V1) {
+            // Will not be implemented in v1
+            abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
+        } else if (mode == MODE_V1_AND_V2) {
+            // TODO: Implement
+            abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
+        } else {
+            abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
+        }
+    }
 
     // == ROUTER READ FUNCTIONS ==
 

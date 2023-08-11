@@ -121,7 +121,7 @@ module aptos_names_v2::subdomain_e2e_tests {
         user: signer,
         aptos: signer,
         rando: signer,
-        foundation: signer
+        foundation: signer,
     ) {
         let users = test_helper::e2e_test_setup(aptos_names_v2, user, &aptos, rando, &foundation);
         let user = vector::borrow(&users, 0);
@@ -220,7 +220,7 @@ module aptos_names_v2::subdomain_e2e_tests {
         user: signer,
         aptos: signer,
         rando: signer,
-        foundation: signer
+        foundation: signer,
     ) {
         let users = test_helper::e2e_test_setup(aptos_names_v2, user, &aptos, rando, &foundation);
         let user = vector::borrow(&users, 0);

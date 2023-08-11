@@ -427,7 +427,7 @@ module aptos_names_v2::domain_e2e_tests {
         foundation = @0xf01d
     )]
     #[expected_failure(abort_code = 327681, location = aptos_names_v2::config)]
-    fun rando_cant_force_set_target_address_e2e_test(
+    fun test_rando_cant_force_set_target_address_e2e(
         router_signer: &signer,
         aptos_names_v2: &signer,
         user: signer,
