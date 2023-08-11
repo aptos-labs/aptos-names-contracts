@@ -509,7 +509,7 @@ module aptos_names_v2::domain_e2e_tests {
         assert!(is_owner, 1);
 
         // Take the domain name for much longer than users are allowed to register it for
-        domains::force_create_or_seize_name(aptos_names_v2, option::none(), test_helper::domain_name(), test_helper::two_hundred_year_secs());
+        domains::force_create_or_seize_name(aptos_names_v2, test_helper::domain_name(), option::none(), test_helper::two_hundred_year_secs());
         let is_owner = domains::is_owner_of_name(signer::address_of(aptos_names_v2), option::none(), test_helper::domain_name());
         assert!(is_owner, 2);
 
@@ -556,7 +556,7 @@ module aptos_names_v2::domain_e2e_tests {
         assert!(is_owner, 1);
 
         // Take the domain name for much longer than users are allowed to register it for
-        domains::force_create_or_seize_name(aptos_names_v2, option::none(), domain_name, test_helper::two_hundred_year_secs());
+        domains::force_create_or_seize_name(aptos_names_v2, domain_name, option::none(), test_helper::two_hundred_year_secs());
         let is_owner = domains::is_owner_of_name(signer::address_of(aptos_names_v2), option::none(), domain_name);
         assert!(is_owner, 2);
 
@@ -588,7 +588,7 @@ module aptos_names_v2::domain_e2e_tests {
         assert!(!domains::name_is_registered(option::none(), test_helper::domain_name()), 1);
 
         // Take the domain name for much longer than users are allowed to register it for
-        domains::force_create_or_seize_name(aptos_names_v2, option::none(), test_helper::domain_name(), test_helper::two_hundred_year_secs());
+        domains::force_create_or_seize_name(aptos_names_v2, test_helper::domain_name(), option::none(), test_helper::two_hundred_year_secs());
         let is_owner = domains::is_owner_of_name(signer::address_of(aptos_names_v2), option::none(), test_helper::domain_name());
         assert!(is_owner, 2);
 
@@ -598,7 +598,7 @@ module aptos_names_v2::domain_e2e_tests {
 
         // Try to nuke the domain
         assert!(domains::name_is_registered(option::none(), test_helper::domain_name()), 3);
-        domains::force_clear_registration(aptos_names_v2, option::none(), test_helper::domain_name());
+        domains::force_clear_registration(aptos_names_v2, test_helper::domain_name(), option::none());
         assert!(!domains::name_is_registered(option::none(), test_helper::domain_name()), 4);
     }
 
@@ -629,7 +629,7 @@ module aptos_names_v2::domain_e2e_tests {
         assert!(is_owner, 1);
 
         // Take the domain name for much longer than users are allowed to register it for
-        domains::force_create_or_seize_name(rando, option::none(), test_helper::domain_name(), test_helper::two_hundred_year_secs());
+        domains::force_create_or_seize_name(rando, test_helper::domain_name(), option::none(), test_helper::two_hundred_year_secs());
     }
 
     #[test(
@@ -654,7 +654,7 @@ module aptos_names_v2::domain_e2e_tests {
         assert!(!domains::name_is_registered(option::none(), test_helper::domain_name()), 1);
 
         // Take the domain name for much longer than users are allowed to register it for
-        domains::force_create_or_seize_name(rando, option::none(), test_helper::domain_name(), test_helper::two_hundred_year_secs());
+        domains::force_create_or_seize_name(rando, test_helper::domain_name(), option::none(), test_helper::two_hundred_year_secs());
     }
 
     #[test(

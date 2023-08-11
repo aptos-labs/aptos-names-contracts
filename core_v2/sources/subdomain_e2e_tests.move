@@ -644,7 +644,7 @@ module aptos_names_v2::subdomain_e2e_tests {
         test_helper::register_name(router_signer, user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>());
         test_helper::register_name(router_signer, user, option::some(test_helper::subdomain_name()), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_subdomain_name(), 1, vector::empty<u8>());
 
-        domains::force_set_subdomain_address(aptos_names_v2, test_helper::subdomain_name(), test_helper::domain_name(), rando_addr);
+        domains::force_set_subdomain_address(aptos_names_v2, test_helper::domain_name(), test_helper::subdomain_name(), rando_addr);
         let (_expiration_time_sec, target_address) = domains::get_name_record_v1_props_for_name(option::some(test_helper::subdomain_name()), test_helper::domain_name());
         test_utils::print_actual_expected(b"set_subdomain_address: ", target_address, option::some(rando_addr), false);
         assert!(target_address == option::some(rando_addr), 33);
@@ -708,7 +708,7 @@ module aptos_names_v2::subdomain_e2e_tests {
         assert!(is_owner, 1);
 
         // Take the subdomain name for much longer than users are allowed to register it for
-        domains::force_create_or_seize_name(aptos_names_v2, option::some(test_helper::subdomain_name()), test_helper::domain_name(), test_helper::one_year_secs());
+        domains::force_create_or_seize_name(aptos_names_v2, test_helper::domain_name(), option::some(test_helper::subdomain_name()), test_helper::one_year_secs());
         let is_owner = domains::is_owner_of_name(signer::address_of(aptos_names_v2), option::some(test_helper::subdomain_name()), test_helper::domain_name());
         assert!(is_owner, 2);
 
@@ -741,7 +741,7 @@ module aptos_names_v2::subdomain_e2e_tests {
         assert!(!domains::name_is_registered(option::some(test_helper::subdomain_name()), test_helper::domain_name()), 1);
 
         // Take the subdomain name
-        domains::force_create_or_seize_name(aptos_names_v2, option::some(test_helper::subdomain_name()), test_helper::domain_name(), test_helper::one_year_secs());
+        domains::force_create_or_seize_name(aptos_names_v2, test_helper::domain_name(), option::some(test_helper::subdomain_name()), test_helper::one_year_secs());
         let is_owner = domains::is_owner_of_name(signer::address_of(aptos_names_v2), option::some(test_helper::subdomain_name()), test_helper::domain_name());
         assert!(is_owner, 2);
 
@@ -775,7 +775,7 @@ module aptos_names_v2::subdomain_e2e_tests {
         assert!(!domains::name_is_registered(option::some(test_helper::subdomain_name()), test_helper::domain_name()), 1);
 
         // Take the subdomain name for longer than domain: this should explode
-        domains::force_create_or_seize_name(aptos_names_v2, option::some(test_helper::subdomain_name()), test_helper::domain_name(), test_helper::one_year_secs() + 1);
+        domains::force_create_or_seize_name(aptos_names_v2, test_helper::domain_name(), option::some(test_helper::subdomain_name()), test_helper::one_year_secs() + 1);
     }
 
     #[test(
@@ -806,7 +806,7 @@ module aptos_names_v2::subdomain_e2e_tests {
         assert!(is_owner, 1);
 
         // Attempt (and fail) to take the subdomain name for much longer than users are allowed to register it for
-        domains::force_create_or_seize_name(rando, option::some(test_helper::subdomain_name()), test_helper::domain_name(), test_helper::two_hundred_year_secs());
+        domains::force_create_or_seize_name(rando, test_helper::domain_name(), option::some(test_helper::subdomain_name()), test_helper::two_hundred_year_secs());
     }
 
     #[test(
@@ -835,6 +835,6 @@ module aptos_names_v2::subdomain_e2e_tests {
         assert!(!domains::name_is_registered(option::some(test_helper::subdomain_name()), test_helper::domain_name()), 1);
 
         // Attempt (and fail) to take the subdomain name for much longer than users are allowed to register it for
-        domains::force_create_or_seize_name(rando, option::some(test_helper::subdomain_name()), test_helper::domain_name(), test_helper::two_hundred_year_secs());
+        domains::force_create_or_seize_name(rando, test_helper::domain_name(), option::some(test_helper::subdomain_name()), test_helper::two_hundred_year_secs());
     }
 }
