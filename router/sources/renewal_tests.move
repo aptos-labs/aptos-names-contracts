@@ -63,7 +63,7 @@ module router::renewal_tests {
         // Bump mode to v2
         router::set_mode(router, 1);
 
-        router::register_domain(user, domain_name, SECONDS_PER_YEAR);
+        router::register_domain(user, domain_name, SECONDS_PER_YEAR, option::none(), option::none());
         assert!(router::get_expiration(domain_name, option::none()) == SECONDS_PER_YEAR, 1);
 
         // Renewals only allowed within 6 months of expiration. Move time to 100 seconds before expiry.
