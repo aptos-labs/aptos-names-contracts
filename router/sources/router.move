@@ -23,7 +23,7 @@ module router::router {
     const ENO_PENDING_ADMIN: u64 = 1;
     /// Caller is not the pending admin
     const ENOT_PENDING_ADMIN: u64 = 2;
-    /// Provided  mode is not supported
+    /// Provided mode is not supported
     const EINVALID_MODE: u64 = 3;
     /// Function is not implemented in the current mode
     const ENOT_IMPLEMENTED_IN_MODE: u64 = 4;
@@ -362,18 +362,6 @@ module router::router {
         _domain_name: String
     ) {}
 
-    public entry fun set_subdomain_expiration_policy(
-        _user: &signer,
-        _domain_name: String,
-        _subdomain_name: String,
-    ) {}
-
-    public entry fun set_subdomain_expiration(
-        _user: &signer,
-        _subdomain_name: String,
-        _domain_name: String,
-    ) {}
-
     // ==== REVERSE REGISTRATION ====
 
     public entry fun set_primary_name(
@@ -436,7 +424,23 @@ module router::router {
         _domain_admin: &signer,
         _domain_name: String,
         _subdomain_name: String,
+        _to_addr: address,
     ) {}
+
+    public entry fun set_subdomain_expiration_policy(
+        _domain_admin: &signer,
+        _domain_name: String,
+        _subdomain_name: String,
+        _expiration_policy: u8,
+    ) {}
+
+    public entry fun set_subdomain_expiration(
+        _domain_admin: &signer,
+        _domain_name: String,
+        _subdomain_name: String,
+        _expiration_time_sec: u64,
+    ) {}
+
 
     // == ROUTER READ FUNCTIONS ==
 
