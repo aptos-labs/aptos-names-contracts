@@ -211,6 +211,7 @@ module router::router {
     /// @param _expiration_policy The expiration policy of the registration. Unused in MODE_V1
     /// @param target_addr The address the registered name will point to
     /// @param to_addr The address to send the token to. If none, then the user will be the owner. In MODE_V1, receiver must have already opted in to direct_transfer via token::opt_in_direct_transfer
+    /// @param disable_owner_transfer If set to true, subdomain owner cannot transfer subdomain anymore
     public entry fun register_subdomain(
         user: &signer,
         domain_name: String,
@@ -220,6 +221,7 @@ module router::router {
         _transferrable: bool,
         target_addr: Option<address>,
         to_addr: Option<address>,
+        disable_owner_transfer: Option<bool>,
     ) acquires RouterConfig {
         let mode = get_mode();
         if (mode == MODE_V1) {
@@ -251,6 +253,17 @@ module router::router {
         };
         if (option::is_some(&to_addr)) {
             transfer_name(user, domain_name, option::some(subdomain_name), *option::borrow(&to_addr));
+        };
+        if (option::is_some(&disable_owner_transfer)) {
+            if (mode == MODE_V1) {
+                abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
+            };
+            aptos_names_v2::domains::disable_subdomain_owner_transfer_as_domain_owner(
+                &get_router_signer(),
+                user,
+                subdomain_name,
+                domain_name,
+            )
         };
     }
 
@@ -553,6 +566,50 @@ module router::router {
         } else if (mode == MODE_V1_AND_V2) {
             // TODO: Implement
             abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
+        } else {
+            abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
+        }
+    }
+
+    /// Not available in MODE_V1
+    public entry fun domain_admin_disable_subdomain_owner_transfer(
+        domain_admin: &signer,
+        domain_name: String,
+        subdomain_name: String,
+    ) acquires RouterConfig {
+        let mode = get_mode();
+        if (mode == MODE_V1) {
+            // Will not be implemented in v1
+            abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
+        } else if (mode == MODE_V1_AND_V2) {
+            aptos_names_v2::domains::disable_subdomain_owner_transfer_as_domain_owner(
+                &get_router_signer(),
+                domain_admin,
+                subdomain_name,
+                domain_name,
+            )
+        } else {
+            abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
+        }
+    }
+
+    /// Not available in MODE_V1
+    public entry fun domain_admin_enable_subdomain_owner_transfer(
+        domain_admin: &signer,
+        domain_name: String,
+        subdomain_name: String,
+    ) acquires RouterConfig {
+        let mode = get_mode();
+        if (mode == MODE_V1) {
+            // Will not be implemented in v1
+            abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
+        } else if (mode == MODE_V1_AND_V2) {
+            aptos_names_v2::domains::enable_subdomain_owner_transfer_as_domain_owner(
+                &get_router_signer(),
+                domain_admin,
+                subdomain_name,
+                domain_name,
+            )
         } else {
             abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
         }
