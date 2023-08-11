@@ -207,6 +207,7 @@ module router::router {
     /// @param domain_name The domain name to register
     /// @param subdomain_name The subdomain name to register
     /// @param expiration_time_sec The expiration time of the registration in seconds
+    /// @param _transferrable Whether this subdomain can be transferred by the owner
     /// @param _expiration_policy The expiration policy of the registration. Unused in MODE_V1
     /// @param target_addr The address the registered name will point to
     /// @param to_addr The address to send the token to. If none, then the user will be the owner. In MODE_V1, receiver must have already opted in to direct_transfer via token::opt_in_direct_transfer
@@ -216,6 +217,7 @@ module router::router {
         subdomain_name: String,
         expiration_time_sec: u64,
         _expiration_policy: u8,
+        _transferrable: bool,
         target_addr: Option<address>,
         to_addr: Option<address>,
     ) acquires RouterConfig {
@@ -520,7 +522,7 @@ module router::router {
         }
     }
 
-    public entry fun set_subdomain_expiration_policy(
+    public entry fun domain_admin_set_subdomain_expiration_policy(
         _domain_admin: &signer,
         _domain_name: String,
         _subdomain_name: String,
@@ -538,7 +540,7 @@ module router::router {
         }
     }
 
-    public entry fun set_subdomain_expiration(
+    public entry fun domain_admin_set_subdomain_expiration(
         _domain_admin: &signer,
         _domain_name: String,
         _subdomain_name: String,

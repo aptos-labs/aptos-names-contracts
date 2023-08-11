@@ -185,6 +185,7 @@ module router::registration_tests {
             subdomain_name1,
             SECONDS_PER_YEAR,
             0,
+            false,
             option::none(),
             option::none()
         );
@@ -203,6 +204,7 @@ module router::registration_tests {
             subdomain_name2,
             SECONDS_PER_YEAR,
             0,
+            false,
             option::none(),
             option::none()
         );
@@ -242,6 +244,7 @@ module router::registration_tests {
             subdomain_name,
             SECONDS_PER_YEAR,
             0,
+            false,
             option::none(),
             option::none()
         );
@@ -259,6 +262,7 @@ module router::registration_tests {
             subdomain_name,
             SECONDS_PER_YEAR,
             0,
+            false,
             option::none(),
             option::none()
         );
@@ -297,6 +301,7 @@ module router::registration_tests {
             subdomain_name,
             SECONDS_PER_YEAR,
             0,
+            false,
             option::none(),
             option::none()
         );
@@ -311,6 +316,7 @@ module router::registration_tests {
             subdomain_name,
             SECONDS_PER_YEAR,
             0,
+            false,
             option::none(),
             option::none()
         );
@@ -354,6 +360,7 @@ module router::registration_tests {
             subdomain_name,
             SECONDS_PER_YEAR,
             0,
+            false,
             option::some(user2_addr),
             option::some(user2_addr),
         );
@@ -377,6 +384,7 @@ module router::registration_tests {
             subdomain_name,
             SECONDS_PER_YEAR,
             0,
+            false,
             option::some(user2_addr),
             option::some(user2_addr)
         );
