@@ -566,6 +566,21 @@ module aptos_names_v2::domains {
         object::enable_ungated_transfer(transfer_ref);
     }
 
+    /// this is for domain owner to update subdomain expiration time
+    public fun transfer_subdomain_as_domain_owner(
+        router_signer: &signer,
+        sign: &signer,
+        domain_name: String,
+        subdomain_name: String,
+        to_addr: address,
+    ) acquires CollectionCapability, NameRecord {
+        assert!(address_of(router_signer) == @router_signer, error::permission_denied(ENOT_ROUTER));
+        validate_subdomain_registered_and_domain_owned_by_signer(sign, domain_name, subdomain_name);
+        let name_record_address = token_addr(domain_name, option::some(subdomain_name));
+        let transfer_ref = &borrow_global_mut<NameRecord>(name_record_address).transfer_ref;
+        object::transfer_with_ref(object::generate_linear_transfer_ref(transfer_ref), to_addr);
+    }
+
     /// Forcefully set the name of a domain.
     /// This is a privileged operation, used via governance, to forcefully set a domain address
     /// This can be used, for example, to forcefully set the domain for a system address domain
