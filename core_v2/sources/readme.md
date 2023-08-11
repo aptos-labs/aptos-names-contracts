@@ -57,11 +57,11 @@ Names are currently verified following the below rules:
 
 When a `Domain` or `Subdomain` is registered, it is not automatically associated with an account. Instead, the owner of
 the token can set the address that the name points to. This is done by
-calling `domains::set_name_address(subdomain_name: Option<String>, new_address: address)` to set the address of a name.
+calling `domains::set_target_address(subdomain_name: Option<String>, new_address: address)` to set the address of a name.
 The owner can set the name to point to any arbitrary address.
 
 The owner can also `clear` the name by
-calling `domains::clear_name_address(subdomain_name: Option<String>, domain_name: String)`. This will remove the address
+calling `domains::clear_target_address(subdomain_name: Option<String>, domain_name: String)`. This will remove the address
 from the mapping, but retain ownership. To help combat harassment, any account that this domain points to can also use
 the same method to `clear` the name, removing the mapping.
 
