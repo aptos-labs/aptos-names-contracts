@@ -487,16 +487,23 @@ module router::router {
 
     /// Not available in MODE_V1
     public entry fun domain_admin_transfer_subdomain(
-        _domain_admin: &signer,
-        _domain_name: String,
-        _subdomain_name: String,
+        domain_admin: &signer,
+        domain_name: String,
+        subdomain_name: String,
+        to_addr: address,
+        target_addr: Option<address>,
     ) acquires RouterConfig {
         let mode = get_mode();
         if (mode == MODE_V1) {
             abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
         } else if (mode == MODE_V1_AND_V2) {
-            // TODO: Implement
-            abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
+            aptos_names_v2::domains::transfer_subdomain_owner(
+                domain_admin,
+                domain_name,
+                subdomain_name,
+                to_addr,
+                target_addr,
+            )
         } else {
             abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
         }

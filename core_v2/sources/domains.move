@@ -683,10 +683,11 @@ module aptos_names_v2::domains {
             error::out_of_range(EINVALID_NUMBER_YEARS)
         );
     }
+
     public fun transfer_subdomain_owner(
         sign: &signer,
-        subdomain_name: String,
         domain_name: String,
+        subdomain_name: String,
         new_owner_address: address,
         new_target_address: Option<address>,
     ) acquires CollectionCapability, NameRecord, ReverseRecord, SetReverseLookupEvents {
