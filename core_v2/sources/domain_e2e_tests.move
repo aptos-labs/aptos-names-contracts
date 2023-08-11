@@ -13,6 +13,8 @@ module aptos_names_v2::domain_e2e_tests {
     use std::string;
     use std::vector;
 
+    const MAX_REMAINING_TIME_FOR_RENEWAL_SEC: u64 = 15552000;
+
     #[test(
         router_signer = @router_signer,
         aptos_names_v2 = @aptos_names_v2,
@@ -39,17 +41,17 @@ module aptos_names_v2::domain_e2e_tests {
         test_helper::register_name(router_signer, user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>());
 
         // Set an address and verify it
-        test_helper::set_name_address(user, option::none(), test_helper::domain_name(), user_addr);
+        test_helper::set_target_address(user, option::none(), test_helper::domain_name(), user_addr);
 
         // Ensure the owner can clear the address
-        test_helper::clear_name_address(user, option::none(), test_helper::domain_name());
+        test_helper::clear_target_address(user, option::none(), test_helper::domain_name());
 
         // And also can clear if the user is the registered address, but not owner
-        test_helper::set_name_address(user, option::none(), test_helper::domain_name(), signer::address_of(rando));
-        test_helper::clear_name_address(rando, option::none(), test_helper::domain_name());
+        test_helper::set_target_address(user, option::none(), test_helper::domain_name(), signer::address_of(rando));
+        test_helper::clear_target_address(rando, option::none(), test_helper::domain_name());
 
         // Set it back for following tests
-        test_helper::set_name_address(user, option::none(), test_helper::domain_name(), user_addr);
+        test_helper::set_target_address(user, option::none(), test_helper::domain_name(), user_addr);
     }
 
     #[test(
@@ -131,17 +133,60 @@ module aptos_names_v2::domain_e2e_tests {
         test_helper::register_name(router_signer, user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, signature);
 
         // Set an address and verify it
-        test_helper::set_name_address(user, option::none(), test_helper::domain_name(), user_addr);
+        test_helper::set_target_address(user, option::none(), test_helper::domain_name(), user_addr);
 
         // Ensure the owner can clear the address
-        test_helper::clear_name_address(user, option::none(), test_helper::domain_name());
+        test_helper::clear_target_address(user, option::none(), test_helper::domain_name());
 
         // And also can clear if the user is the registered address, but not owner
-        test_helper::set_name_address(user, option::none(), test_helper::domain_name(), signer::address_of(rando));
-        test_helper::clear_name_address(rando, option::none(), test_helper::domain_name());
+        test_helper::set_target_address(user, option::none(), test_helper::domain_name(), signer::address_of(rando));
+        test_helper::clear_target_address(rando, option::none(), test_helper::domain_name());
 
         // Set it back for following tests
-        test_helper::set_name_address(user, option::none(), test_helper::domain_name(), user_addr);
+        test_helper::set_target_address(user, option::none(), test_helper::domain_name(), user_addr);
+    }
+
+    #[test(
+        router_signer = @router_signer,
+        aptos_names_v2 = @aptos_names_v2,
+        user = @0x077,
+        aptos = @0x1,
+        rando = @0x266f,
+        foundation = @0xf01d
+    )]
+    fun test_renew_domain_e2e(
+        router_signer: &signer,
+        aptos_names_v2: &signer,
+        user: signer,
+        aptos: signer,
+        rando: signer,
+        foundation: signer
+    ) {
+        let users = test_helper::e2e_test_setup(aptos_names_v2, user, &aptos, rando, &foundation);
+        let user = vector::borrow(&users, 0);
+
+        // Register the domain
+        test_helper::register_name(router_signer, user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>());
+        let (expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(option::none(), test_helper::domain_name());
+
+        // Set the time is early than max remaining time for renewal from expiration time
+        timestamp::update_global_time_for_test_secs(expiration_time_sec - MAX_REMAINING_TIME_FOR_RENEWAL_SEC - 5);
+        assert!(!domains::is_domain_in_renewal_window(test_helper::domain_name()), 1);
+
+        timestamp::update_global_time_for_test_secs(expiration_time_sec - MAX_REMAINING_TIME_FOR_RENEWAL_SEC + 5);
+        assert!(domains::is_domain_in_renewal_window(test_helper::domain_name()), 2);
+
+        // Renew the domain
+        domains::renew_domain(user, test_helper::domain_name(), time_helper::years_to_seconds(1));
+
+        // Ensure the domain is still registered after the original expiration time
+        timestamp::update_global_time_for_test_secs(expiration_time_sec + 5);
+        assert!(domains::name_is_registered(option::none(), test_helper::domain_name()), 4);
+
+        let (new_expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(option::none(), test_helper::domain_name());
+        // Ensure the domain is still expired after the new expiration time
+        timestamp::update_global_time_for_test_secs(new_expiration_time_sec + 5);
+        assert!(domains::name_is_expired(option::none(), test_helper::domain_name()), 5);
     }
 
     #[test(
@@ -271,7 +316,7 @@ module aptos_names_v2::domain_e2e_tests {
         // Register the domain
         test_helper::register_name(router_signer, user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>());
         // Ensure we can't set it as a rando. The expected target address doesn't matter as it won't get hit
-        test_helper::set_name_address(rando, option::none(), test_helper::domain_name(), @aptos_names_v2);
+        test_helper::set_target_address(rando, option::none(), test_helper::domain_name(), @aptos_names_v2);
     }
 
     #[test(
@@ -297,10 +342,10 @@ module aptos_names_v2::domain_e2e_tests {
 
         // Register the domain, and set its address
         test_helper::register_name(router_signer, user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>());
-        test_helper::set_name_address(user, option::none(), test_helper::domain_name(), signer::address_of(user));
+        test_helper::set_target_address(user, option::none(), test_helper::domain_name(), signer::address_of(user));
 
         // Ensure we can't clear it as a rando
-        test_helper::clear_name_address(rando, option::none(), test_helper::domain_name());
+        test_helper::clear_target_address(rando, option::none(), test_helper::domain_name());
     }
 
     #[test(
@@ -325,10 +370,10 @@ module aptos_names_v2::domain_e2e_tests {
 
         // Register the domain, and set its address
         test_helper::register_name(router_signer, user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>());
-        test_helper::set_name_address(user, option::none(), test_helper::domain_name(), signer::address_of(rando));
+        test_helper::set_target_address(user, option::none(), test_helper::domain_name(), signer::address_of(rando));
 
         // Ensure we can clear as owner
-        test_helper::clear_name_address(user, option::none(), test_helper::domain_name());
+        test_helper::clear_target_address(user, option::none(), test_helper::domain_name());
     }
 
     #[test(
@@ -339,7 +384,7 @@ module aptos_names_v2::domain_e2e_tests {
         rando = @0x266f,
         foundation = @0xf01d
     )]
-    fun admin_can_force_set_name_address_e2e_test(
+    fun test_admin_can_force_set_target_address_e2e(
         router_signer: &signer,
         aptos_names_v2: &signer,
         user: signer,
@@ -382,7 +427,7 @@ module aptos_names_v2::domain_e2e_tests {
         foundation = @0xf01d
     )]
     #[expected_failure(abort_code = 327681, location = aptos_names_v2::config)]
-    fun rando_cant_force_set_name_address_e2e_test(
+    fun test_rando_cant_force_set_target_address_e2e(
         router_signer: &signer,
         aptos_names_v2: &signer,
         user: signer,
@@ -401,6 +446,40 @@ module aptos_names_v2::domain_e2e_tests {
 
         // Rando is not allowed to do this
         domains::force_set_domain_address(rando, test_helper::domain_name(), rando_addr);
+    }
+
+    #[test(
+        router_signer = @router_signer,
+        aptos_names_v2 = @aptos_names_v2,
+        user = @0x077,
+        aptos = @0x1,
+        rando = @0x266f,
+        foundation = @0xf01d
+    )]
+    fun test_admin_can_force_renew_domain_name(
+        router_signer: &signer,
+        aptos_names_v2: &signer,
+        user: signer,
+        aptos: signer,
+        rando: signer,
+        foundation: signer
+    ) {
+        let users = test_helper::e2e_test_setup(aptos_names_v2, user, &aptos, rando, &foundation);
+        let user = vector::borrow(&users, 0);
+
+        // Register the domain
+        test_helper::register_name(router_signer, user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>());
+        let is_owner = domains::is_owner_of_name(signer::address_of(user), option::none(), test_helper::domain_name());
+        assert!(is_owner, 1);
+
+        let (expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(option::none(), test_helper::domain_name());
+        assert!(time_helper::seconds_to_years(expiration_time_sec) == 1, time_helper::seconds_to_years(expiration_time_sec));
+
+        // renew the domain by admin outside of renewal window
+        domains::force_set_name_expiration(aptos_names_v2, test_helper::domain_name(), option::none(), timestamp::now_seconds() + 2 * test_helper::one_year_secs());
+
+        let (expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(option::none(), test_helper::domain_name());
+        assert!(time_helper::seconds_to_years(expiration_time_sec) == 2, time_helper::seconds_to_years(expiration_time_sec));
     }
 
 

@@ -47,6 +47,10 @@ module aptos_names_v2::test_helper {
         string::utf8(b"sub.test.apt")
     }
 
+    public fun invalid_subdomain_name(): String {
+        string::utf8(b"a")
+    }
+
     /// Sets up test by initializing ANS v2
     public fun e2e_test_setup(
         aptos_names_v2: &signer,
@@ -88,7 +92,7 @@ module aptos_names_v2::test_helper {
         };
         let is_expired_before = domains::name_is_registered(subdomain_name, domain_name) && domains::name_is_expired(subdomain_name, domain_name);
         let register_name_event_v1_event_count_before = domains::get_register_name_event_v1_count();
-        let set_name_address_event_v1_event_count_before = domains::get_set_name_address_event_v1_count();
+        let set_target_address_event_v1_event_count_before = domains::get_set_target_address_event_v1_count();
         let set_reverse_lookup_event_v1_event_count_before = domains::get_set_reverse_lookup_event_v1_count();
 
         if (option::is_none(&subdomain_name)) {
@@ -198,7 +202,7 @@ module aptos_names_v2::test_helper {
 
         // Assert events have been correctly emmitted
         let register_name_event_v1_num_emitted = domains::get_register_name_event_v1_count() - register_name_event_v1_event_count_before;
-        let set_name_address_event_v1_num_emitted = domains::get_set_name_address_event_v1_count() - set_name_address_event_v1_event_count_before;
+        let set_target_address_event_v1_num_emitted = domains::get_set_target_address_event_v1_count() - set_target_address_event_v1_event_count_before;
         let set_reverse_lookup_event_v1_num_emitted = domains::get_set_reverse_lookup_event_v1_count() - set_reverse_lookup_event_v1_event_count_before;
 
         test_utils::print_actual_expected(b"register_name_event_v1_num_emitted: ", register_name_event_v1_num_emitted, 1, false);
@@ -245,30 +249,30 @@ module aptos_names_v2::test_helper {
         if (is_subdomain) {
             if (option::is_none(&user_reverse_lookup_before)) {
                 // Should automatically point to the users address
-                test_utils::print_actual_expected(b"set_name_address_event_v1_num_emitted: ", set_name_address_event_v1_num_emitted, 1, false);
-                assert!(set_name_address_event_v1_num_emitted == 1, set_name_address_event_v1_num_emitted);
+                test_utils::print_actual_expected(b"set_target_address_event_v1_num_emitted: ", set_target_address_event_v1_num_emitted, 1, false);
+                assert!(set_target_address_event_v1_num_emitted == 1, set_target_address_event_v1_num_emitted);
             } else {
                 // We haven't set a target address yet!
-                test_utils::print_actual_expected(b"set_name_address_event_v1_num_emitted: ", set_name_address_event_v1_num_emitted, 0, false);
-                assert!(set_name_address_event_v1_num_emitted == 0, set_name_address_event_v1_num_emitted);
+                test_utils::print_actual_expected(b"set_target_address_event_v1_num_emitted: ", set_target_address_event_v1_num_emitted, 0, false);
+                assert!(set_target_address_event_v1_num_emitted == 0, set_target_address_event_v1_num_emitted);
             }
         } else {
             // Should automatically point to the users address
-            test_utils::print_actual_expected(b"set_name_address_event_v1_num_emitted: ", set_name_address_event_v1_num_emitted, 1, false);
-            assert!(set_name_address_event_v1_num_emitted == 1, set_name_address_event_v1_num_emitted);
+            test_utils::print_actual_expected(b"set_target_address_event_v1_num_emitted: ", set_target_address_event_v1_num_emitted, 1, false);
+            assert!(set_target_address_event_v1_num_emitted == 1, set_target_address_event_v1_num_emitted);
         };
     }
 
     /// Set the domain address, and verify the address was set correctly
-    public fun set_name_address(user: &signer, subdomain_name: Option<String>, domain_name: String, expected_target_address: address) {
+    public fun set_target_address(user: &signer, subdomain_name: Option<String>, domain_name: String, expected_target_address: address) {
         let user_addr = signer::address_of(user);
 
         let register_name_event_v1_event_count_before = domains::get_register_name_event_v1_count();
-        let set_name_address_event_v1_event_count_before = domains::get_set_name_address_event_v1_count();
+        let set_target_address_event_v1_event_count_before = domains::get_set_target_address_event_v1_count();
         let set_reverse_lookup_event_v1_event_count_before = domains::get_set_reverse_lookup_event_v1_count();
         let maybe_reverse_lookup_before = domains::get_reverse_lookup(user_addr);
 
-        domains::set_name_address(user, subdomain_name, domain_name, expected_target_address);
+        domains::set_target_address(user, subdomain_name, domain_name, expected_target_address);
         let (_expiration_time_sec, target_address) = domains::get_name_record_v1_props_for_name(subdomain_name, domain_name);
         test_utils::print_actual_expected(b"set_domain_address: ", target_address, option::some(expected_target_address), false);
         assert!(target_address == option::some(expected_target_address), 33);
@@ -281,14 +285,14 @@ module aptos_names_v2::test_helper {
 
         // Assert events have been correctly emmitted
         let register_name_event_v1_num_emitted = domains::get_register_name_event_v1_count() - register_name_event_v1_event_count_before;
-        let set_name_address_event_v1_num_emitted = domains::get_set_name_address_event_v1_count() - set_name_address_event_v1_event_count_before;
+        let set_target_address_event_v1_num_emitted = domains::get_set_target_address_event_v1_count() - set_target_address_event_v1_event_count_before;
         let set_reverse_lookup_event_v1_num_emitted = domains::get_set_reverse_lookup_event_v1_count() - set_reverse_lookup_event_v1_event_count_before;
 
         test_utils::print_actual_expected(b"register_name_event_v1_num_emitted: ", register_name_event_v1_num_emitted, 0, false);
         assert!(register_name_event_v1_num_emitted == 0, register_name_event_v1_num_emitted);
 
-        test_utils::print_actual_expected(b"set_name_address_event_v1_num_emitted: ", set_name_address_event_v1_num_emitted, 1, false);
-        assert!(set_name_address_event_v1_num_emitted == 1, set_name_address_event_v1_num_emitted);
+        test_utils::print_actual_expected(b"set_target_address_event_v1_num_emitted: ", set_target_address_event_v1_num_emitted, 1, false);
+        assert!(set_target_address_event_v1_num_emitted == 1, set_target_address_event_v1_num_emitted);
 
         // If the signer had a reverse lookup before, and set his reverse lookup name to a different address, it should be cleared
         if (option::is_some(&maybe_reverse_lookup_before)) {
@@ -300,10 +304,10 @@ module aptos_names_v2::test_helper {
     }
 
     /// Clear the domain address, and verify the address was cleared
-    public fun clear_name_address(user: &signer, subdomain_name: Option<String>, domain_name: String) {
+    public fun clear_target_address(user: &signer, subdomain_name: Option<String>, domain_name: String) {
         let user_addr = signer::address_of(user);
         let register_name_event_v1_event_count_before = domains::get_register_name_event_v1_count();
-        let set_name_address_event_v1_event_count_before = domains::get_set_name_address_event_v1_count();
+        let set_target_address_event_v1_event_count_before = domains::get_set_target_address_event_v1_count();
         let set_reverse_lookup_event_v1_event_count_before = domains::get_set_reverse_lookup_event_v1_count();
         let maybe_reverse_lookup_before = domains::get_reverse_lookup(user_addr);
 
@@ -330,13 +334,13 @@ module aptos_names_v2::test_helper {
 
         // Assert events have been correctly emmitted
         let register_name_event_v1_num_emitted = domains::get_register_name_event_v1_count() - register_name_event_v1_event_count_before;
-        let set_name_address_event_v1_num_emitted = domains::get_set_name_address_event_v1_count() - set_name_address_event_v1_event_count_before;
+        let set_target_address_event_v1_num_emitted = domains::get_set_target_address_event_v1_count() - set_target_address_event_v1_event_count_before;
 
         test_utils::print_actual_expected(b"register_name_event_v1_num_emitted: ", register_name_event_v1_num_emitted, 0, false);
         assert!(register_name_event_v1_num_emitted == 0, register_name_event_v1_num_emitted);
 
-        test_utils::print_actual_expected(b"set_name_address_event_v1_num_emitted: ", set_name_address_event_v1_num_emitted, 1, false);
-        assert!(set_name_address_event_v1_num_emitted == 1, set_name_address_event_v1_num_emitted);
+        test_utils::print_actual_expected(b"set_target_address_event_v1_num_emitted: ", set_target_address_event_v1_num_emitted, 1, false);
+        assert!(set_target_address_event_v1_num_emitted == 1, set_target_address_event_v1_num_emitted);
     }
 
     public fun setup_and_fund_accounts(aptos: &signer, foundation: &signer, users: vector<signer>): vector<signer> {

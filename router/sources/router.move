@@ -23,7 +23,7 @@ module router::router {
     const ENO_PENDING_ADMIN: u64 = 1;
     /// Caller is not the pending admin
     const ENOT_PENDING_ADMIN: u64 = 2;
-    /// Provided  mode is not supported
+    /// Provided mode is not supported
     const EINVALID_MODE: u64 = 3;
     /// Function is not implemented in the current mode
     const ENOT_IMPLEMENTED_IN_MODE: u64 = 4;
@@ -295,7 +295,7 @@ module router::router {
             if (is_primary_name) {
                 aptos_names_v2::domains::set_reverse_lookup(user, subdomain_name, domain_name)
             } else if (option::is_some(&target_addr)) {
-                aptos_names_v2::domains::set_name_address(
+                aptos_names_v2::domains::set_target_address(
                     user,
                     subdomain_name,
                     domain_name,
@@ -346,7 +346,7 @@ module router::router {
             let token_addr = aptos_names_v2::domains::token_addr(domain_name, subdomain_name);
             object::transfer(
                 user,
-                object::address_to_object<aptos_names_v2::domains::NameRecordV2>(token_addr),
+                object::address_to_object<aptos_names_v2::domains::NameRecord>(token_addr),
                 to_addr,
             );
         } else {
@@ -374,40 +374,6 @@ module router::router {
     }
 
     // Not available in MODE_V1
-    public entry fun set_subdomain_expiration_policy(
-        _user: &signer,
-        _domain_name: String,
-        _subdomain_name: String,
-    ) acquires RouterConfig {
-        let mode = get_mode();
-        if (mode == MODE_V1) {
-            // Will not be implemented in v1
-            abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
-        } else if (mode == MODE_V1_AND_V2) {
-            // TODO: Implement
-            abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
-        } else {
-            abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
-        }
-    }
-
-    public entry fun set_subdomain_expiration(
-        _user: &signer,
-        _subdomain_name: String,
-        _domain_name: String,
-    ) acquires RouterConfig {
-        let mode = get_mode();
-        if (mode == MODE_V1) {
-            // Will not be implemented in v1
-            abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
-        } else if (mode == MODE_V1_AND_V2) {
-            // TODO: Implement
-            abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
-        } else {
-            abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
-        }
-    }
-
     // ==== REVERSE REGISTRATION ====
 
     public entry fun set_primary_name(
@@ -461,7 +427,7 @@ module router::router {
                 target_addr,
             )
         } else if (mode == MODE_V1_AND_V2) {
-            aptos_names_v2::domains::set_name_address(
+            aptos_names_v2::domains::set_target_address(
                 user,
                 subdomain_name,
                 domain_name,
@@ -479,7 +445,44 @@ module router::router {
         _domain_admin: &signer,
         _domain_name: String,
         _subdomain_name: String,
+        _to_addr: address,
     ) {}
+
+    public entry fun set_subdomain_expiration_policy(
+        _domain_admin: &signer,
+        _domain_name: String,
+        _subdomain_name: String,
+        _expiration_policy: u8,
+    ) acquires RouterConfig {
+        let mode = get_mode();
+        if (mode == MODE_V1) {
+            // Will not be implemented in v1
+            abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
+        } else if (mode == MODE_V1_AND_V2) {
+            // TODO: Implement
+            abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
+        } else {
+            abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
+        }
+    }
+
+    public entry fun set_subdomain_expiration(
+        _domain_admin: &signer,
+        _domain_name: String,
+        _subdomain_name: String,
+        _expiration_time_sec: u64,
+    ) acquires RouterConfig {
+        let mode = get_mode();
+        if (mode == MODE_V1) {
+            // Will not be implemented in v1
+            abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
+        } else if (mode == MODE_V1_AND_V2) {
+            // TODO: Implement
+            abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
+        } else {
+            abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
+        }
+    }
 
     // == ROUTER READ FUNCTIONS ==
 
