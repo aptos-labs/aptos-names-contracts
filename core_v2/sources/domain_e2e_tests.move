@@ -1,6 +1,5 @@
 #[test_only]
 module aptos_names_v2::domain_e2e_tests {
-    use std::fixed_point32::round;
     use aptos_framework::chain_id;
     use aptos_framework::timestamp;
     use aptos_framework::object;
