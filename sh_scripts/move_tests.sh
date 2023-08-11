@@ -19,4 +19,3 @@ ROUTER_SIGNER="0x6d846cb3b6bbfface9c60ef52a82cd0f3c4d7a9b5f58159f3bd6d40a5b7f887
 ./aptos move test \
   --package-dir router \
   --named-addresses aptos_names=$APTOS_NAMES,aptos_names_v2=$APTOS_NAMES_V2,aptos_names_admin=$ADMIN,aptos_names_funds=$FUNDS,router=$ROUTER,router_signer=$ROUTER_SIGNER
-  
