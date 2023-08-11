@@ -258,15 +258,14 @@ module router::router {
             if (mode == MODE_V1) {
                 abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
             };
-            // TODO: ask product should set default transferrable to true or false, I'm defaluting to true now
-            if (!option::get_with_default(&transferrable, true)) {
-                aptos_names_v2::domains::disable_subdomain_owner_transfer_as_domain_owner(
-                    &get_router_signer(),
-                    user,
-                    domain_name,
-                    subdomain_name,
-                )
-            }
+            aptos_names_v2::domains::set_subdomain_transferability_as_domain_owner(
+                &get_router_signer(),
+                user,
+                domain_name,
+                subdomain_name,
+                // TODO: ask product should set default transferrable to true or false, I'm defaluting to true now
+                option::get_with_default(&transferrable, true)
+            )
         };
     }
 
@@ -537,21 +536,13 @@ module router::router {
         if (mode == MODE_V1) {
             abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
         } else if (mode == MODE_V1_AND_V2) {
-            if (transferable) {
-                aptos_names_v2::domains::enable_subdomain_owner_transfer_as_domain_owner(
-                    &get_router_signer(),
-                    domain_admin,
-                    domain_name,
-                    subdomain_name,
-                )
-            } else {
-                aptos_names_v2::domains::disable_subdomain_owner_transfer_as_domain_owner(
-                    &get_router_signer(),
-                    domain_admin,
-                    domain_name,
-                    subdomain_name,
-                )
-            }
+            aptos_names_v2::domains::set_subdomain_transferability_as_domain_owner(
+                &get_router_signer(),
+                domain_admin,
+                domain_name,
+                subdomain_name,
+                transferable
+            )
         } else {
             abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
         }

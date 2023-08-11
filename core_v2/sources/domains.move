@@ -538,32 +538,23 @@ module aptos_names_v2::domains {
         );
     }
 
-    /// Disable subdomain owner from transferring subdomain as domain owner
-    public fun disable_subdomain_owner_transfer_as_domain_owner(
+    /// Disable or enable subdomain owner from transferring subdomain as domain owner
+    public fun set_subdomain_transferability_as_domain_owner(
         router_signer: &signer,
         sign: &signer,
         domain_name: String,
         subdomain_name: String,
+        transferrable: bool
     ) acquires CollectionCapability, NameRecord {
         assert!(address_of(router_signer) == @router_signer, error::permission_denied(ENOT_ROUTER));
         validate_subdomain_registered_and_domain_owned_by_signer(sign, domain_name, subdomain_name);
         let name_record_address = token_addr(domain_name, option::some(subdomain_name));
         let transfer_ref = &borrow_global_mut<NameRecord>(name_record_address).transfer_ref;
-        object::disable_ungated_transfer(transfer_ref);
-    }
-
-    /// Enable subdomain owner from transferring subdomain as domain owner
-    public fun enable_subdomain_owner_transfer_as_domain_owner(
-        router_signer: &signer,
-        sign: &signer,
-        domain_name: String,
-        subdomain_name: String,
-    ) acquires CollectionCapability, NameRecord {
-        assert!(address_of(router_signer) == @router_signer, error::permission_denied(ENOT_ROUTER));
-        validate_subdomain_registered_and_domain_owned_by_signer(sign, domain_name, subdomain_name);
-        let name_record_address = token_addr(domain_name, option::some(subdomain_name));
-        let transfer_ref = &borrow_global_mut<NameRecord>(name_record_address).transfer_ref;
-        object::enable_ungated_transfer(transfer_ref);
+        if (transferrable) {
+            object::enable_ungated_transfer(transfer_ref);
+        } else {
+            object::disable_ungated_transfer(transfer_ref);
+        }
     }
 
     /// this is for domain owner to update subdomain expiration time
