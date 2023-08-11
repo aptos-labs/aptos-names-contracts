@@ -207,11 +207,10 @@ module router::router {
     /// @param domain_name The domain name to register
     /// @param subdomain_name The subdomain name to register
     /// @param expiration_time_sec The expiration time of the registration in seconds
-    /// @param _transferrable Whether this subdomain can be transferred by the owner
+    /// @param transferrable Whether this subdomain can be transferred by the owner
     /// @param _expiration_policy The expiration policy of the registration. Unused in MODE_V1
     /// @param target_addr The address the registered name will point to
     /// @param to_addr The address to send the token to. If none, then the user will be the owner. In MODE_V1, receiver must have already opted in to direct_transfer via token::opt_in_direct_transfer
-    /// @param disable_owner_transfer If set to true, subdomain owner cannot transfer subdomain anymore
     public entry fun register_subdomain(
         user: &signer,
         domain_name: String,
