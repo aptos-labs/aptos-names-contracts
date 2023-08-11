@@ -114,6 +114,34 @@ module aptos_names_v2::subdomain_e2e_tests {
         rando = @0x266f,
         foundation = @0xf01d
     )]
+    #[expected_failure(abort_code = 131083, location = aptos_names_v2::domains)]
+    fun test_register_subdomain_with_invalid_string(
+        router_signer: &signer,
+        aptos_names_v2: &signer,
+        user: signer,
+        aptos: signer,
+        rando: signer,
+        foundation: signer
+    ) {
+        let users = test_helper::e2e_test_setup(aptos_names_v2, user, &aptos, rando, &foundation);
+        let user = vector::borrow(&users, 0);
+
+        // Register the domain
+        test_helper::register_name(router_signer, user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>());
+
+        // Register a subdomain with an invalid string!
+        test_helper::register_name(router_signer, user, option::some(test_helper::invalid_subdomain_name()), test_helper::domain_name(), timestamp::now_seconds() + test_helper::one_year_secs(), test_helper::fq_subdomain_name(), 1, vector::empty<u8>());
+
+    }
+
+    #[test(
+        router_signer = @router_signer,
+        aptos_names_v2 = @aptos_names_v2,
+        user = @0x077,
+        aptos = @0x1,
+        rando = @0x266f,
+        foundation = @0xf01d
+    )]
     fun test_auto_renew_subdomain_e2e(
         router_signer: &signer,
         aptos_names_v2: &signer,
@@ -214,6 +242,38 @@ module aptos_names_v2::subdomain_e2e_tests {
         // Ensure the subdomain is still expired after domain renewal
         assert!(!domains::name_is_expired(option::none(), test_helper::domain_name()), 80);
         assert!(domains::name_is_expired(option::some(test_helper::subdomain_name()), test_helper::domain_name()), 80);
+    }
+
+    #[test(
+        router_signer = @router_signer,
+        aptos_names_v2 = @aptos_names_v2,
+        user = @0x077,
+        aptos = @0x1,
+        rando = @0x266f,
+        foundation = @0xf01d
+    )]
+    fun test_admin_can_force_renew_subdomain_name(
+        router_signer: &signer,
+        aptos_names_v2: &signer,
+        user: signer,
+        aptos: signer,
+        rando: signer,
+        foundation: signer
+    ) {
+        let users = test_helper::e2e_test_setup(aptos_names_v2, user, &aptos, rando, &foundation);
+        let user = vector::borrow(&users, 0);
+
+        // Register the domain
+        test_helper::register_name(router_signer, user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>());
+
+        // Register a subdomain!
+        test_helper::register_name(router_signer, user, option::some(test_helper::subdomain_name()), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_subdomain_name(), 1, vector::empty<u8>());
+
+        // renew the domain by admin outside of renewal window
+        domains::force_set_name_expiration(aptos_names_v2, test_helper::domain_name(), option::some(test_helper::subdomain_name()), timestamp::now_seconds() + 2 * test_helper::one_year_secs());
+
+        let (expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(option::some(test_helper::subdomain_name()), test_helper::domain_name());
+        assert!(time_helper::seconds_to_years(expiration_time_sec) == 2, time_helper::seconds_to_years(expiration_time_sec));
     }
 
     #[test(
@@ -698,7 +758,7 @@ module aptos_names_v2::subdomain_e2e_tests {
         rando = @0x266f,
         foundation = @0xf01d
     )]
-    #[expected_failure(abort_code = 131086, location = aptos_names_v2::domains)]
+    #[expected_failure(abort_code = 131096, location = aptos_names_v2::domains)]
     fun test_admin_cant_force_create_subdomain_more_than_domain_time_e2e(
         router_signer: &signer,
         aptos_names_v2: &signer,
