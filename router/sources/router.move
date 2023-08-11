@@ -218,7 +218,7 @@ module router::router {
         subdomain_name: String,
         expiration_time_sec: u64,
         _expiration_policy: u8,
-        transferrable: Option<bool>,
+        transferrable: bool,
         target_addr: Option<address>,
         to_addr: Option<address>,
     ) acquires RouterConfig {
@@ -253,19 +253,15 @@ module router::router {
         if (option::is_some(&to_addr)) {
             transfer_name(user, domain_name, option::some(subdomain_name), *option::borrow(&to_addr));
         };
-        if (option::is_some(&transferrable)) {
-            if (mode == MODE_V1) {
-                abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
-            };
+        if (mode == MODE_V1_AND_V2) {
             aptos_names_v2::domains::set_subdomain_transferability_as_domain_owner(
                 &get_router_signer(),
                 user,
                 domain_name,
                 subdomain_name,
-                // TODO: ask product should set default transferrable to true or false, I'm defaluting to true now
-                option::get_with_default(&transferrable, true)
+                transferrable
             )
-        };
+        }
     }
 
     // ==== MIGRATION ====

@@ -186,7 +186,6 @@ module router::migration_tests {
             false,
             option::none(),
             option::none(),
-            option::none(),
         );
         router::set_primary_name(user, domain_name, subdomain_name_opt);
         assert!(router::is_name_owner(user_addr, domain_name, subdomain_name_opt), 7);
@@ -261,7 +260,6 @@ module router::migration_tests {
             SECONDS_PER_YEAR,
             0,
             false,
-            option::none(),
             option::none(),
             option::none(),
         );
