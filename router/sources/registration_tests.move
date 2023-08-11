@@ -112,17 +112,42 @@ module router::registration_tests {
         let domain_name2 = utf8(b"test2");
 
         // Register with v1
-        router::register_domain(user1, domain_name1, SECONDS_PER_YEAR, option::some(user2_addr), option::none());
-        assert!(router::is_name_owner(user1_addr, domain_name1, option::none()), 1);
+        aptos_token::token::opt_in_direct_transfer(user2, true);
+        router::register_domain(
+            user1,
+            domain_name1,
+            SECONDS_PER_YEAR,
+            option::some(user2_addr),
+            option::some(user2_addr)
+        );
+        assert!(router::is_name_owner(user2_addr, domain_name1, option::none()), 1);
         assert!(*option::borrow(&router::get_target_addr(domain_name1, option::none())) == user2_addr, 2);
+        {
+            // Primary name should be unset for user1 now that `target_addr` has been changed.
+            let (primary_subdomain, primary_domain) = router::get_primary_name(user1_addr);
+            assert!(primary_subdomain == option::none(), 3);
+            assert!(primary_domain == option::none(), 4);
+        };
 
         // Bump mode
         router::set_mode(router, 1);
 
         // Register with v2
-        router::register_domain(user1, domain_name2, SECONDS_PER_YEAR, option::some(user2_addr), option::some(user2_addr));
+        router::register_domain(
+            user1,
+            domain_name2,
+            SECONDS_PER_YEAR,
+            option::some(user2_addr),
+            option::some(user2_addr)
+        );
         assert!(router::is_name_owner(user2_addr, domain_name2, option::none()), 1);
         assert!(*option::borrow(&router::get_target_addr(domain_name2, option::none())) == user2_addr, 2);
+        {
+            // Primary name should be unset for user1 now that `target_addr` has been changed.
+            let (primary_subdomain, primary_domain) = router::get_primary_name(user1_addr);
+            assert!(primary_subdomain == option::none(), 3);
+            assert!(primary_domain == option::none(), 4);
+        };
     }
 
     // == SUBDOMAIN REGISTRATION ==
@@ -321,6 +346,7 @@ module router::registration_tests {
         let subdomain_name_opt = option::some(subdomain_name);
 
         // Register with v1
+        aptos_token::token::opt_in_direct_transfer(user2, true);
         router::register_domain(user1, domain_name1, SECONDS_PER_YEAR, option::some(user2_addr), option::none());
         router::register_subdomain(
             user1,
@@ -329,10 +355,16 @@ module router::registration_tests {
             SECONDS_PER_YEAR,
             0,
             option::some(user2_addr),
-            option::none()
+            option::some(user2_addr),
         );
-        assert!(router::is_name_owner(user1_addr, domain_name1, subdomain_name_opt), 1);
+        assert!(router::is_name_owner(user2_addr, domain_name1, subdomain_name_opt), 1);
         assert!(*option::borrow(&router::get_target_addr(domain_name1, subdomain_name_opt)) == user2_addr, 2);
+        {
+            // Primary name should be unset for user1 now that `target_addr` has been changed.
+            let (primary_subdomain, primary_domain) = router::get_primary_name(user1_addr);
+            assert!(primary_subdomain == option::none(), 3);
+            assert!(primary_domain == option::none(), 4);
+        };
 
         // Bump mode
         router::set_mode(router, 1);
@@ -350,5 +382,11 @@ module router::registration_tests {
         );
         assert!(router::is_name_owner(user2_addr, domain_name2, subdomain_name_opt), 1);
         assert!(*option::borrow(&router::get_target_addr(domain_name2, subdomain_name_opt)) == user2_addr, 2);
+        {
+            // Primary name should be unset for user1 now that `target_addr` has been changed.
+            let (primary_subdomain, primary_domain) = router::get_primary_name(user1_addr);
+            assert!(primary_subdomain == option::none(), 3);
+            assert!(primary_domain == option::none(), 4);
+        };
     }
 }

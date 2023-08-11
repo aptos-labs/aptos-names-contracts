@@ -158,7 +158,7 @@ module router::router {
     /// @param domain_name The domain name to register
     /// @param registration_duration_secs The duration of the registration in seconds
     /// @param target_addr The address the registered name will point to
-    /// @param to_addr The address to send the token to. If none, then the user will be the owner. Not available in MODE_V1 because token transfers are unreliable (receiver must already have token store)
+    /// @param to_addr The address to send the token to. If none, then the user will be the owner. In MODE_V1, receiver must have already opted in to direct_transfer via token::opt_in_direct_transfer
     public entry fun register_domain(
         user: &signer,
         domain_name: String,
@@ -172,7 +172,6 @@ module router::router {
                 registration_duration_secs % SECONDS_PER_YEAR == 0,
                 error::invalid_argument(ENOT_MULTIPLE_OF_SECONDS_PER_YEAR)
             );
-            assert!(option::is_none(&to_addr), error::not_implemented(ENOT_IMPLEMENTED_IN_MODE));
             aptos_names::domains::register_domain(
                 user,
                 domain_name,
@@ -210,7 +209,7 @@ module router::router {
     /// @param expiration_time_sec The expiration time of the registration in seconds
     /// @param _expiration_policy The expiration policy of the registration. Unused in MODE_V1
     /// @param target_addr The address the registered name will point to
-    /// @param to_addr The address to send the token to. If none, then the user will be the owner. Not available in MODE_V1 because token transfers are unreliable (receiver must already have token store)
+    /// @param to_addr The address to send the token to. If none, then the user will be the owner. In MODE_V1, receiver must have already opted in to direct_transfer via token::opt_in_direct_transfer
     public entry fun register_subdomain(
         user: &signer,
         domain_name: String,
@@ -222,7 +221,6 @@ module router::router {
     ) acquires RouterConfig {
         let mode = get_mode();
         if (mode == MODE_V1) {
-            assert!(option::is_none(&to_addr), error::not_implemented(ENOT_IMPLEMENTED_IN_MODE));
             aptos_names::domains::register_subdomain(user, subdomain_name, domain_name, expiration_time_sec);
         } else if (mode == MODE_V1_AND_V2) {
             assert!(
