@@ -206,7 +206,13 @@ module router::subdomain_transfer_tests {
         );
         assert!(router::is_name_owner(user2_addr, domain_name, subdomain_name_opt), 0);
         // Domain admin should still be able to transfer subdomain
-        router::domain_admin_transfer_subdomain(user1, domain_name, subdomain_name, user1_addr);
+        router::domain_admin_transfer_subdomain(
+            user1,
+            domain_name,
+            subdomain_name,
+            user1_addr,
+            option::some(user1_addr)
+        );
         assert!(router::is_name_owner(user1_addr, domain_name, subdomain_name_opt), 0);
     }
 }

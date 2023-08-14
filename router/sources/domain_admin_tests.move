@@ -47,6 +47,7 @@ module router::domain_admin_tests {
             subdomain_name,
             SECONDS_PER_YEAR,
             0,
+            false,
             option::none(),
             option::none()
         );
