@@ -404,22 +404,21 @@ module router::router {
 
     // Not available in MODE_V1
     public entry fun renew_domain(
-        _user: &signer,
-        _domain_name: String
+        user: &signer,
+        domain_name: String,
+        renewal_duration_secs: u64,
     ) acquires RouterConfig {
         let mode = get_mode();
         if (mode == MODE_V1) {
             // Will not be implemented in v1
             abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
         } else if (mode == MODE_V1_AND_V2) {
-            // TODO: Implement
-            abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
+            aptos_names_v2::domains::renew_domain(user, domain_name, renewal_duration_secs)
         } else {
             abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
         }
     }
 
-    // Not available in MODE_V1
     // ==== REVERSE REGISTRATION ====
 
     public entry fun set_primary_name(
