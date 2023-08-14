@@ -76,7 +76,6 @@ module aptos_names_v2::test_helper {
         registration_duration_secs: u64,
         _expected_fq_domain_name: String,
         _expected_property_version: u64,
-        signature: vector<u8>
     ) {
         let user_addr = signer::address_of(user);
 
@@ -96,17 +95,7 @@ module aptos_names_v2::test_helper {
         let set_reverse_lookup_event_v1_event_count_before = domains::get_set_reverse_lookup_event_v1_count();
 
         if (option::is_none(&subdomain_name)) {
-            if (vector::length(&signature)== 0) {
-                domains::register_domain(router_signer, user, domain_name, registration_duration_secs);
-            } else {
-                domains::register_domain_with_signature(
-                    router_signer,
-                    user,
-                    domain_name,
-                    registration_duration_secs,
-                    signature
-                );
-            };
+            domains::register_domain(router_signer, user, domain_name, registration_duration_secs);
         } else {
             domains::register_subdomain(
                 router_signer,
@@ -144,12 +133,6 @@ module aptos_names_v2::test_helper {
         } else {
             assert!(query_helper::is_owner_of_domain_name(user_addr, domain_name), 103);
         };
-        // assert!(tdi_creator == domains::get_token_signer_address(), 4);
-        // assert!(tdi_collection == config::collection_name_v1(), 5);
-        // test_utils::print_actual_expected(b"tdi_name: ", tdi_name, expected_fq_domain_name, false);
-        // assert!(tdi_name == expected_fq_domain_name, 6);
-        // test_utils::print_actual_expected(b"tdi_property_version: ", tdi_property_version, expected_property_version, false);
-        // assert!(tdi_property_version == expected_property_version, tdi_property_version);
 
         let expected_user_balance_after;
         let user_balance_after = coin::balance<AptosCoin>(user_addr);
