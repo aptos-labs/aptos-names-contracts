@@ -633,7 +633,7 @@ module aptos_names_v2::domains {
         record.expiration_time_sec = new_expiration_secs;
     }
 
-    public entry fun renew_domain(
+    public fun renew_domain(
         sign: &signer,
         domain_name: String,
         renewal_duration_secs: u64,
