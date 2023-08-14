@@ -508,8 +508,7 @@ module router::router {
         if (mode == MODE_V1) {
             abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
         } else if (mode == MODE_V1_AND_V2) {
-            aptos_names_v2::domains::transfer_subdomain_as_domain_owner(
-                &get_router_signer(),
+            aptos_names_v2::domains::transfer_subdomain_owner(
                 domain_admin,
                 domain_name,
                 subdomain_name,
