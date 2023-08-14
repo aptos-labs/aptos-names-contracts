@@ -527,19 +527,23 @@ module router::router {
         }
     }
 
-    public entry fun set_subdomain_expiration_policy(
-        _domain_admin: &signer,
-        _domain_name: String,
-        _subdomain_name: String,
-        _expiration_policy: u8,
+    public entry fun domain_admin_set_subdomain_expiration_policy(
+        domain_admin: &signer,
+        domain_name: String,
+        subdomain_name: String,
+        expiration_policy: u8,
     ) acquires RouterConfig {
         let mode = get_mode();
         if (mode == MODE_V1) {
             // Will not be implemented in v1
             abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
         } else if (mode == MODE_V1_AND_V2) {
-            // TODO: Implement
-            abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
+            aptos_names_v2::domains::set_subdomain_renewal_policy(
+                domain_admin,
+                domain_name,
+                subdomain_name,
+                expiration_policy,
+            );
         } else {
             abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
         }
@@ -688,16 +692,15 @@ module router::router {
     #[view]
     /// Not available in MODE_v1
     public fun get_subdomain_expiration_policy(
-        _domain_name: String,
-        _subdomain_name: Option<String>
+        domain_name: String,
+        subdomain_name: String,
     ): u8 acquires RouterConfig {
         let mode = get_mode();
         if (mode == MODE_V1) {
             // Cannot be implemented with token v1
             abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
         } else if (mode == MODE_V1_AND_V2) {
-            // TODO
-            abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
+            aptos_names_v2::domains::get_subdomain_expiration_policy(domain_name, subdomain_name)
         } else {
             abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
         }

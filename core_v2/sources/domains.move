@@ -774,7 +774,7 @@ module aptos_names_v2::domains {
         subdomain_ext.subdomain_expiration_policy = subdomain_expiration_policy;
     }
 
-    public fun get_subdomain_renewal_policy(
+    public fun get_subdomain_expiration_policy(
         domain_name: String,
         subdomain_name: String,
     ): u8 acquires CollectionCapability, NameRecord {
