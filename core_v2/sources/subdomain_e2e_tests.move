@@ -306,7 +306,13 @@ module aptos_names_v2::subdomain_e2e_tests {
         assert!(is_owner, 1);
 
         // transfer the subdomain to rando
-        domains::transfer_subdomain_owner(user, test_helper::subdomain_name(), test_helper::domain_name(), rando_addr, option::some(rando_addr));
+        domains::transfer_subdomain_owner(
+            user,
+            test_helper::domain_name(),
+            test_helper::subdomain_name(),
+            rando_addr,
+            option::some(rando_addr)
+        );
 
         // rando owns the subdomain
         let is_owner = domains::is_owner_of_name(rando_addr, option::some(test_helper::subdomain_name()), test_helper::domain_name());
@@ -316,8 +322,8 @@ module aptos_names_v2::subdomain_e2e_tests {
             // when rando owns the subdomain and user owns the domain, user can still transfer the subdomain.
             domains::transfer_subdomain_owner(
                 user,
-                test_helper::subdomain_name(),
                 test_helper::domain_name(),
+                test_helper::subdomain_name(),
                 user_addr,
                 option::some(user_addr)
             );
@@ -361,14 +367,20 @@ module aptos_names_v2::subdomain_e2e_tests {
         assert!(is_owner, 1);
 
         // transfer the subdomain to rando
-        domains::transfer_subdomain_owner(user, test_helper::subdomain_name(), test_helper::domain_name(), rando_addr, option::some(rando_addr));
+        domains::transfer_subdomain_owner(
+            user,
+            test_helper::domain_name(),
+            test_helper::subdomain_name(),
+            rando_addr,
+            option::some(rando_addr)
+        );
 
         {
             // when rando owns the subdomain but not the domain, rando can't transfer subdomain ownership.
             domains::transfer_subdomain_owner(
                 rando,
-                test_helper::subdomain_name(),
                 test_helper::domain_name(),
+                test_helper::subdomain_name(),
                 user_addr,
                 option::some(user_addr)
             );
