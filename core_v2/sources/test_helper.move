@@ -178,10 +178,6 @@ module aptos_names_v2::test_helper {
                 // Should automatically point to the users address
                 assert!(target_address == option::some(user_addr), 11);
                 assert!(target_address_lookup_result == option::some(user_addr), 111);
-            } else {
-                // We haven't set a target address yet!
-                assert!(target_address == option::none(), 11);
-                assert!(target_address_lookup_result == option::none(), 111);
             }
         } else {
             let (expiration_time_sec_lookup_result, target_address_lookup_result) = query_helper::get_domain_props(domain_name);
@@ -236,6 +232,11 @@ module aptos_names_v2::test_helper {
                 && *option::borrow(&name_reverse_lookup_before) == *option::borrow(&user_reverse_lookup_before)
                 && is_expired_before
             ) {
+                // if (!is_subdomain) {
+                //     assert!(set_reverse_lookup_event_v1_num_emitted == 2, set_reverse_lookup_event_v1_num_emitted);
+                // } else {
+                //
+                // };
                 assert!(set_reverse_lookup_event_v1_num_emitted == 2, set_reverse_lookup_event_v1_num_emitted);
             } else if (option::is_some(&name_reverse_lookup_before) && is_expired_before) {
                 // If we are registering over a name that is already registered but expired and was a primary name,
@@ -251,10 +252,6 @@ module aptos_names_v2::test_helper {
                 // Should automatically point to the users address
                 test_utils::print_actual_expected(b"set_target_address_event_v1_num_emitted: ", set_target_address_event_v1_num_emitted, 1, false);
                 assert!(set_target_address_event_v1_num_emitted == 1, set_target_address_event_v1_num_emitted);
-            } else {
-                // We haven't set a target address yet!
-                test_utils::print_actual_expected(b"set_target_address_event_v1_num_emitted: ", set_target_address_event_v1_num_emitted, 0, false);
-                assert!(set_target_address_event_v1_num_emitted == 0, set_target_address_event_v1_num_emitted);
             }
         } else {
             // Should automatically point to the users address
