@@ -11,7 +11,6 @@ module aptos_names_v2::domains {
     use aptos_names_v2::time_helper;
     use aptos_names_v2::token_helper;
     use aptos_names_v2::utf8_utils;
-    use aptos_names_v2::verify;
     use aptos_token_objects::collection;
     use aptos_token_objects::token;
     use std::error;
@@ -398,19 +397,6 @@ module aptos_names_v2::domains {
         register_domain_generic(sign, domain_name, registration_duration_secs);
     }
 
-    public fun register_domain_with_signature(
-        router_signer: &signer,
-        sign: &signer,
-        domain_name: String,
-        registration_duration_secs: u64,
-        signature: vector<u8>
-    ) acquires CollectionCapability, NameRecord, RegisterNameEvents, ReverseRecord, SetTargetAddressEvents, SetReverseLookupEvents {
-        assert!(address_of(router_signer) == @router_signer, error::permission_denied(ENOT_ROUTER));
-        let account_address = signer::address_of(sign);
-        verify::assert_register_domain_signature_verifies(signature, account_address, domain_name);
-        register_domain_generic(sign, domain_name, registration_duration_secs);
-    }
-
     /// A wrapper around `register_name` as an entry function.
     /// Option<String> is not currently serializable, so we have these convenience method
     /// `expiration_time_sec` is the timestamp, in seconds, when the name expires
@@ -430,7 +416,6 @@ module aptos_names_v2::domains {
         );
 
         // We are registering a subdomain name: this has no cost, but is only doable by the owner of the domain
-        // TODO: Unit tests for trying to register invalid domains/subdomains
         validate_name_string(subdomain_name);
 
         // Ensure signer owns the domain we're registering a subdomain for
