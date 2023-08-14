@@ -538,6 +538,25 @@ module aptos_names_v2::domains {
         );
     }
 
+    /// Disable or enable subdomain owner from transferring subdomain as domain owner
+    public fun set_subdomain_transferability_as_domain_owner(
+        router_signer: &signer,
+        sign: &signer,
+        domain_name: String,
+        subdomain_name: String,
+        transferrable: bool
+    ) acquires CollectionCapability, NameRecord {
+        assert!(address_of(router_signer) == @router_signer, error::permission_denied(ENOT_ROUTER));
+        validate_subdomain_registered_and_domain_owned_by_signer(sign, domain_name, subdomain_name);
+        let name_record_address = token_addr(domain_name, option::some(subdomain_name));
+        let transfer_ref = &borrow_global_mut<NameRecord>(name_record_address).transfer_ref;
+        if (transferrable) {
+            object::enable_ungated_transfer(transfer_ref);
+        } else {
+            object::disable_ungated_transfer(transfer_ref);
+        }
+    }
+
     /// Forcefully set the name of a domain.
     /// This is a privileged operation, used via governance, to forcefully set a domain address
     /// This can be used, for example, to forcefully set the domain for a system address domain
@@ -736,7 +755,7 @@ module aptos_names_v2::domains {
         subdomain_name: String,
         expiration_time_sec: u64,
     ) acquires CollectionCapability, NameRecord {
-        validate_subdomain_to_renew(sign, subdomain_name, domain_name);
+        validate_subdomain_registered_and_domain_owned_by_signer(sign, domain_name, subdomain_name);
         // check if the expiration time is valid
         let domain_record = get_record(domain_name, option::none());
         assert!(
@@ -762,7 +781,7 @@ module aptos_names_v2::domains {
         subdomain_name: String,
         subdomain_expiration_policy: u8,
     ) acquires CollectionCapability, NameRecord {
-        validate_subdomain_to_renew(sign, subdomain_name, domain_name);
+        validate_subdomain_registered_and_domain_owned_by_signer(sign, domain_name, subdomain_name);
         validate_subdomain_expiration_policy(subdomain_expiration_policy);
         // if manually set the expiration date
         let record = get_record_mut(domain_name, option::some(subdomain_name));
@@ -799,10 +818,10 @@ module aptos_names_v2::domains {
         );
     }
 
-    fun validate_subdomain_to_renew(
+    fun validate_subdomain_registered_and_domain_owned_by_signer(
         sign: &signer,
-        subdomain_name: String,
         domain_name: String,
+        subdomain_name: String,
     ) acquires CollectionCapability, NameRecord {
         assert!(name_is_registered(option::some(subdomain_name), domain_name), error::not_found(ESUBDOMAIN_NOT_EXIST));
         // Ensure signer owns the domain we're registering a subdomain for

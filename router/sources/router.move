@@ -207,7 +207,7 @@ module router::router {
     /// @param domain_name The domain name to register
     /// @param subdomain_name The subdomain name to register
     /// @param expiration_time_sec The expiration time of the registration in seconds
-    /// @param _transferrable Whether this subdomain can be transferred by the owner
+    /// @param transferrable Whether this subdomain can be transferred by the owner
     /// @param _expiration_policy The expiration policy of the registration. Unused in MODE_V1
     /// @param target_addr The address the registered name will point to
     /// @param to_addr The address to send the token to. If none, then the user will be the owner. In MODE_V1, receiver must have already opted in to direct_transfer via token::opt_in_direct_transfer
@@ -217,7 +217,7 @@ module router::router {
         subdomain_name: String,
         expiration_time_sec: u64,
         _expiration_policy: u8,
-        _transferrable: bool,
+        transferrable: bool,
         target_addr: Option<address>,
         to_addr: Option<address>,
     ) acquires RouterConfig {
@@ -252,6 +252,15 @@ module router::router {
         if (option::is_some(&to_addr)) {
             transfer_name(user, domain_name, option::some(subdomain_name), *option::borrow(&to_addr));
         };
+        if (mode == MODE_V1_AND_V2) {
+            aptos_names_v2::domains::set_subdomain_transferability_as_domain_owner(
+                &get_router_signer(),
+                user,
+                domain_name,
+                subdomain_name,
+                transferrable
+            )
+        }
     }
 
     // ==== MIGRATION ====
@@ -512,17 +521,22 @@ module router::router {
 
     /// Not available in MODE_V1
     public entry fun domain_admin_set_subdomain_transferability(
-        _domain_admin: &signer,
-        _domain_name: String,
-        _subdomain_name: String,
-        _transferable: bool,
+        domain_admin: &signer,
+        domain_name: String,
+        subdomain_name: String,
+        transferable: bool,
     ) acquires RouterConfig {
         let mode = get_mode();
         if (mode == MODE_V1) {
             abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
         } else if (mode == MODE_V1_AND_V2) {
-            // TODO: Implement
-            abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
+            aptos_names_v2::domains::set_subdomain_transferability_as_domain_owner(
+                &get_router_signer(),
+                domain_admin,
+                domain_name,
+                subdomain_name,
+                transferable
+            )
         } else {
             abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
         }
