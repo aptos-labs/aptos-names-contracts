@@ -502,6 +502,7 @@ module router::router {
         domain_name: String,
         subdomain_name: String,
         to_addr: address,
+        target_addr: Option<address>,
     ) acquires RouterConfig {
         let mode = get_mode();
         if (mode == MODE_V1) {
@@ -513,6 +514,7 @@ module router::router {
                 domain_name,
                 subdomain_name,
                 to_addr,
+                target_addr,
             )
         } else {
             abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
