@@ -761,12 +761,12 @@ module aptos_names_v2::domains {
     }
 
     public fun set_subdomain_expiration_policy(
-        sign: &signer,
+        domain_admin: &signer,
         domain_name: String,
         subdomain_name: String,
         subdomain_expiration_policy: u8,
     ) acquires CollectionCapability, NameRecord {
-        validate_subdomain_registered_and_domain_owned_by_signer(sign, domain_name, subdomain_name);
+        validate_subdomain_registered_and_domain_owned_by_signer(domain_admin, domain_name, subdomain_name);
         validate_subdomain_expiration_policy(subdomain_expiration_policy);
         // if manually set the expiration date
         let record = get_record_mut(domain_name, option::some(subdomain_name));
