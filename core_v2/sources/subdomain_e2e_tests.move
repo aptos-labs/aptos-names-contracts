@@ -543,7 +543,7 @@ module aptos_names_v2::subdomain_e2e_tests {
         assert!(domains::name_is_registerable(option::some(test_helper::subdomain_name()), test_helper::domain_name()), 95);
 
         // and likewise for the subdomain
-        // test_helper::register_name(router_signer, rando, option::some(test_helper::subdomain_name()), test_helper::domain_name(), timestamp::now_seconds() + test_helper::one_year_secs(), test_helper::fq_subdomain_name(), 3, vector::empty<u8>());
+        test_helper::register_name(router_signer, rando, option::some(test_helper::subdomain_name()), test_helper::domain_name(), timestamp::now_seconds() + test_helper::one_year_secs(), test_helper::fq_subdomain_name(), 3, vector::empty<u8>());
     }
 
     #[test(

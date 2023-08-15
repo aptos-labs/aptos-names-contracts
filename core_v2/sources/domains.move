@@ -1046,36 +1046,25 @@ module aptos_names_v2::domains {
     /// Entry function for clearing reverse lookup.
     public entry fun clear_reverse_lookup_entry(
         account: &signer
-    ) acquires NameRecord, ReverseRecord, SetReverseLookupEvents, CollectionCapability {
+    ) acquires NameRecord, ReverseRecord, SetReverseLookupEvents {
         clear_reverse_lookup(account);
     }
 
     /// Clears the user's reverse lookup.
     public fun clear_reverse_lookup(
         account: &signer
-    ) acquires NameRecord, ReverseRecord, SetReverseLookupEvents, CollectionCapability {
+    ) acquires NameRecord, ReverseRecord, SetReverseLookupEvents {
         let account_addr = signer::address_of(account);
         clear_reverse_lookup_internal(account_addr);
     }
 
     /// Returns the reverse lookup (the token addr) for an address if any.
-    /// Returns none if exist but expired
     public fun get_reverse_lookup(
         account_addr: address
-    ): Option<address> acquires ReverseRecord, NameRecord, CollectionCapability {
+    ): Option<address> acquires ReverseRecord {
         if (exists<ReverseRecord>(account_addr)) {
             let reverse_record = borrow_global<ReverseRecord>(account_addr);
-            if (option::is_none(&reverse_record.token_addr)) {
-                option::none()
-            } else {
-                let record = borrow_global<NameRecord>(*option::borrow(&reverse_record.token_addr));
-                let subdomain_name = extract_subdomain_name(record);
-                if (name_is_expired(subdomain_name, record.domain_name)) {
-                    option::none()
-                } else {
-                    reverse_record.token_addr
-                }
-            }
+            reverse_record.token_addr
         } else {
             option::none()
         }
@@ -1113,7 +1102,7 @@ module aptos_names_v2::domains {
 
     fun clear_reverse_lookup_internal(
         account_addr: address
-    ) acquires NameRecord, ReverseRecord, SetReverseLookupEvents, CollectionCapability {
+    ) acquires NameRecord, ReverseRecord, SetReverseLookupEvents {
         let maybe_reverse_lookup = get_reverse_lookup(account_addr);
         if (option::is_none(&maybe_reverse_lookup)) {
             return
