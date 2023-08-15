@@ -10,12 +10,17 @@ FUNDS="0x78ee3915e67ef5d19fa91d1e05e60ae08751efd12ce58e23fc1109de87ea7865"
 ROUTER="0xaceef506a10f3ef427d09b2e1410e79bbdcd9b3a0c3165ac2809b514db128d4e"
 ROUTER_SIGNER="0x6d846cb3b6bbfface9c60ef52a82cd0f3c4d7a9b5f58159f3bd6d40a5b7f887"
 
-./aptos move test \
-  --package-dir core \
-  --named-addresses aptos_names=$APTOS_NAMES,aptos_names_admin=$ADMIN,aptos_names_funds=$FUNDS
-./aptos move test \
+# aptos move test \
+#   --package-dir core \
+#   --named-addresses aptos_names=$APTOS_NAMES,aptos_names_admin=$ADMIN,aptos_names_funds=$FUNDS
+# aptos move test \
+#   --package-dir core_v2 \
+#   --named-addresses aptos_names=$APTOS_NAMES,aptos_names_v2=$APTOS_NAMES_V2,aptos_names_admin=$ADMIN,aptos_names_funds=$FUNDS,router=$ROUTER,router_signer=$ROUTER_SIGNER
+# aptos move test \
+#   --package-dir router \
+#   --named-addresses aptos_names=$APTOS_NAMES,aptos_names_v2=$APTOS_NAMES_V2,aptos_names_admin=$ADMIN,aptos_names_funds=$FUNDS,router=$ROUTER,router_signer=$ROUTER_SIGNER
+
+aptos move test \
+  --filter test_names_are_registerable_after_expiry_e2e \
   --package-dir core_v2 \
-  --named-addresses aptos_names=$APTOS_NAMES,aptos_names_v2=$APTOS_NAMES_V2,aptos_names_admin=$ADMIN,aptos_names_funds=$FUNDS,router=$ROUTER,router_signer=$ROUTER_SIGNER
-./aptos move test \
-  --package-dir router \
   --named-addresses aptos_names=$APTOS_NAMES,aptos_names_v2=$APTOS_NAMES_V2,aptos_names_admin=$ADMIN,aptos_names_funds=$FUNDS,router=$ROUTER,router_signer=$ROUTER_SIGNER

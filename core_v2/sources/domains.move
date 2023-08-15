@@ -448,14 +448,15 @@ module aptos_names_v2::domains {
 
         register_name_internal(sign, option::some(subdomain_name), domain_name, registration_duration_secs, price);
 
-        debug::print(&string::utf8(b"test"));
-
         // Automatically assign primary name if not exists. If exists, just assign target_addr
         let reverse_lookup_result = get_reverse_lookup(address_of(sign));
         if (option::is_none(&reverse_lookup_result)) {
             // If the user has no reverse lookup set, set the user's reverse lookup.
             set_reverse_lookup(sign, option::some(subdomain_name), domain_name);
         } else {
+            // debug::print(&string::utf8(b"set subdomain target address but not reverse lookup"));
+            
+            // TODO: Investigate why we don't do target_addr auto assignments for subdomains
             // Automatically set the name to point to the sender's address
             set_target_address_internal(option::some(subdomain_name), domain_name, signer::address_of(sign));
         };
@@ -1067,6 +1068,23 @@ module aptos_names_v2::domains {
     ): Option<address> acquires ReverseRecord {
         if (exists<ReverseRecord>(account_addr)) {
             let reverse_record = borrow_global<ReverseRecord>(account_addr);
+            reverse_record.token_addr
+        } else {
+            option::none()
+        }
+    }
+
+    /// Returns the reverse lookup (the token addr) for an address if any.
+    public fun get_reverse_lookup2(
+        account_addr: address
+    ): Option<address> acquires ReverseRecord {
+        if (exists<ReverseRecord>(account_addr)) {
+            let reverse_record = borrow_global<ReverseRecord>(account_addr);
+            if (option::is_some(&reverse_record.token_addr)) {
+                debug::print(&string::utf8(b"reverse_record.token_addr is some"));
+            } else {
+                debug::print(&string::utf8(b"reverse_record.token_addr is none"));
+            };
             reverse_record.token_addr
         } else {
             option::none()

@@ -84,14 +84,54 @@ module aptos_names_v2::test_helper {
         let is_subdomain = option::is_some(&subdomain_name);
 
         let user_balance_before = coin::balance<AptosCoin>(user_addr);
+
         let user_reverse_lookup_before = domains::get_reverse_lookup(user_addr);
+
         let maybe_target_address = domains::name_resolved_address(subdomain_name, domain_name);
         let name_reverse_lookup_before = if (option::is_some(&maybe_target_address)) {
-            domains::get_reverse_lookup(*option::borrow(&maybe_target_address))
+            if (is_subdomain) {
+                domains::get_reverse_lookup2(*option::borrow(&maybe_target_address))
+            } else {
+                domains::get_reverse_lookup(*option::borrow(&maybe_target_address))
+            }
         } else {
             option::none()
         };
+
         let is_expired_before = domains::name_is_registered(subdomain_name, domain_name) && domains::name_is_expired(subdomain_name, domain_name);
+
+        if (is_subdomain) {
+            if (option::is_some(&maybe_target_address)) {
+                debug::print(&string::utf8(b"maybe_target_address is some"));
+            } else {
+                debug::print(&string::utf8(b"maybe_target_address is none"));
+            };
+
+            if (option::is_some(&name_reverse_lookup_before)) {
+                debug::print(&string::utf8(b"name_reverse_lookup_before is some"));
+            } else {
+                debug::print(&string::utf8(b"name_reverse_lookup_before is none"));
+            };
+
+            if (option::is_some(&user_reverse_lookup_before)) {
+                debug::print(&string::utf8(b"user_reverse_lookup_before is some"));
+            } else {
+                debug::print(&string::utf8(b"user_reverse_lookup_before is none"));
+            };
+
+            if (option::is_some(&name_reverse_lookup_before) && option::is_some(&user_reverse_lookup_before) && *option::borrow(&name_reverse_lookup_before) == *option::borrow(&user_reverse_lookup_before)) {
+                debug::print(&string::utf8(b"name_reverse_lookup_before == user_reverse_lookup_before"));
+            } else {
+                debug::print(&string::utf8(b"name_reverse_lookup_before != user_reverse_lookup_before"));
+            };
+
+            if (is_expired_before) {
+                debug::print(&string::utf8(b"is_expired_before is true"));
+            } else {
+                debug::print(&string::utf8(b"is_expired_before is false"));
+            };
+        };
+
         let register_name_event_v1_event_count_before = domains::get_register_name_event_v1_count();
         let set_target_address_event_v1_event_count_before = domains::get_set_target_address_event_v1_count();
         let set_reverse_lookup_event_v1_event_count_before = domains::get_set_reverse_lookup_event_v1_count();
@@ -206,6 +246,17 @@ module aptos_names_v2::test_helper {
         let set_target_address_event_v1_num_emitted = domains::get_set_target_address_event_v1_count() - set_target_address_event_v1_event_count_before;
         let set_reverse_lookup_event_v1_num_emitted = domains::get_set_reverse_lookup_event_v1_count() - set_reverse_lookup_event_v1_event_count_before;
 
+        // if (is_subdomain) {
+        //     debug::print(
+        //         &string_utils::format3(
+        //             &b"get_set_reverse_lookup_event_v1_count {}, set_reverse_lookup_event_v1_event_count_before {} set_reverse_lookup_event_v1_num_emitted {}",
+        //             domains::get_set_reverse_lookup_event_v1_count(),
+        //             set_reverse_lookup_event_v1_event_count_before,
+        //             set_reverse_lookup_event_v1_num_emitted
+        //         )
+        //     );
+        // };
+
         test_utils::print_actual_expected(b"register_name_event_v1_num_emitted: ", register_name_event_v1_num_emitted, 1, false);
         assert!(register_name_event_v1_num_emitted == 1, register_name_event_v1_num_emitted);
 
@@ -237,12 +288,16 @@ module aptos_names_v2::test_helper {
                 && *option::borrow(&name_reverse_lookup_before) == *option::borrow(&user_reverse_lookup_before)
                 && is_expired_before
             ) {
-                // if (!is_subdomain) {
-                //     assert!(set_reverse_lookup_event_v1_num_emitted == 2, set_reverse_lookup_event_v1_num_emitted);
-                // } else {
-                //
+                // if (is_subdomain) {
+                //     debug::print(
+                //         &string_utils::format3(
+                //             &b"get_set_reverse_lookup_event_v1_count {}, set_reverse_lookup_event_v1_event_count_before {} set_reverse_lookup_event_v1_num_emitted {}",
+                //             domains::get_set_reverse_lookup_event_v1_count(),
+                //             set_reverse_lookup_event_v1_event_count_before,
+                //             set_reverse_lookup_event_v1_num_emitted
+                //         )
+                //     );
                 // };
-                debug::print(&set_reverse_lookup_event_v1_num_emitted);
                 assert!(set_reverse_lookup_event_v1_num_emitted == 2, set_reverse_lookup_event_v1_num_emitted);
             } else if (option::is_some(&name_reverse_lookup_before) && is_expired_before) {
                 // If we are registering over a name that is already registered but expired and was a primary name,
