@@ -616,7 +616,7 @@ module router::router {
             if (!exists_in_v2(domain_name, subdomain_name)) {
                 get_v1_target_addr(domain_name, subdomain_name)
             } else {
-                let (_expiration_time_sec, target_addr) = aptos_names_v2::domains::get_name_record_v1_props_for_name(
+                let (_expiration_time_sec, target_addr) = aptos_names_v2::domains::get_name_record_props_for_name(
                     subdomain_name,
                     domain_name
                 );
@@ -697,7 +697,7 @@ module router::router {
             if (!exists_in_v2(domain_name, subdomain_name)) {
                 get_v1_expiration(domain_name, subdomain_name)
             } else {
-                let (expiration_time_sec, _target_addr) = aptos_names_v2::domains::get_name_record_v1_props_for_name(
+                let (expiration_time_sec, _target_addr) = aptos_names_v2::domains::get_name_record_props_for_name(
                     subdomain_name,
                     domain_name,
                 );

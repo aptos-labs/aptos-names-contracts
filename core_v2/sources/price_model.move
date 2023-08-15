@@ -25,7 +25,7 @@ module aptos_names_v2::price_model {
     }
 
     /// There is a fixed cost per each tier of domain names, from 2 to >=6, and it also scales exponentially with number of years to register
-    public fun price_for_domain_v1(domain_length: u64, registration_secs: u64): u64 {
+    public fun price_for_domain(domain_length: u64, registration_secs: u64): u64 {
         assert!(domain_length >= 2, error::out_of_range(EDOMAIN_TOO_SHORT));
         let length_to_charge_for = math64::min(domain_length, 6);
         let registration_years = (registration_secs / SECONDS_PER_YEAR as u8);
@@ -33,12 +33,12 @@ module aptos_names_v2::price_model {
     }
 
     /// Subdomains have a fixed unit cost
-    public fun price_for_subdomain_v1(_registration_duration_secs: u64): u64 {
+    public fun price_for_subdomain(_registration_duration_secs: u64): u64 {
         config::subdomain_price()
     }
 
     #[test(myself = @aptos_names_v2, framework = @0x1)]
-    fun test_price_for_domain_v1(myself: &signer, framework: &signer) {
+    fun test_price_for_domain(myself: &signer, framework: &signer) {
         use aptos_names_v2::config;
         use aptos_framework::aptos_coin::AptosCoin;
         use aptos_framework::coin;
@@ -50,7 +50,7 @@ module aptos_names_v2::price_model {
 
         config::initialize_aptoscoin_for(framework);
         coin::register<AptosCoin>(myself);
-        config::initialize_v1(myself, @aptos_names_v2, @aptos_names_v2);
+        config::initialize_config(myself, @aptos_names_v2, @aptos_names_v2);
 
         config::set_subdomain_price(myself, config::octas() / 5);
         config::set_domain_price_for_length(myself, (100 * config::octas()), 2);
@@ -59,28 +59,28 @@ module aptos_names_v2::price_model {
         config::set_domain_price_for_length(myself, (15 * config::octas()), 5);
         config::set_domain_price_for_length(myself, (5 * config::octas()), 6);
 
-        let price = price_for_domain_v1(2, SECONDS_PER_YEAR) / config::octas();
+        let price = price_for_domain(2, SECONDS_PER_YEAR) / config::octas();
         assert!(price == 100, price);
 
-        let price = price_for_domain_v1(4, SECONDS_PER_YEAR) / config::octas();
+        let price = price_for_domain(4, SECONDS_PER_YEAR) / config::octas();
         assert!(price == 30, price);
 
-        let price = price_for_domain_v1(2, 3 * SECONDS_PER_YEAR) / config::octas();
+        let price = price_for_domain(2, 3 * SECONDS_PER_YEAR) / config::octas();
         assert!(price == 335, price);
 
-        let price = price_for_domain_v1(5, SECONDS_PER_YEAR) / config::octas();
+        let price = price_for_domain(5, SECONDS_PER_YEAR) / config::octas();
         assert!(price == 15, price);
 
-        let price = price_for_domain_v1(5, 8 * SECONDS_PER_YEAR) / config::octas();
+        let price = price_for_domain(5, 8 * SECONDS_PER_YEAR) / config::octas();
         assert!(price == 204, price);
 
-        let price = price_for_domain_v1(10, SECONDS_PER_YEAR) / config::octas();
+        let price = price_for_domain(10, SECONDS_PER_YEAR) / config::octas();
         assert!(price == 5, price);
 
-        let price = price_for_domain_v1(15, SECONDS_PER_YEAR) / config::octas();
+        let price = price_for_domain(15, SECONDS_PER_YEAR) / config::octas();
         assert!(price == 5, price);
 
-        let price = price_for_domain_v1(15, 10 * SECONDS_PER_YEAR) / config::octas();
+        let price = price_for_domain(15, 10 * SECONDS_PER_YEAR) / config::octas();
         assert!(price == 102, price);
     }
 

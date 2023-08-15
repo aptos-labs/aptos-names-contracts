@@ -8,7 +8,7 @@ module aptos_names_v2::query_helper {
     public fun get_domain_props(
         domain: String,
     ): (u64, Option<address>) {
-        domains::get_name_record_v1_props_for_name(option::none(), domain)
+        domains::get_name_record_props_for_name(option::none(), domain)
     }
 
     #[view]
@@ -17,7 +17,7 @@ module aptos_names_v2::query_helper {
         subdomain: String,
         domain: String,
     ): (u64, Option<address>) {
-        domains::get_name_record_v1_props_for_name(option::some(subdomain), domain)
+        domains::get_name_record_props_for_name(option::some(subdomain), domain)
     }
 
     #[view]
