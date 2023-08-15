@@ -19,6 +19,7 @@ module aptos_names_v2::domains {
     use std::signer;
     use std::signer::address_of;
     use std::string::{Self, String, utf8};
+    use aptos_std::debug;
 
     const APP_SIGNER_CAPABILITY_SEED: vector<u8> = b"APP_SIGNER_CAPABILITY";
     const BURN_SIGNER_CAPABILITY_SEED: vector<u8> = b"BURN_SIGNER_CAPABILITY";
@@ -446,6 +447,8 @@ module aptos_names_v2::domains {
         coin::transfer<AptosCoin>(sign, config::fund_destination_address(), price);
 
         register_name_internal(sign, option::some(subdomain_name), domain_name, registration_duration_secs, price);
+
+        debug::print(&string::utf8(b"test"));
 
         // Automatically assign primary name if not exists. If exists, just assign target_addr
         let reverse_lookup_result = get_reverse_lookup(address_of(sign));

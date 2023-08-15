@@ -14,6 +14,7 @@ module aptos_names_v2::test_helper {
     use std::signer;
     use std::string::{Self, String};
     use std::vector;
+    use aptos_std::debug;
 
     // Ammount to mint to test accounts during the e2e tests
     const MINT_AMOUNT_APT: u64 = 500;
@@ -174,11 +175,15 @@ module aptos_names_v2::test_helper {
             let (expiration_time_sec_lookup_result, target_address_lookup_result) = query_helper::get_subdomain_props(*option::borrow(&subdomain_name_copy), domain_name);
             assert!(time_helper::seconds_to_days(expiration_time_sec_lookup_result - timestamp::now_seconds()) == 365, 100);
 
-            if (option::is_none(&user_reverse_lookup_before)) {
-                // Should automatically point to the users address
-                assert!(target_address == option::some(user_addr), 11);
-                assert!(target_address_lookup_result == option::some(user_addr), 111);
-            }
+            // if (option::is_none(&user_reverse_lookup_before)) {
+            //     // Should automatically point to the users address
+            //     assert!(target_address == option::some(user_addr), 11);
+            //     assert!(target_address_lookup_result == option::some(user_addr), 111);
+            // }
+
+            // Should automatically point to the users address
+            assert!(target_address == option::some(user_addr), 11);
+            assert!(target_address_lookup_result == option::some(user_addr), 111);
         } else {
             let (expiration_time_sec_lookup_result, target_address_lookup_result) = query_helper::get_domain_props(domain_name);
             assert!(time_helper::seconds_to_days(expiration_time_sec_lookup_result - timestamp::now_seconds()) == 365, 100);
@@ -237,6 +242,7 @@ module aptos_names_v2::test_helper {
                 // } else {
                 //
                 // };
+                debug::print(&set_reverse_lookup_event_v1_num_emitted);
                 assert!(set_reverse_lookup_event_v1_num_emitted == 2, set_reverse_lookup_event_v1_num_emitted);
             } else if (option::is_some(&name_reverse_lookup_before) && is_expired_before) {
                 // If we are registering over a name that is already registered but expired and was a primary name,
@@ -247,17 +253,19 @@ module aptos_names_v2::test_helper {
             }
         };
 
-        if (is_subdomain) {
-            if (option::is_none(&user_reverse_lookup_before)) {
-                // Should automatically point to the users address
-                test_utils::print_actual_expected(b"set_target_address_event_v1_num_emitted: ", set_target_address_event_v1_num_emitted, 1, false);
-                assert!(set_target_address_event_v1_num_emitted == 1, set_target_address_event_v1_num_emitted);
-            }
-        } else {
-            // Should automatically point to the users address
-            test_utils::print_actual_expected(b"set_target_address_event_v1_num_emitted: ", set_target_address_event_v1_num_emitted, 1, false);
-            assert!(set_target_address_event_v1_num_emitted == 1, set_target_address_event_v1_num_emitted);
-        };
+        // if (is_subdomain) {
+        //     if (option::is_none(&user_reverse_lookup_before)) {
+        //         // Should automatically point to the users address
+        //         test_utils::print_actual_expected(b"set_target_address_event_v1_num_emitted: ", set_target_address_event_v1_num_emitted, 1, false);
+        //         assert!(set_target_address_event_v1_num_emitted == 1, set_target_address_event_v1_num_emitted);
+        //     }
+        // } else {
+        //     // Should automatically point to the users address
+        //     test_utils::print_actual_expected(b"set_target_address_event_v1_num_emitted: ", set_target_address_event_v1_num_emitted, 1, false);
+        //     assert!(set_target_address_event_v1_num_emitted == 1, set_target_address_event_v1_num_emitted);
+        // };
+        test_utils::print_actual_expected(b"set_target_address_event_v1_num_emitted: ", set_target_address_event_v1_num_emitted, 1, false);
+        assert!(set_target_address_event_v1_num_emitted == 1, set_target_address_event_v1_num_emitted);
     }
 
     /// Set the domain address, and verify the address was set correctly
