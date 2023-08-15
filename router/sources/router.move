@@ -565,18 +565,22 @@ module router::router {
     }
 
     public entry fun domain_admin_set_subdomain_expiration(
-        _domain_admin: &signer,
-        _domain_name: String,
-        _subdomain_name: String,
-        _expiration_time_sec: u64,
+        domain_admin: &signer,
+        domain_name: String,
+        subdomain_name: String,
+        expiration_time_sec: u64,
     ) acquires RouterConfig {
         let mode = get_mode();
         if (mode == MODE_V1) {
             // Will not be implemented in v1
             abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
         } else if (mode == MODE_V1_AND_V2) {
-            // TODO: Implement
-            abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
+            aptos_names_v2::domains::set_subdomain_expiration(
+                domain_admin,
+                domain_name,
+                subdomain_name,
+                expiration_time_sec,
+            )
         } else {
             abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
         }

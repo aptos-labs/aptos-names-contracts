@@ -734,13 +734,13 @@ module aptos_names_v2::domains {
     }
 
     /// this is for domain owner to update subdomain expiration time
-    public fun set_subdomain_expiration_as_domain_owner(
-        sign: &signer,
+    public fun set_subdomain_expiration(
+        domain_admin: &signer,
         domain_name: String,
         subdomain_name: String,
         expiration_time_sec: u64,
     ) acquires CollectionCapability, NameRecord {
-        validate_subdomain_registered_and_domain_owned_by_signer(sign, domain_name, subdomain_name);
+        validate_subdomain_registered_and_domain_owned_by_signer(domain_admin, domain_name, subdomain_name);
         // check if the expiration time is valid
         let domain_record = get_record(domain_name, option::none());
         assert!(
