@@ -553,7 +553,7 @@ module router::router {
             // Will not be implemented in v1
             abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
         } else if (mode == MODE_V1_AND_V2) {
-            aptos_names_v2::domains::set_subdomain_renewal_policy(
+            aptos_names_v2::domains::set_subdomain_expiration_policy(
                 domain_admin,
                 domain_name,
                 subdomain_name,

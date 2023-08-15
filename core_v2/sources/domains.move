@@ -760,7 +760,7 @@ module aptos_names_v2::domains {
         record.expiration_time_sec = expiration_time_sec;
     }
 
-    public fun set_subdomain_renewal_policy(
+    public fun set_subdomain_expiration_policy(
         sign: &signer,
         domain_name: String,
         subdomain_name: String,
