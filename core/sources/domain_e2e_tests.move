@@ -448,4 +448,89 @@ module aptos_names::domain_e2e_tests {
             assert!(is_expired, 1);
         };
     }
+
+    #[test(myself = @aptos_names, user = @0x077, aptos = @0x1, rando = @0x266f, foundation = @0xf01d)]
+    #[expected_failure(abort_code = 196611, location = aptos_names::domains)]
+    fun test_register_during_reregistration_grace(myself: &signer, user: signer, aptos: signer, rando: signer, foundation: signer) {
+        let users = test_helper::e2e_test_setup(myself, user, &aptos, rando, &foundation);
+        let user = vector::borrow(&users, 0);
+        let user_addr = signer::address_of(user);
+
+        // Set the reregistration grace period to 30 days
+        config::set_reregistration_grace_sec(myself, time_helper::days_to_seconds(30));
+
+        // Register the domain
+        test_helper::register_name(
+            user,
+            option::none(),
+            test_helper::domain_name(),
+            test_helper::one_year_secs(),
+            test_helper::fq_domain_name(),
+            1,
+            vector::empty<u8>()
+        );
+        let (is_owner, _token_id) = domains::is_owner_of_name(user_addr, option::none(), test_helper::domain_name());
+        assert!(is_owner, 1);
+
+        // Set the time right before the domain's expiration time + grace period
+        let (_, expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(option::none(), test_helper::domain_name());
+        timestamp::update_global_time_for_test_secs(expiration_time_sec + config::reregistration_grace_sec());
+
+        // Not owner anymore, name has expired
+        let (is_owner, _token_id) = domains::is_owner_of_name(user_addr, option::none(), test_helper::domain_name());
+        assert!(!is_owner, 1);
+
+        // Register the domain again. Should fail because it's still in the grace period
+        test_helper::register_name(
+            user,
+            option::none(),
+            test_helper::domain_name(),
+            test_helper::one_year_secs(),
+            test_helper::fq_domain_name(),
+            2,
+            vector::empty<u8>()
+        );
+    }
+
+    #[test(myself = @aptos_names, user = @0x077, aptos = @0x1, rando = @0x266f, foundation = @0xf01d)]
+    fun test_register_after_reregistration_grace(myself: &signer, user: signer, aptos: signer, rando: signer, foundation: signer) {
+        let users = test_helper::e2e_test_setup(myself, user, &aptos, rando, &foundation);
+        let user = vector::borrow(&users, 0);
+        let user_addr = signer::address_of(user);
+
+        // Set the reregistration grace period to 30 days
+        config::set_reregistration_grace_sec(myself, time_helper::days_to_seconds(30));
+
+        // Register the domain
+        test_helper::register_name(
+            user,
+            option::none(),
+            test_helper::domain_name(),
+            test_helper::one_year_secs(),
+            test_helper::fq_domain_name(),
+            1,
+            vector::empty<u8>()
+        );
+        let (is_owner, _token_id) = domains::is_owner_of_name(user_addr, option::none(), test_helper::domain_name());
+        assert!(is_owner, 1);
+
+        // Set the time past the domain's expiration time + grace period
+        let (_, expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(option::none(), test_helper::domain_name());
+        timestamp::update_global_time_for_test_secs(expiration_time_sec + config::reregistration_grace_sec() + 1);
+
+        // Not owner anymore, name has expired
+        let (is_owner, _token_id) = domains::is_owner_of_name(user_addr, option::none(), test_helper::domain_name());
+        assert!(!is_owner, 1);
+
+        // Register the domain again. Works because it's past the grace period
+        test_helper::register_name(
+            user,
+            option::none(),
+            test_helper::domain_name(),
+            test_helper::one_year_secs(),
+            test_helper::fq_domain_name(),
+            2,
+            vector::empty<u8>()
+        );
+    }
 }
