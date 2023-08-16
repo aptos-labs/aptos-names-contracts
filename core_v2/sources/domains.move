@@ -11,7 +11,6 @@ module aptos_names_v2::domains {
     use aptos_names_v2::time_helper;
     use aptos_names_v2::token_helper;
     use aptos_names_v2::utf8_utils;
-    use aptos_names_v2::verify;
     use aptos_token_objects::collection;
     use aptos_token_objects::token;
     use std::error;
@@ -398,19 +397,6 @@ module aptos_names_v2::domains {
         register_domain_generic(sign, domain_name, registration_duration_secs);
     }
 
-    public fun register_domain_with_signature(
-        router_signer: &signer,
-        sign: &signer,
-        domain_name: String,
-        registration_duration_secs: u64,
-        signature: vector<u8>
-    ) acquires CollectionCapability, NameRecord, RegisterNameEvents, ReverseRecord, SetTargetAddressEvents, SetReverseLookupEvents {
-        assert!(address_of(router_signer) == @router_signer, error::permission_denied(ENOT_ROUTER));
-        let account_address = signer::address_of(sign);
-        verify::assert_register_domain_signature_verifies(signature, account_address, domain_name);
-        register_domain_generic(sign, domain_name, registration_duration_secs);
-    }
-
     /// A wrapper around `register_name` as an entry function.
     /// Option<String> is not currently serializable, so we have these convenience method
     /// `expiration_time_sec` is the timestamp, in seconds, when the name expires
@@ -430,7 +416,6 @@ module aptos_names_v2::domains {
         );
 
         // We are registering a subdomain name: this has no cost, but is only doable by the owner of the domain
-        // TODO: Unit tests for trying to register invalid domains/subdomains
         validate_name_string(subdomain_name);
 
         // Ensure signer owns the domain we're registering a subdomain for
@@ -535,6 +520,25 @@ module aptos_names_v2::domains {
                 expiration_time_secs: name_expiration_time_secs,
             },
         );
+    }
+
+    /// Disable or enable subdomain owner from transferring subdomain as domain owner
+    public fun set_subdomain_transferability_as_domain_owner(
+        router_signer: &signer,
+        sign: &signer,
+        domain_name: String,
+        subdomain_name: String,
+        transferrable: bool
+    ) acquires CollectionCapability, NameRecord {
+        assert!(address_of(router_signer) == @router_signer, error::permission_denied(ENOT_ROUTER));
+        validate_subdomain_registered_and_domain_owned_by_signer(sign, domain_name, subdomain_name);
+        let name_record_address = token_addr(domain_name, option::some(subdomain_name));
+        let transfer_ref = &borrow_global_mut<NameRecord>(name_record_address).transfer_ref;
+        if (transferrable) {
+            object::enable_ungated_transfer(transfer_ref);
+        } else {
+            object::disable_ungated_transfer(transfer_ref);
+        }
     }
 
     /// Forcefully set the name of a domain.
@@ -735,7 +739,7 @@ module aptos_names_v2::domains {
         subdomain_name: String,
         expiration_time_sec: u64,
     ) acquires CollectionCapability, NameRecord {
-        validate_subdomain_to_renew(sign, subdomain_name, domain_name);
+        validate_subdomain_registered_and_domain_owned_by_signer(sign, domain_name, subdomain_name);
         // check if the expiration time is valid
         let domain_record = get_record(domain_name, option::none());
         assert!(
@@ -761,7 +765,7 @@ module aptos_names_v2::domains {
         subdomain_name: String,
         subdomain_expiration_policy: u8,
     ) acquires CollectionCapability, NameRecord {
-        validate_subdomain_to_renew(sign, subdomain_name, domain_name);
+        validate_subdomain_registered_and_domain_owned_by_signer(sign, domain_name, subdomain_name);
         validate_subdomain_expiration_policy(subdomain_expiration_policy);
         // if manually set the expiration date
         let record = get_record_mut(domain_name, option::some(subdomain_name));
@@ -798,10 +802,10 @@ module aptos_names_v2::domains {
         );
     }
 
-    fun validate_subdomain_to_renew(
+    fun validate_subdomain_registered_and_domain_owned_by_signer(
         sign: &signer,
-        subdomain_name: String,
         domain_name: String,
+        subdomain_name: String,
     ) acquires CollectionCapability, NameRecord {
         assert!(name_is_registered(option::some(subdomain_name), domain_name), error::not_found(ESUBDOMAIN_NOT_EXIST));
         // Ensure signer owns the domain we're registering a subdomain for

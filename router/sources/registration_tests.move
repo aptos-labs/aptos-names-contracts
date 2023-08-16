@@ -187,7 +187,7 @@ module router::registration_tests {
             0,
             false,
             option::none(),
-            option::none()
+            option::none(),
         );
         router::is_name_owner(user_addr, domain_name1, option::some(subdomain_name1));
 
@@ -206,7 +206,7 @@ module router::registration_tests {
             0,
             false,
             option::none(),
-            option::none()
+            option::none(),
         );
         router::is_name_owner(user_addr, domain_name2, option::some(subdomain_name2));
     }
@@ -246,7 +246,7 @@ module router::registration_tests {
             0,
             false,
             option::none(),
-            option::none()
+            option::none(),
         );
 
         // Bump mode
@@ -264,7 +264,7 @@ module router::registration_tests {
             0,
             false,
             option::none(),
-            option::none()
+            option::none(),
         );
     }
 
@@ -303,7 +303,7 @@ module router::registration_tests {
             0,
             false,
             option::none(),
-            option::none()
+            option::none(),
         );
 
         // Bump mode
@@ -318,7 +318,7 @@ module router::registration_tests {
             0,
             false,
             option::none(),
-            option::none()
+            option::none(),
         );
     }
 
@@ -386,7 +386,7 @@ module router::registration_tests {
             0,
             false,
             option::some(user2_addr),
-            option::some(user2_addr)
+            option::some(user2_addr),
         );
         assert!(router::is_name_owner(user2_addr, domain_name2, subdomain_name_opt), 1);
         assert!(*option::borrow(&router::get_target_addr(domain_name2, subdomain_name_opt)) == user2_addr, 2);

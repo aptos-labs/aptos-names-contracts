@@ -7,7 +7,6 @@ Anyone can read, but only admins can write, as all write methods are gated via p
 
 module aptos_names_v2::config {
     friend aptos_names_v2::domains;
-    friend aptos_names_v2::verify;
 
     use aptos_framework::account;
     use aptos_framework::aptos_account;
