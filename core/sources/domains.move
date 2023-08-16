@@ -442,7 +442,13 @@ module aptos_names::domains {
             return false
         };
 
-        // Name has expired. We also now check that it is past the grace period
+        // Name has expired.
+        if (option::is_some(&subdomain_name)) {
+            // We don't check registration grace period for subdomains. Name is available.
+            return true
+        };
+
+        // Name has expired AND it is a domain. Check registration grace period.
         let expired_for = now - expiration_time_sec;
         return expired_for > config::reregistration_grace_sec()
     }
