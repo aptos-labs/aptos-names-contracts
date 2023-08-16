@@ -82,9 +82,7 @@ module aptos_names_v2::test_helper {
         let is_subdomain = option::is_some(&subdomain_name);
 
         let user_balance_before = coin::balance<AptosCoin>(user_addr);
-
         let user_reverse_lookup_before = domains::get_reverse_lookup(user_addr);
-
         let maybe_target_address = domains::name_resolved_address(subdomain_name, domain_name);
         let name_reverse_lookup_before = if (option::is_some(&maybe_target_address)) {
             let result = domains::get_reverse_lookup(*option::borrow(&maybe_target_address));
@@ -100,12 +98,10 @@ module aptos_names_v2::test_helper {
         } else {
             option::none()
         };
-
         let is_registered_and_expired_before = domains::name_is_registered(
             subdomain_name,
             domain_name
         ) && domains::name_is_expired(subdomain_name, domain_name);
-
         let register_name_event_v1_event_count_before = domains::get_register_name_event_v1_count();
         let set_target_address_event_v1_event_count_before = domains::get_set_target_address_event_v1_count();
         let set_reverse_lookup_event_v1_event_count_before = domains::get_set_reverse_lookup_event_v1_count();
