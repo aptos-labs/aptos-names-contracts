@@ -1081,12 +1081,13 @@ module aptos_names_v2::domains {
         if (exists<ReverseRecord>(account_addr)) {
             let reverse_record = borrow_global<ReverseRecord>(account_addr);
             if (option::is_some(&reverse_record.token_addr)) {
-                debug::print(&string::utf8(b"reverse_record.token_addr is some"));
+                debug::print(&string::utf8(b"get name reverse lookup reverse_record.token_addr is some"));
             } else {
-                debug::print(&string::utf8(b"reverse_record.token_addr is none"));
+                debug::print(&string::utf8(b"get name reverse lookup reverse_record.token_addr is none"));
             };
             reverse_record.token_addr
         } else {
+            debug::print(&string::utf8(b"get name reverse lookup reverse_record not exist on account_addr"));
             option::none()
         }
     }
