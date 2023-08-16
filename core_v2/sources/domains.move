@@ -19,7 +19,6 @@ module aptos_names_v2::domains {
     use std::signer;
     use std::signer::address_of;
     use std::string::{Self, String, utf8};
-    use aptos_std::debug;
 
     const APP_SIGNER_CAPABILITY_SEED: vector<u8> = b"APP_SIGNER_CAPABILITY";
     const BURN_SIGNER_CAPABILITY_SEED: vector<u8> = b"BURN_SIGNER_CAPABILITY";
@@ -454,9 +453,6 @@ module aptos_names_v2::domains {
             // If the user has no reverse lookup set, set the user's reverse lookup.
             set_reverse_lookup(sign, option::some(subdomain_name), domain_name);
         } else {
-            // debug::print(&string::utf8(b"set subdomain target address but not reverse lookup"));
-            
-            // TODO: Investigate why we don't do target_addr auto assignments for subdomains
             // Automatically set the name to point to the sender's address
             set_target_address_internal(option::some(subdomain_name), domain_name, signer::address_of(sign));
         };
@@ -1070,24 +1066,6 @@ module aptos_names_v2::domains {
             let reverse_record = borrow_global<ReverseRecord>(account_addr);
             reverse_record.token_addr
         } else {
-            option::none()
-        }
-    }
-
-    /// Returns the reverse lookup (the token addr) for an address if any.
-    public fun get_reverse_lookup2(
-        account_addr: address
-    ): Option<address> acquires ReverseRecord {
-        if (exists<ReverseRecord>(account_addr)) {
-            let reverse_record = borrow_global<ReverseRecord>(account_addr);
-            if (option::is_some(&reverse_record.token_addr)) {
-                debug::print(&string::utf8(b"get name reverse lookup reverse_record.token_addr is some"));
-            } else {
-                debug::print(&string::utf8(b"get name reverse lookup reverse_record.token_addr is none"));
-            };
-            reverse_record.token_addr
-        } else {
-            debug::print(&string::utf8(b"get name reverse lookup reverse_record not exist on account_addr"));
             option::none()
         }
     }
