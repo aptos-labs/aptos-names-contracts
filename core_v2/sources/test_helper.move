@@ -84,19 +84,18 @@ module aptos_names_v2::test_helper {
         let user_balance_before = coin::balance<AptosCoin>(user_addr);
         let user_reverse_lookup_before = domains::get_reverse_lookup(user_addr);
         let maybe_target_address = domains::name_resolved_address(subdomain_name, domain_name);
-        let name_reverse_lookup_before = if (option::is_some(&maybe_target_address)) {
-            let result = domains::get_reverse_lookup(*option::borrow(&maybe_target_address));
-            // When domain and subdomain both have target address set to user, and domain is primary name
-            // get_reverse_lookup returns the address of domain token
-            // we need to make sure the name token address match the name token address returnes from reverse lookup
-            // to know the name does have reverse look up (i.e. name is primary name)
-            if (result == option::some(domains::token_addr(domain_name, subdomain_name))) {
-                result
+        let was_primary_name_before = if (option::is_some(&maybe_target_address)) {
+            let maybe_primary_name = domains::get_reverse_lookup(*option::borrow(&maybe_target_address));
+            if (option::is_some(&maybe_primary_name)) {
+                // Even if target_addr has a primary name, it may not necessarily point to this `(domain_name, subdomain_name)`
+                *option::borrow(&maybe_primary_name) == domains::token_addr(domain_name, subdomain_name)
             } else {
-                option::none()
+                // No primary name, so definitely was not primary name before
+                false
             }
         } else {
-            option::none()
+            // No target address, so definitely was not primary name before
+            false
         };
         let is_registered_and_expired_before = domains::name_is_registered(
             subdomain_name,
@@ -178,8 +177,7 @@ module aptos_names_v2::test_helper {
         assert!(time_helper::seconds_to_days(expiration_time_sec - timestamp::now_seconds()) == 365, 10);
 
         let (expiration_time_sec_lookup_result, target_address_lookup_result) = if (is_subdomain) {
-            let subdomain_name_copy = subdomain_name;
-            query_helper::get_subdomain_props(*option::borrow(&subdomain_name_copy), domain_name)
+            query_helper::get_subdomain_props(*option::borrow(&subdomain_name), domain_name)
         } else {
             query_helper::get_domain_props(domain_name)
         };
@@ -229,7 +227,7 @@ module aptos_names_v2::test_helper {
             };
             // If we are registering over a name that is already registered but expired and was a primary name,
             // that name should be removed from being a primary name.
-            if (option::is_some(&name_reverse_lookup_before) && is_registered_and_expired_before) {
+            if (was_primary_name_before && is_registered_and_expired_before) {
                 assert!(set_reverse_lookup_event_v1_num_emitted == 2, set_reverse_lookup_event_v1_num_emitted);
             } else {
                 assert!(set_reverse_lookup_event_v1_num_emitted == 1, set_reverse_lookup_event_v1_num_emitted);
@@ -237,13 +235,12 @@ module aptos_names_v2::test_helper {
         } else {
             // If we are registering over a name that is already registered but expired and was the user's primary name,
             // that name should be removed from being a primary name and the new one should be set.
-            if (option::is_some(&name_reverse_lookup_before)
+            if (was_primary_name_before
                 && option::is_some(&user_reverse_lookup_before)
-                && *option::borrow(&name_reverse_lookup_before) == *option::borrow(&user_reverse_lookup_before)
                 && is_registered_and_expired_before
             ) {
                 assert!(set_reverse_lookup_event_v1_num_emitted == 2, set_reverse_lookup_event_v1_num_emitted);
-            } else if (option::is_some(&name_reverse_lookup_before) && is_registered_and_expired_before) {
+            } else if (was_primary_name_before && is_registered_and_expired_before) {
                 // If we are registering over a name that is already registered but expired and was a primary name,
                 // that name should be removed from being a primary name.
                 assert!(set_reverse_lookup_event_v1_num_emitted == 1, set_reverse_lookup_event_v1_num_emitted);
