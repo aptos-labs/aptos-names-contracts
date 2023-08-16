@@ -413,13 +413,13 @@ module aptos_names_v2::subdomain_e2e_tests {
         // Set the auto-renewal flag as false
         domains::set_subdomain_expiration_policy(user, test_helper::domain_name(), test_helper::subdomain_name(), 0);
 
-        domains::set_subdomain_expiration_as_domain_owner(user, test_helper::domain_name(), test_helper::subdomain_name(), timestamp::now_seconds() + 10);
+        domains::set_subdomain_expiration(user, test_helper::domain_name(), test_helper::subdomain_name(), timestamp::now_seconds() + 10);
         let (expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(option::some(test_helper::subdomain_name()), test_helper::domain_name());
         assert!(expiration_time_sec == timestamp::now_seconds() + 10, 1);
         let (domain_expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(option::none(), test_helper::domain_name());
 
         // expect error when the expiration date pass the domain expiration date
-        domains::set_subdomain_expiration_as_domain_owner(user, test_helper::domain_name(), test_helper::subdomain_name(), domain_expiration_time_sec + 5);
+        domains::set_subdomain_expiration(user, test_helper::domain_name(), test_helper::subdomain_name(), domain_expiration_time_sec + 5);
     }
 
     #[test(
