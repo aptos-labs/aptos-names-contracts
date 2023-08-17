@@ -438,9 +438,8 @@ module aptos_names_v2::domains {
             // If the user has no reverse lookup set, set the user's reverse lookup.
             set_reverse_lookup(sign, option::some(subdomain_name), domain_name);
         } else {
-            // TODO: Investigate why we don't do target_addr auto assignments for subdomains
             // Automatically set the name to point to the sender's address
-            // set_target_address_internal(option::some(subdomain_name), domain_name, signer::address_of(sign));
+            set_target_address_internal(option::some(subdomain_name), domain_name, signer::address_of(sign));
         };
     }
 
