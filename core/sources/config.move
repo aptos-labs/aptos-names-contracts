@@ -166,6 +166,7 @@ module aptos_names::config {
         read_bool_v1(@aptos_names, &config_key_unrestricted_mint_enabled())
     }
 
+    #[view]
     public fun reregistration_grace_sec(): u64 acquires ConfigurationV1 {
         let key = config_key_reregistration_grace_sec();
         let key_exists = property_map::contains_key(&borrow_global<ConfigurationV1>(@aptos_names).config, &key);
