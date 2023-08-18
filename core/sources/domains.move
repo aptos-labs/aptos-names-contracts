@@ -427,8 +427,30 @@ module aptos_names::domains {
         if (option::is_some(&subdomain_name) && name_is_registerable(option::none(), domain_name)) {
             return false
         };
-        // Check to see if the domain is expired
-        name_is_expired(subdomain_name, domain_name)
+        if (!name_is_registered(subdomain_name, domain_name)) {
+            // Name has never been registered. It is available.
+            return true
+        };
+
+        let aptos_names = borrow_global<NameRegistryV1>(@aptos_names);
+        let name_record_key = create_name_record_key_v1(subdomain_name, domain_name);
+        let name_record = table::borrow(&aptos_names.registry, name_record_key);
+        let (_property_version, expiration_time_sec, _target_address) = get_name_record_v1_props(name_record);
+        let now = timestamp::now_seconds();
+        if (expiration_time_sec > now) {
+            // Name has not expired. It is not available.
+            return false
+        };
+
+        // Name has expired.
+        if (option::is_some(&subdomain_name)) {
+            // We don't check registration grace period for subdomains. Name is available.
+            return true
+        };
+
+        // Name has expired AND it is a domain. Check registration grace period.
+        let expired_for = now - expiration_time_sec;
+        return expired_for > config::reregistration_grace_sec()
     }
 
     /// Returns true if the name is not registered OR (is registered AND is expired)
