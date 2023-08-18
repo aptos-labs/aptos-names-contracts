@@ -327,13 +327,20 @@ module router::router {
 
             // Calculate new expiration
             let now = timestamp::now_seconds();
-            assert!(expiration_time_sec >= now, error::invalid_state(EMIGRATION_ALREADY_EXPIRED));
-            let new_expiration_time_sec = if (option::is_none(
-                &subdomain_name
-            ) && expiration_time_sec <= AUTO_RENEWAL_EXPIRATION_CUTOFF_SEC) {
-                expiration_time_sec + SECONDS_PER_YEAR
+            let new_expiration_time_sec = if (option::is_some(&subdomain_name)) {
+                // Subdomains inherit the expiration of their domain
+                let (domain_expiration_time_sec, _domain_target_addr) = aptos_names_v2::domains::get_name_record_v1_props_for_name(
+                    option::none(),
+                    domain_name,
+                );
+                domain_expiration_time_sec
             } else {
-                expiration_time_sec
+                assert!(expiration_time_sec >= now, error::invalid_state(EMIGRATION_ALREADY_EXPIRED));
+                if (expiration_time_sec <= AUTO_RENEWAL_EXPIRATION_CUTOFF_SEC) {
+                    expiration_time_sec + SECONDS_PER_YEAR
+                } else {
+                    expiration_time_sec
+                }
             };
 
             // Mint token in v2
