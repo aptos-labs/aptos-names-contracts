@@ -1133,16 +1133,11 @@ module aptos_names_v2::domains {
         };
 
         // Lookup the previous reverse lookup
-        let prev_subdomain_name = option::none<String>();
-        let prev_domain_name = option::none<String>();
-        let prev_target_address = option::none<address>();
-        if (option::is_some(&maybe_reverse_lookup)) {
-            let token_addr = *option::borrow(&maybe_reverse_lookup);
-            let record = borrow_global_mut<NameRecord>(token_addr);
-            prev_subdomain_name = extract_subdomain_name(record);
-            prev_domain_name = option::some(record.domain_name);
-            prev_target_address = record.target_address;
-        };
+        let token_addr = *option::borrow(&maybe_reverse_lookup);
+        let record = borrow_global_mut<NameRecord>(token_addr);
+        let prev_subdomain_name = extract_subdomain_name(record);
+        let prev_domain_name = option::some(record.domain_name);
+        let prev_target_address = record.target_address;
 
         // Clear the reverse lookup
         let reverse_record = borrow_global_mut<ReverseRecord>(account_addr);
