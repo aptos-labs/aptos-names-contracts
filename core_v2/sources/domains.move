@@ -671,6 +671,7 @@ module aptos_names_v2::domains {
         let record = get_record_mut(domain_name, option::none());
         record.expiration_time_sec = record.expiration_time_sec + renewal_duration_secs;
 
+        // Idea here is that if this is a primary name, then the target_addr's reverse lookup should point back to this domain
         let is_primary_name = if (option::is_some(&record.target_address)) {
             let maybe_reverse_record = get_reverse_lookup(*option::borrow(&record.target_address));
             if (option::is_some(&maybe_reverse_record)) {
