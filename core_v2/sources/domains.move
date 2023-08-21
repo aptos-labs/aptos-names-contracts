@@ -131,9 +131,14 @@ module aptos_names_v2::domains {
     /// the reverse lookup has been cleared (in which case |target_address|
     /// will be none)
     struct SetReverseLookupEvent has drop, store {
-        domain_name: String,
-        subdomain_name: Option<String>,
-        target_address: Option<address>,
+        prev_domain_name: Option<String>,
+        prev_subdomain_name: Option<String>,
+        prev_target_address: Option<address>,
+
+        next_domain_name: Option<String>,
+        next_subdomain_name: Option<String>,
+        next_target_address: Option<address>,
+
     }
 
     /// A name (potentially subdomain) has had it's address changed
@@ -1084,22 +1089,37 @@ module aptos_names_v2::domains {
         token_addr: address,
     ) acquires NameRecord, ReverseRecord, SetReverseLookupEvents {
         let account_addr = signer::address_of(account);
-        let record = borrow_global<NameRecord>(token_addr);
         let record_obj = object::address_to_object<NameRecord>(token_addr);
         assert!(object::owns(record_obj, account_addr), error::permission_denied(ENOT_AUTHORIZED));
 
+        let prev_subdomain_name = option::none<String>();
+        let prev_domain_name = option::none<String>();
+        let prev_target_address = option::none<address>();
         if (!exists<ReverseRecord>(account_addr)) {
             move_to(account, ReverseRecord {
                 token_addr: option::some(token_addr)
             })
         } else {
             let reverse_record = borrow_global_mut<ReverseRecord>(account_addr);
+
+            // Lookup the previous reverse lookup
+            if (option::is_some(&reverse_record.token_addr)) {
+                let prev_token_addr = *option::borrow(&reverse_record.token_addr);
+                let prev_record = borrow_global_mut<NameRecord>(prev_token_addr);
+                prev_subdomain_name = extract_subdomain_name(prev_record);
+                prev_domain_name = option::some(prev_record.domain_name);
+                prev_target_address = prev_record.target_address;
+            };
             reverse_record.token_addr = option::some(token_addr);
         };
 
+        let record = borrow_global<NameRecord>(token_addr);
         emit_set_reverse_lookup_event_v1(
+            prev_subdomain_name,
+            prev_domain_name,
+            prev_target_address,
             extract_subdomain_name(record),
-            record.domain_name,
+            option::some(record.domain_name),
             option::some(account_addr)
         );
     }
@@ -1111,13 +1131,29 @@ module aptos_names_v2::domains {
         if (option::is_none(&maybe_reverse_lookup)) {
             return
         };
-        let token_addr = *option::borrow(&maybe_reverse_lookup);
-        let record = borrow_global<NameRecord>(token_addr);
+
+        // Lookup the previous reverse lookup
+        let prev_subdomain_name = option::none<String>();
+        let prev_domain_name = option::none<String>();
+        let prev_target_address = option::none<address>();
+        if (option::is_some(&maybe_reverse_lookup)) {
+            let token_addr = *option::borrow(&maybe_reverse_lookup);
+            let record = borrow_global_mut<NameRecord>(token_addr);
+            prev_subdomain_name = extract_subdomain_name(record);
+            prev_domain_name = option::some(record.domain_name);
+            prev_target_address = record.target_address;
+        };
+
+        // Clear the reverse lookup
         let reverse_record = borrow_global_mut<ReverseRecord>(account_addr);
         reverse_record.token_addr = option::none();
+
         emit_set_reverse_lookup_event_v1(
-            extract_subdomain_name(record),
-            record.domain_name,
+            prev_subdomain_name,
+            prev_domain_name,
+            prev_target_address,
+            option::none(),
+            option::none(),
             option::none()
         );
     }
@@ -1161,14 +1197,21 @@ module aptos_names_v2::domains {
     }
 
     fun emit_set_reverse_lookup_event_v1(
-        subdomain_name: Option<String>,
-        domain_name: String,
-        target_address: Option<address>
+        prev_subdomain_name: Option<String>,
+        prev_domain_name: Option<String>,
+        prev_target_address: Option<address>,
+        next_subdomain_name: Option<String>,
+        next_domain_name: Option<String>,
+        next_target_address: Option<address>,
     ) acquires SetReverseLookupEvents {
         let event = SetReverseLookupEvent {
-            domain_name,
-            subdomain_name,
-            target_address,
+            prev_domain_name,
+            prev_subdomain_name,
+            prev_target_address,
+
+            next_domain_name,
+            next_subdomain_name,
+            next_target_address,
         };
 
         event::emit_event<SetReverseLookupEvent>(
