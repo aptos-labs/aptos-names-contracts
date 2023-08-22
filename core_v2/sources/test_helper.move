@@ -83,7 +83,7 @@ module aptos_names_v2::test_helper {
 
         let user_balance_before = coin::balance<AptosCoin>(user_addr);
         let user_reverse_lookup_before = domains::get_reverse_lookup(user_addr);
-        let maybe_target_address = domains::name_resolved_address(subdomain_name, domain_name);
+        let maybe_target_address = domains::get_name_resolved_address(subdomain_name, domain_name);
         let was_primary_name_before = if (option::is_some(&maybe_target_address)) {
             let maybe_primary_name = domains::get_reverse_lookup(*option::borrow(&maybe_target_address));
             if (option::is_some(&maybe_primary_name)) {
@@ -97,10 +97,10 @@ module aptos_names_v2::test_helper {
             // No target address, so definitely was not primary name before
             false
         };
-        let is_registered_and_expired_before = domains::name_is_registered(
+        let is_registered_and_expired_before = domains::is_name_registered(
             subdomain_name,
             domain_name
-        ) && domains::name_is_expired(subdomain_name, domain_name);
+        ) && domains::is_name_expired(subdomain_name, domain_name);
         let register_name_event_event_count_before = domains::get_register_name_event_count();
         let set_target_address_event_event_count_before = domains::get_set_target_address_event_count();
         let set_reverse_lookup_event_event_count_before = domains::get_set_reverse_lookup_event_count();
@@ -118,9 +118,9 @@ module aptos_names_v2::test_helper {
         };
 
         // It should now be: not expired, registered, and not registerable
-        assert!(!domains::name_is_expired(subdomain_name, domain_name), 12);
-        assert!(!domains::name_is_registerable(subdomain_name, domain_name), 13);
-        assert!(domains::name_is_registered(subdomain_name, domain_name), 14);
+        assert!(!domains::is_name_expired(subdomain_name, domain_name), 12);
+        assert!(!domains::is_name_registerable(subdomain_name, domain_name), 13);
+        assert!(domains::is_name_registered(subdomain_name, domain_name), 14);
 
         if (is_subdomain) {
             let subdomain_name_copy = subdomain_name;
