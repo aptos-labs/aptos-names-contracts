@@ -37,25 +37,29 @@ module aptos_names_v2::config {
     const DOMAIN_TYPE: vector<u8> = b"domain";
     const SUBDOMAIN_TYPE: vector<u8> = b"subdomain";
 
-    const DOMAIN_COLLECTION_NAME_V1: vector<u8> = b"Aptos Domain Names V1";
-    const SUBDOMAIN_COLLECTION_NAME_V1: vector<u8> = b"Aptos Subdomain Names V1";
+    const DOMAIN_COLLECTION_NAME: vector<u8> = b"Aptos Domain Names V2";
+    const SUBDOMAIN_COLLECTION_NAME: vector<u8> = b"Aptos Subdomain Names V2";
 
     /// Raised if the signer is not authorized to perform an action
     const ENOT_AUTHORIZED: u64 = 1;
     /// Raised if there is an invalid value for a configuration
     const EINVALID_VALUE: u64 = 2;
 
-    struct ConfigurationV1 has key, store {
+    struct Config has key, store {
         config: PropertyMap,
     }
 
-    public(friend) fun initialize_v1(framework: &signer, admin_address: address, fund_destination_address: address) acquires ConfigurationV1 {
-        move_to(framework, ConfigurationV1 {
+    public(friend) fun initialize_config(
+        framework: &signer,
+        admin_address: address,
+        fund_destination_address: address
+    ) acquires Config {
+        move_to(framework, Config {
             config: property_map::empty(),
         });
 
         // Temporarily set this to framework to allow other methods below to be set with framework signer
-        set_v1(@aptos_names_v2, config_key_admin_address(), &signer::address_of(framework));
+        set(@aptos_names_v2, config_key_admin_address(), &signer::address_of(framework));
 
         set_is_enabled(framework, true);
 
@@ -80,8 +84,8 @@ module aptos_names_v2::config {
         set_unrestricted_mint_enabled(framework, true);
 
         // We set it directly here to allow boostrapping the other values
-        set_v1(@aptos_names_v2, config_key_fund_destination_address(), &fund_destination_address);
-        set_v1(@aptos_names_v2, config_key_admin_address(), &admin_address);
+        set(@aptos_names_v2, config_key_fund_destination_address(), &fund_destination_address);
+        set(@aptos_names_v2, config_key_admin_address(), &admin_address);
     }
 
 
@@ -93,47 +97,47 @@ module aptos_names_v2::config {
         100000000
     }
 
-    public fun is_enabled(): bool acquires ConfigurationV1 {
-        read_bool_v1(@aptos_names_v2, &config_key_enabled())
+    public fun is_enabled(): bool acquires Config {
+        read_bool(@aptos_names_v2, &config_key_enabled())
     }
 
-    public fun fund_destination_address(): address acquires ConfigurationV1 {
-        read_address_v1(@aptos_names_v2, &config_key_fund_destination_address())
+    public fun fund_destination_address(): address acquires Config {
+        read_address(@aptos_names_v2, &config_key_fund_destination_address())
     }
 
-    public fun admin_address(): address acquires ConfigurationV1 {
-        read_address_v1(@aptos_names_v2, &config_key_admin_address())
+    public fun admin_address(): address acquires Config {
+        read_address(@aptos_names_v2, &config_key_admin_address())
     }
 
-    public fun max_number_of_years_registered(): u8 acquires ConfigurationV1 {
-        read_u8_v1(@aptos_names_v2, &config_key_max_number_of_years_registered())
+    public fun max_number_of_years_registered(): u8 acquires Config {
+        read_u8(@aptos_names_v2, &config_key_max_number_of_years_registered())
     }
 
-    public fun max_domain_length(): u64 acquires ConfigurationV1 {
-        read_u64_v1(@aptos_names_v2, &config_key_max_domain_length())
+    public fun max_domain_length(): u64 acquires Config {
+        read_u64(@aptos_names_v2, &config_key_max_domain_length())
     }
 
-    public fun min_domain_length(): u64 acquires ConfigurationV1 {
-        read_u64_v1(@aptos_names_v2, &config_key_min_domain_length())
+    public fun min_domain_length(): u64 acquires Config {
+        read_u64(@aptos_names_v2, &config_key_min_domain_length())
     }
 
     /// Admins will be able to intervene when necessary.
     /// The account will be used to manage names that are being used in a way that is harmful to others.
     /// Alternatively, the deployer can be used to perform admin actions.
-    public fun signer_is_admin(sign: &signer): bool acquires ConfigurationV1 {
+    public fun signer_is_admin(sign: &signer): bool acquires Config {
         signer::address_of(sign) == admin_address() || signer::address_of(sign) == @aptos_names_v2
     }
 
-    public fun assert_signer_is_admin(sign: &signer) acquires ConfigurationV1 {
+    public fun assert_signer_is_admin(sign: &signer) acquires Config {
         assert!(signer_is_admin(sign), error::permission_denied(ENOT_AUTHORIZED));
     }
 
-    public fun tokendata_description(): String acquires ConfigurationV1 {
-        read_string_v1(@aptos_names_v2, &config_key_tokendata_description())
+    public fun tokendata_description(): String acquires Config {
+        read_string(@aptos_names_v2, &config_key_tokendata_description())
     }
 
-    public fun tokendata_url_prefix(): String acquires ConfigurationV1 {
-        read_string_v1(@aptos_names_v2, &config_key_tokendata_url_prefix())
+    public fun tokendata_url_prefix(): String acquires Config {
+        read_string(@aptos_names_v2, &config_key_tokendata_url_prefix())
     }
 
     public fun domain_type(): String {
@@ -144,102 +148,98 @@ module aptos_names_v2::config {
         return string::utf8(SUBDOMAIN_TYPE)
     }
 
-    public fun domain_collection_name_v1(): String {
-        return string::utf8(DOMAIN_COLLECTION_NAME_V1)
+    public fun domain_collection_name(): String {
+        return string::utf8(DOMAIN_COLLECTION_NAME)
     }
 
-    public fun subdomain_collection_name_v1(): String {
-        return string::utf8(SUBDOMAIN_COLLECTION_NAME_V1)
+    public fun subdomain_collection_name(): String {
+        return string::utf8(SUBDOMAIN_COLLECTION_NAME)
     }
 
-    public fun domain_price_for_length(domain_length: u64): u64 acquires ConfigurationV1 {
-        read_u64_v1(@aptos_names_v2, &config_key_domain_price(domain_length))
+    public fun domain_price_for_length(domain_length: u64): u64 acquires Config {
+        read_u64(@aptos_names_v2, &config_key_domain_price(domain_length))
     }
 
-    public fun subdomain_price(): u64 acquires ConfigurationV1 {
-        read_u64_v1(@aptos_names_v2, &config_key_subdomain_price())
+    public fun subdomain_price(): u64 acquires Config {
+        read_u64(@aptos_names_v2, &config_key_subdomain_price())
     }
 
-    public fun captcha_public_key(): UnvalidatedPublicKey acquires ConfigurationV1 {
-        read_unvalidated_public_key(@aptos_names_v2, &config_key_captcha_public_key())
-    }
-
-    public fun unrestricted_mint_enabled(): bool acquires ConfigurationV1 {
-        read_bool_v1(@aptos_names_v2, &config_key_unrestricted_mint_enabled())
+    public fun unrestricted_mint_enabled(): bool acquires Config {
+        read_bool(@aptos_names_v2, &config_key_unrestricted_mint_enabled())
     }
 
     //
     // Setters
     //
 
-    public entry fun set_is_enabled(sign: &signer, enabled: bool) acquires ConfigurationV1 {
+    public entry fun set_is_enabled(sign: &signer, enabled: bool) acquires Config {
         assert_signer_is_admin(sign);
-        set_v1(@aptos_names_v2, config_key_enabled(), &enabled)
+        set(@aptos_names_v2, config_key_enabled(), &enabled)
     }
 
-    public entry fun set_fund_destination_address(sign: &signer, addr: address) acquires ConfigurationV1 {
+    public entry fun set_fund_destination_address(sign: &signer, addr: address) acquires Config {
         assert_signer_is_admin(sign);
         aptos_account::assert_account_is_registered_for_apt(addr);
 
-        set_v1(@aptos_names_v2, config_key_fund_destination_address(), &addr)
+        set(@aptos_names_v2, config_key_fund_destination_address(), &addr)
     }
 
-    public entry fun set_admin_address(sign: &signer, addr: address) acquires ConfigurationV1 {
+    public entry fun set_admin_address(sign: &signer, addr: address) acquires Config {
         assert_signer_is_admin(sign);
         assert!(account::exists_at(addr), error::invalid_argument(EINVALID_VALUE));
-        set_v1(@aptos_names_v2, config_key_admin_address(), &addr)
+        set(@aptos_names_v2, config_key_admin_address(), &addr)
     }
 
-    public entry fun set_max_number_of_years_registered(sign: &signer, max_years_registered: u8) acquires ConfigurationV1 {
+    public entry fun set_max_number_of_years_registered(sign: &signer, max_years_registered: u8) acquires Config {
         assert_signer_is_admin(sign);
         assert!(max_years_registered > 0, error::invalid_argument(EINVALID_VALUE));
-        set_v1(@aptos_names_v2, config_key_max_number_of_years_registered(), &max_years_registered)
+        set(@aptos_names_v2, config_key_max_number_of_years_registered(), &max_years_registered)
     }
 
-    public entry fun set_max_domain_length(sign: &signer, domain_length: u64) acquires ConfigurationV1 {
+    public entry fun set_max_domain_length(sign: &signer, domain_length: u64) acquires Config {
         assert_signer_is_admin(sign);
         assert!(domain_length > 0, error::invalid_argument(EINVALID_VALUE));
-        set_v1(@aptos_names_v2, config_key_max_domain_length(), &domain_length)
+        set(@aptos_names_v2, config_key_max_domain_length(), &domain_length)
     }
 
-    public entry fun set_min_domain_length(sign: &signer, domain_length: u64) acquires ConfigurationV1 {
+    public entry fun set_min_domain_length(sign: &signer, domain_length: u64) acquires Config {
         assert_signer_is_admin(sign);
         assert!(domain_length > 0, error::invalid_argument(EINVALID_VALUE));
-        set_v1(@aptos_names_v2, config_key_min_domain_length(), &domain_length)
+        set(@aptos_names_v2, config_key_min_domain_length(), &domain_length)
     }
 
-    public entry fun set_tokendata_description(sign: &signer, description: String) acquires ConfigurationV1 {
+    public entry fun set_tokendata_description(sign: &signer, description: String) acquires Config {
         assert_signer_is_admin(sign);
-        set_v1(@aptos_names_v2, config_key_tokendata_description(), &description)
+        set(@aptos_names_v2, config_key_tokendata_description(), &description)
     }
 
-    public entry fun set_tokendata_url_prefix(sign: &signer, description: String) acquires ConfigurationV1 {
+    public entry fun set_tokendata_url_prefix(sign: &signer, description: String) acquires Config {
         assert_signer_is_admin(sign);
-        set_v1(@aptos_names_v2, config_key_tokendata_url_prefix(), &description)
+        set(@aptos_names_v2, config_key_tokendata_url_prefix(), &description)
     }
 
-    public entry fun set_subdomain_price(sign: &signer, price: u64) acquires ConfigurationV1 {
+    public entry fun set_subdomain_price(sign: &signer, price: u64) acquires Config {
         assert_signer_is_admin(sign);
-        set_v1(@aptos_names_v2, config_key_subdomain_price(), &price)
+        set(@aptos_names_v2, config_key_subdomain_price(), &price)
     }
 
-    public entry fun set_domain_price_for_length(sign: &signer, price: u64, length: u64) acquires ConfigurationV1 {
+    public entry fun set_domain_price_for_length(sign: &signer, price: u64, length: u64) acquires Config {
         assert_signer_is_admin(sign);
         assert!(price > 0, error::invalid_argument(EINVALID_VALUE));
         assert!(length > 0, error::invalid_argument(EINVALID_VALUE));
-        set_v1(@aptos_names_v2, config_key_domain_price(length), &price)
+        set(@aptos_names_v2, config_key_domain_price(length), &price)
     }
 
-    public entry fun set_captcha_public_key(sign: &signer, public_key: vector<u8>) acquires ConfigurationV1 {
+    public entry fun set_captcha_public_key(sign: &signer, public_key: vector<u8>) acquires Config {
         assert_signer_is_admin(sign);
-        set_v1(@aptos_names_v2, config_key_captcha_public_key(), &ed25519::new_unvalidated_public_key_from_bytes(public_key));
+        set(@aptos_names_v2, config_key_captcha_public_key(), &ed25519::new_unvalidated_public_key_from_bytes(public_key));
     }
 
     // set if we want to allow users to bypass signature verification
     // when unrestricted_mint_enabled == false, signature verification is required for registering a domain
-    public entry fun set_unrestricted_mint_enabled(sign: &signer, unrestricted_mint_enabled: bool) acquires ConfigurationV1 {
+    public entry fun set_unrestricted_mint_enabled(sign: &signer, unrestricted_mint_enabled: bool) acquires Config {
         assert_signer_is_admin(sign);
-        set_v1(@aptos_names_v2, config_key_unrestricted_mint_enabled(), &unrestricted_mint_enabled);
+        set(@aptos_names_v2, config_key_unrestricted_mint_enabled(), &unrestricted_mint_enabled);
     }
 
     //
@@ -308,8 +308,8 @@ module aptos_names_v2::config {
         string::utf8(CONFIG_KEY_UNRESTRICTED_MINT_ENABLED)
     }
 
-    fun set_v1<T: copy>(addr: address, config_name: String, value: &T) acquires ConfigurationV1 {
-        let map = &mut borrow_global_mut<ConfigurationV1>(addr).config;
+    fun set<T: copy>(addr: address, config_name: String, value: &T) acquires Config {
+        let map = &mut borrow_global_mut<Config>(addr).config;
         let value = property_map::create_property_value(value);
         if (property_map::contains_key(map, &config_name)) {
             property_map::update_property_value(map, &config_name, value);
@@ -318,32 +318,32 @@ module aptos_names_v2::config {
         };
     }
 
-    public fun read_string_v1(addr: address, key: &String): String acquires ConfigurationV1 {
-        property_map::read_string(&borrow_global<ConfigurationV1>(addr).config, key)
+    public fun read_string(addr: address, key: &String): String acquires Config {
+        property_map::read_string(&borrow_global<Config>(addr).config, key)
     }
 
-    public fun read_u8_v1(addr: address, key: &String): u8 acquires ConfigurationV1 {
-        property_map::read_u8(&borrow_global<ConfigurationV1>(addr).config, key)
+    public fun read_u8(addr: address, key: &String): u8 acquires Config {
+        property_map::read_u8(&borrow_global<Config>(addr).config, key)
     }
 
-    public fun read_u64_v1(addr: address, key: &String): u64 acquires ConfigurationV1 {
-        property_map::read_u64(&borrow_global<ConfigurationV1>(addr).config, key)
+    public fun read_u64(addr: address, key: &String): u64 acquires Config {
+        property_map::read_u64(&borrow_global<Config>(addr).config, key)
     }
 
-    public fun read_address_v1(addr: address, key: &String): address acquires ConfigurationV1 {
-        property_map::read_address(&borrow_global<ConfigurationV1>(addr).config, key)
+    public fun read_address(addr: address, key: &String): address acquires Config {
+        property_map::read_address(&borrow_global<Config>(addr).config, key)
     }
 
-    public fun read_u128_v1(addr: address, key: &String): u128 acquires ConfigurationV1 {
-        property_map::read_u128(&borrow_global<ConfigurationV1>(addr).config, key)
+    public fun read_u128(addr: address, key: &String): u128 acquires Config {
+        property_map::read_u128(&borrow_global<Config>(addr).config, key)
     }
 
-    public fun read_bool_v1(addr: address, key: &String): bool acquires ConfigurationV1 {
-        property_map::read_bool(&borrow_global<ConfigurationV1>(addr).config, key)
+    public fun read_bool(addr: address, key: &String): bool acquires Config {
+        property_map::read_bool(&borrow_global<Config>(addr).config, key)
     }
 
-    public fun read_unvalidated_public_key(addr: address, key: &String): UnvalidatedPublicKey acquires ConfigurationV1 {
-        let value = property_map::borrow_value(property_map::borrow(&borrow_global<ConfigurationV1>(addr).config, key));
+    public fun read_unvalidated_public_key(addr: address, key: &String): UnvalidatedPublicKey acquires Config {
+        let value = property_map::borrow_value(property_map::borrow(&borrow_global<Config>(addr).config, key));
         // remove the length of this vector recorded at index 0
         vector::remove(&mut value, 0);
         ed25519::new_unvalidated_public_key_from_bytes(value)
@@ -371,29 +371,29 @@ module aptos_names_v2::config {
     }
 
     #[test_only]
-    public fun set_fund_destination_address_test_only(addr: address) acquires ConfigurationV1 {
-        set_v1(@aptos_names_v2, config_key_fund_destination_address(), &addr)
+    public fun set_fund_destination_address_test_only(addr: address) acquires Config {
+        set(@aptos_names_v2, config_key_fund_destination_address(), &addr)
     }
 
     #[test_only]
-    public fun set_admin_address_test_only(addr: address) acquires ConfigurationV1 {
-        set_v1(@aptos_names_v2, config_key_admin_address(), &addr)
+    public fun set_admin_address_test_only(addr: address) acquires Config {
+        set(@aptos_names_v2, config_key_admin_address(), &addr)
     }
 
     #[test_only]
-    public fun initialize_for_test(aptos_names_v2: &signer, aptos: &signer) acquires ConfigurationV1 {
+    public fun initialize_for_test(aptos_names_v2: &signer, aptos: &signer) acquires Config {
         timestamp::set_time_has_started_for_testing(aptos);
         initialize_aptoscoin_for(aptos);
-        initialize_v1(aptos_names_v2, @aptos_names_v2, @aptos_names_v2);
+        initialize_config(aptos_names_v2, @aptos_names_v2, @aptos_names_v2);
         set_admin_address_test_only(signer::address_of(aptos_names_v2));
     }
 
     #[test(myself = @aptos_names_v2)]
-    fun test_default_token_configs_are_set(myself: signer) acquires ConfigurationV1 {
+    fun test_default_token_configs_are_set(myself: signer) acquires Config {
         account::create_account_for_test(signer::address_of(&myself));
 
-        initialize_v1(&myself, @aptos_names_v2, @aptos_names_v2);
-        set_v1(@aptos_names_v2, config_key_admin_address(), &@aptos_names_v2);
+        initialize_config(&myself, @aptos_names_v2, @aptos_names_v2);
+        set(@aptos_names_v2, config_key_admin_address(), &@aptos_names_v2);
 
         set_tokendata_description(&myself, string::utf8(b"test description"));
         assert!(tokendata_description() == string::utf8(b"test description"), 1);
@@ -403,11 +403,11 @@ module aptos_names_v2::config {
     }
 
     #[test(myself = @aptos_names_v2)]
-    fun test_default_tokens_configs_are_set(myself: signer) acquires ConfigurationV1 {
+    fun test_default_tokens_configs_are_set(myself: signer) acquires Config {
         account::create_account_for_test(signer::address_of(&myself));
 
-        initialize_v1(&myself, @aptos_names_v2, @aptos_names_v2);
-        set_v1(@aptos_names_v2, config_key_admin_address(), &@aptos_names_v2);
+        initialize_config(&myself, @aptos_names_v2, @aptos_names_v2);
+        set(@aptos_names_v2, config_key_admin_address(), &@aptos_names_v2);
 
         set_tokendata_description(&myself, string::utf8(b"test description"));
         assert!(tokendata_description() == string::utf8(b"test description"), 1);
@@ -417,7 +417,7 @@ module aptos_names_v2::config {
     }
 
     #[test(myself = @aptos_names_v2, rando = @0x266f, aptos = @0x1)]
-    fun test_configs_are_set(myself: &signer, rando: &signer, aptos: &signer) acquires ConfigurationV1 {
+    fun test_configs_are_set(myself: &signer, rando: &signer, aptos: &signer) acquires Config {
         account::create_account_for_test(signer::address_of(myself));
         account::create_account_for_test(signer::address_of(rando));
         account::create_account_for_test(signer::address_of(aptos));
@@ -451,7 +451,7 @@ module aptos_names_v2::config {
 
     #[test(myself = @aptos_names_v2, rando = @0x266f, aptos = @0x1)]
     #[expected_failure(abort_code = 393218, location = aptos_framework::aptos_account)]
-    fun test_cant_set_foundation_address_without_coin(myself: &signer, rando: &signer, aptos: &signer) acquires ConfigurationV1 {
+    fun test_cant_set_foundation_address_without_coin(myself: &signer, rando: &signer, aptos: &signer) acquires Config {
         account::create_account_for_test(signer::address_of(myself));
         account::create_account_for_test(signer::address_of(rando));
         account::create_account_for_test(signer::address_of(aptos));
@@ -467,7 +467,7 @@ module aptos_names_v2::config {
 
     #[test(myself = @aptos_names_v2, rando = @0x266f, aptos = @0x1)]
     #[expected_failure(abort_code = 327681, location = aptos_names_v2::config)]
-    fun test_foundation_config_requires_admin(myself: &signer, rando: &signer, aptos: &signer) acquires ConfigurationV1 {
+    fun test_foundation_config_requires_admin(myself: &signer, rando: &signer, aptos: &signer) acquires Config {
         account::create_account_for_test(signer::address_of(myself));
         account::create_account_for_test(signer::address_of(rando));
         account::create_account_for_test(signer::address_of(aptos));
@@ -481,7 +481,7 @@ module aptos_names_v2::config {
 
     #[test(myself = @aptos_names_v2, rando = @0x266f, aptos = @0x1)]
     #[expected_failure(abort_code = 327681, location = aptos_names_v2::config)]
-    fun test_admin_config_requires_admin(myself: &signer, rando: &signer, aptos: &signer) acquires ConfigurationV1 {
+    fun test_admin_config_requires_admin(myself: &signer, rando: &signer, aptos: &signer) acquires Config {
         account::create_account_for_test(signer::address_of(myself));
         account::create_account_for_test(signer::address_of(rando));
         account::create_account_for_test(signer::address_of(aptos));
