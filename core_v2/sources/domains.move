@@ -978,24 +978,9 @@ module aptos_names_v2::domains {
         );
     }
 
-    public entry fun clear_domain_address(
-        sign: &signer,
-        domain_name: String
-    ) acquires CollectionCapability, NameRecord, ReverseRecord, SetTargetAddressEvents, SetReverseLookupEvents {
-        clear_target_address(sign, option::none(), domain_name);
-    }
-
-    public entry fun clear_subdomain_address(
-        sign: &signer,
-        subdomain_name: String,
-        domain_name: String
-    ) acquires CollectionCapability, NameRecord, ReverseRecord, SetTargetAddressEvents, SetReverseLookupEvents {
-        clear_target_address(sign, option::some(subdomain_name), domain_name);
-    }
-
     /// This is a shared entry point for clearing the address of a domain or subdomain
     /// It enforces owner permissions
-    fun clear_target_address(
+    public fun clear_target_address(
         sign: &signer,
         subdomain_name: Option<String>,
         domain_name: String

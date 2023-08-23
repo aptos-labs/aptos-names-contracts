@@ -329,7 +329,7 @@ module router::router {
             let now = timestamp::now_seconds();
             let new_expiration_time_sec = if (option::is_some(&subdomain_name)) {
                 // Subdomains inherit the expiration of their domain
-                let (domain_expiration_time_sec, _domain_target_addr) = aptos_names_v2::domains::get_name_record_v1_props_for_name(
+                let (domain_expiration_time_sec, _domain_target_addr) = aptos_names_v2::domains::get_name_record_props_for_name(
                     option::none(),
                     domain_name,
                 );
@@ -493,6 +493,29 @@ module router::router {
                 subdomain_name,
                 domain_name,
                 target_addr,
+            )
+        } else {
+            abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
+        }
+    }
+
+    public entry fun clear_target_addr(
+        user: &signer,
+        domain_name: String,
+        subdomain_name: Option<String>,
+    ) acquires RouterConfig {
+        let mode = get_mode();
+        if (mode == MODE_V1) {
+            aptos_names::domains::clear_name_address(
+                user,
+                subdomain_name,
+                domain_name,
+            )
+        } else if (mode == MODE_V1_AND_V2) {
+            aptos_names_v2::domains::clear_target_address(
+                user,
+                subdomain_name,
+                domain_name,
             )
         } else {
             abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)

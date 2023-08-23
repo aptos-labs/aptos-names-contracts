@@ -336,12 +336,7 @@ module aptos_names_v2::test_helper {
         let set_reverse_lookup_event_event_count_before = domains::get_set_reverse_lookup_event_count();
         let maybe_reverse_lookup_before = domains::get_reverse_lookup(user_addr);
 
-        // And also can clear if is registered address, but not owner
-        if (option::is_none(&subdomain_name)) {
-            domains::clear_domain_address(user, domain_name);
-        } else {
-            domains::clear_subdomain_address(user, *option::borrow(&subdomain_name), domain_name);
-        };
+        domains::clear_target_address(user, subdomain_name, domain_name);
         let (_expiration_time_sec, target_address) = domains::get_name_record_props_for_name(
             subdomain_name,
             domain_name
