@@ -209,7 +209,7 @@ module aptos_names_v2::domain_e2e_tests {
         foundation = @0xf01d
     )]
     #[expected_failure(abort_code = 327689, location = aptos_names_v2::domains)]
-    fun dont_allow_rando_to_set_domain_address_e2e_test(
+    fun test_non_owner_can_not_set_target_address(
         router_signer: &signer,
         aptos_names_v2: &signer,
         user: signer,
@@ -236,7 +236,7 @@ module aptos_names_v2::domain_e2e_tests {
         foundation = @0xf01d
     )]
     #[expected_failure(abort_code = 327682, location = aptos_names_v2::domains)]
-    fun dont_allow_rando_to_clear_domain_address_e2e_test(
+    fun test_non_owner_can_not_clear_target_address(
         router_signer: &signer,
         aptos_names_v2: &signer,
         user: signer,
@@ -264,7 +264,7 @@ module aptos_names_v2::domain_e2e_tests {
         rando = @0x266f,
         foundation = @0xf01d
     )]
-    fun owner_can_clear_domain_address_e2e_test(
+    fun test_owner_can_clear_domain_address(
         router_signer: &signer,
         aptos_names_v2: &signer,
         user: signer,
@@ -282,6 +282,34 @@ module aptos_names_v2::domain_e2e_tests {
 
         // Ensure we can clear as owner
         test_helper::clear_target_address(user, option::none(), test_helper::domain_name());
+    }
+
+    #[test(
+        router_signer = @router_signer,
+        aptos_names_v2 = @aptos_names_v2,
+        user = @0x077,
+        aptos = @0x1,
+        rando = @0x266f,
+        foundation = @0xf01d
+    )]
+    fun test_target_addr_owner_can_clear_target_address(
+        router_signer: &signer,
+        aptos_names_v2: &signer,
+        user: signer,
+        aptos: signer,
+        rando: signer,
+        foundation: signer,
+    ) {
+        let users = test_helper::e2e_test_setup(aptos_names_v2, user, &aptos, rando, &foundation);
+        let user = vector::borrow(&users, 0);
+        let rando = vector::borrow(&users, 1);
+
+        // Register the domain, and set its address
+        test_helper::register_name(router_signer, user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1);
+        test_helper::set_target_address(user, option::none(), test_helper::domain_name(), signer::address_of(rando));
+
+        // Ensure we can clear as owner
+        test_helper::clear_target_address(rando, option::none(), test_helper::domain_name());
     }
 
     #[test(

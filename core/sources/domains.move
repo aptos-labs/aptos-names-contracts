@@ -621,7 +621,7 @@ module aptos_names::domains {
 
     /// This is a shared entry point for clearing the address of a domain or subdomain
     /// It enforces owner permissions
-    fun clear_name_address(
+    public fun clear_name_address(
         sign: &signer,
         subdomain_name: Option<String>,
         domain_name: String
