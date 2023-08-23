@@ -23,7 +23,7 @@ module aptos_names_v2::domain_e2e_tests {
         rando = @0x266f,
         foundation = @0xf01d
     )]
-    fun happy_path_e2e_test(
+    fun test_happy_path_e2e(
         router_signer: &signer,
         aptos_names_v2: &signer,
         user: signer,
@@ -131,7 +131,7 @@ module aptos_names_v2::domain_e2e_tests {
         rando = @0x266f,
         foundation = @0xf01d
     )]
-    fun names_are_registerable_after_expiry_e2e_test(
+    fun test_names_are_registerable_after_expiry(
         router_signer: &signer,
         aptos_names_v2: &signer,
         user: signer,
@@ -183,7 +183,7 @@ module aptos_names_v2::domain_e2e_tests {
         foundation = @0xf01d
     )]
     #[expected_failure(abort_code = 196611, location = aptos_names_v2::domains)]
-    fun dont_allow_double_domain_registrations_e2e_test(
+    fun test_no_double_domain_registrations(
         router_signer: &signer,
         aptos_names_v2: &signer,
         user: signer,
@@ -398,7 +398,7 @@ module aptos_names_v2::domain_e2e_tests {
         rando = @0x266f,
         foundation = @0xf01d
     )]
-    fun admin_can_force_seize_domain_name_e2e_test(
+    fun test_admin_can_force_seize_domain_name(
         router_signer: &signer,
         aptos_names_v2: &signer,
         user: signer,
@@ -436,7 +436,7 @@ module aptos_names_v2::domain_e2e_tests {
         rando = @0x266f,
         foundation = @0xf01d
     )]
-    fun admin_force_seize_domain_name_doesnt_clear_unrelated_primary_name_e2e_test(
+    fun test_admin_force_seize_domain_name_doesnt_clear_unrelated_primary_name(
         router_signer: &signer,
         aptos_names_v2: &signer,
         user: signer,
@@ -482,7 +482,7 @@ module aptos_names_v2::domain_e2e_tests {
         rando = @0x266f,
         foundation = @0xf01d
     )]
-    fun admin_can_force_create_domain_name_e2e_test(
+    fun test_admin_can_force_create_domain_name(
         aptos_names_v2: &signer,
         user: signer,
         aptos: signer,
@@ -518,7 +518,7 @@ module aptos_names_v2::domain_e2e_tests {
         foundation = @0xf01d
     )]
     #[expected_failure(abort_code = 327681, location = aptos_names_v2::config)]
-    fun rando_cant_force_seize_domain_name_e2e_test(
+    fun test_rando_cant_force_seize_domain_name(
         router_signer: &signer,
         aptos_names_v2: &signer,
         user: signer,
@@ -547,7 +547,7 @@ module aptos_names_v2::domain_e2e_tests {
         foundation = @0xf01d
     )]
     #[expected_failure(abort_code = 327681, location = aptos_names_v2::config)]
-    fun rando_cant_force_create_domain_name_e2e_test(
+    fun test_rando_cant_force_create_domain_name(
         aptos_names_v2: &signer,
         user: signer,
         aptos: signer,
@@ -572,7 +572,7 @@ module aptos_names_v2::domain_e2e_tests {
         rando = @0x266f,
         foundation = @0xf01d
     )]
-    fun clear_name_happy_path_e2e_test(
+    fun test_clear_name_happy_path_e2e(
         router_signer: &signer,
         aptos_names_v2: &signer,
         user: signer,
@@ -601,7 +601,7 @@ module aptos_names_v2::domain_e2e_tests {
         rando = @0x266f,
         foundation = @0xf01d
     )]
-    fun set_primary_name_after_transfer_clears_old_primary_name_e2e_test(
+    fun test_set_primary_name_after_transfer_clears_old_primary_name(
         router_signer: &signer,
         aptos_names_v2: &signer,
         user: signer,
@@ -645,7 +645,7 @@ module aptos_names_v2::domain_e2e_tests {
         rando = @0x266f,
         foundation = @0xf01d
     )]
-    fun set_target_address_after_transfer_clears_old_primary_name_e2e_test(
+    fun test_set_target_address_after_transfer_clears_old_primary_name(
         router_signer: &signer,
         aptos_names_v2: &signer,
         user: signer,
@@ -689,7 +689,7 @@ module aptos_names_v2::domain_e2e_tests {
         rando = @0x266f,
         foundation = @0xf01d
     )]
-    fun owner_of_expired_name_is_not_owner(
+    fun test_owner_of_expired_name_is_not_owner(
         router_signer: &signer,
         aptos_names_v2: &signer,
         user: signer,

@@ -329,7 +329,7 @@ module router::router {
             let now = timestamp::now_seconds();
             let new_expiration_time_sec = if (option::is_some(&subdomain_name)) {
                 // Subdomains inherit the expiration of their domain
-                let (domain_expiration_time_sec, _domain_target_addr) = aptos_names_v2::domains::get_name_record_v1_props_for_name(
+                let (domain_expiration_time_sec, _domain_target_addr) = aptos_names_v2::domains::get_name_record_props_for_name(
                     option::none(),
                     domain_name,
                 );
