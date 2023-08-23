@@ -84,7 +84,7 @@ module aptos_names_v2::subdomain_e2e_tests {
 
         // Register the domain
         test_helper::register_name(router_signer, user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1);
-        let (expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(option::none(), test_helper::domain_name());
+        let (expiration_time_sec, _) = domains::get_name_record_props_for_name(option::none(), test_helper::domain_name());
 
         // Set the time is early than max remaining time for renewal from expiration time
         timestamp::update_global_time_for_test_secs(expiration_time_sec - MAX_REMAINING_TIME_FOR_RENEWAL_SEC - 5);
@@ -100,7 +100,7 @@ module aptos_names_v2::subdomain_e2e_tests {
         timestamp::update_global_time_for_test_secs(expiration_time_sec + 5);
         assert!(domains::name_is_registered(option::none(), test_helper::domain_name()), 4);
 
-        let (new_expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(option::none(), test_helper::domain_name());
+        let (new_expiration_time_sec, _) = domains::get_name_record_props_for_name(option::none(), test_helper::domain_name());
         // Ensure the domain is still expired after the new expiration time
         timestamp::update_global_time_for_test_secs(new_expiration_time_sec + 5);
         assert!(domains::name_is_expired(option::none(), test_helper::domain_name()), 5);
@@ -163,7 +163,7 @@ module aptos_names_v2::subdomain_e2e_tests {
         domains::set_subdomain_expiration_policy(user, test_helper::domain_name(), test_helper::subdomain_name(), 1);
 
         // Renew the domain (and the subdomain should be auto renewed)
-        let (original_expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(option::some(test_helper::subdomain_name()), test_helper::domain_name());
+        let (original_expiration_time_sec, _) = domains::get_name_record_props_for_name(option::some(test_helper::subdomain_name()), test_helper::domain_name());
         timestamp::update_global_time_for_test_secs(original_expiration_time_sec - 5);
         domains::renew_domain(user, test_helper::domain_name(), time_helper::years_to_seconds(1));
         // Set the time past the domain's expiration time
@@ -233,7 +233,7 @@ module aptos_names_v2::subdomain_e2e_tests {
         assert!(domains::get_subdomain_renewal_policy(test_helper::domain_name(), test_helper::subdomain_name()) == 0, 2);
 
         // Set the time past the domain's expiration time
-        let (expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(option::some(test_helper::subdomain_name()), test_helper::domain_name());
+        let (expiration_time_sec, _) = domains::get_name_record_props_for_name(option::some(test_helper::subdomain_name()), test_helper::domain_name());
         // Renew the domain before it's expired
         timestamp::update_global_time_for_test_secs(expiration_time_sec - 5);
         domains::renew_domain(user, test_helper::domain_name(), time_helper::years_to_seconds(1));
@@ -272,7 +272,7 @@ module aptos_names_v2::subdomain_e2e_tests {
         // renew the domain by admin outside of renewal window
         domains::force_set_name_expiration(aptos_names_v2, test_helper::domain_name(), option::some(test_helper::subdomain_name()), timestamp::now_seconds() + 2 * test_helper::one_year_secs());
 
-        let (expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(option::some(test_helper::subdomain_name()), test_helper::domain_name());
+        let (expiration_time_sec, _) = domains::get_name_record_props_for_name(option::some(test_helper::subdomain_name()), test_helper::domain_name());
         assert!(time_helper::seconds_to_years(expiration_time_sec) == 2, time_helper::seconds_to_years(expiration_time_sec));
     }
 
@@ -414,9 +414,7 @@ module aptos_names_v2::subdomain_e2e_tests {
         domains::set_subdomain_expiration_policy(user, test_helper::domain_name(), test_helper::subdomain_name(), 0);
 
         domains::set_subdomain_expiration(user, test_helper::domain_name(), test_helper::subdomain_name(), timestamp::now_seconds() + 10);
-        let (expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(option::some(test_helper::subdomain_name()), test_helper::domain_name());
-        assert!(expiration_time_sec == timestamp::now_seconds() + 10, 1);
-        let (domain_expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(option::none(), test_helper::domain_name());
+        let (domain_expiration_time_sec, _) = domains::get_name_record_props_for_name(option::none(), test_helper::domain_name());
 
         // expect error when the expiration date pass the domain expiration date
         domains::set_subdomain_expiration(user, test_helper::domain_name(), test_helper::subdomain_name(), domain_expiration_time_sec + 5);
@@ -497,7 +495,7 @@ module aptos_names_v2::subdomain_e2e_tests {
         domains::set_subdomain_expiration_policy(user, test_helper::domain_name(), test_helper::subdomain_name(), 0);
 
         // Set the time past the domain's expiration time
-        let (expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(option::some(test_helper::subdomain_name()), test_helper::domain_name());
+        let (expiration_time_sec, _) = domains::get_name_record_props_for_name(option::some(test_helper::subdomain_name()), test_helper::domain_name());
         timestamp::update_global_time_for_test_secs(expiration_time_sec + 5);
 
         // The domain should now be: expired, registered, AND registerable
@@ -521,7 +519,7 @@ module aptos_names_v2::subdomain_e2e_tests {
         test_helper::register_name(router_signer, rando, option::some(test_helper::subdomain_name()), test_helper::domain_name(), timestamp::now_seconds() + test_helper::one_year_secs(), test_helper::fq_subdomain_name(), 2);
 
         // And again!
-        let (expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(option::some(test_helper::subdomain_name()), test_helper::domain_name());
+        let (expiration_time_sec, _) = domains::get_name_record_props_for_name(option::some(test_helper::subdomain_name()), test_helper::domain_name());
         timestamp::update_global_time_for_test_secs(expiration_time_sec + 5);
 
 
@@ -657,7 +655,7 @@ module aptos_names_v2::subdomain_e2e_tests {
         test_helper::register_name(router_signer, user, option::some(test_helper::subdomain_name()), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_subdomain_name(), 1);
 
         domains::force_set_subdomain_address(aptos_names_v2, test_helper::domain_name(), test_helper::subdomain_name(), rando_addr);
-        let (_expiration_time_sec, target_address) = domains::get_name_record_v1_props_for_name(option::some(test_helper::subdomain_name()), test_helper::domain_name());
+        let (_expiration_time_sec, target_address) = domains::get_name_record_props_for_name(option::some(test_helper::subdomain_name()), test_helper::domain_name());
         test_utils::print_actual_expected(b"set_subdomain_address: ", target_address, option::some(rando_addr), false);
         assert!(target_address == option::some(rando_addr), 33);
     }
@@ -725,7 +723,7 @@ module aptos_names_v2::subdomain_e2e_tests {
         assert!(is_owner, 2);
 
         // Ensure the expiration_time_sec is set to the new far future value
-        let (expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(option::some(test_helper::subdomain_name()), test_helper::domain_name());
+        let (expiration_time_sec, _) = domains::get_name_record_props_for_name(option::some(test_helper::subdomain_name()), test_helper::domain_name());
         assert!(time_helper::seconds_to_years(expiration_time_sec) == 1, time_helper::seconds_to_years(expiration_time_sec));
     }
 
@@ -758,7 +756,7 @@ module aptos_names_v2::subdomain_e2e_tests {
         assert!(is_owner, 2);
 
         // Ensure the expiration_time_sec is set to the new far future value
-        let (expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(option::some(test_helper::subdomain_name()), test_helper::domain_name());
+        let (expiration_time_sec, _) = domains::get_name_record_props_for_name(option::some(test_helper::subdomain_name()), test_helper::domain_name());
         assert!(time_helper::seconds_to_years(expiration_time_sec) == 1, time_helper::seconds_to_years(expiration_time_sec));
     }
 

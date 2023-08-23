@@ -187,7 +187,7 @@ module aptos_names_v2::domains {
             aptos_account::create_account(admin_address);
         };
 
-        config::initialize_v1(account, admin_address, funds_address);
+        config::initialize_config(account, admin_address, funds_address);
 
         move_to(account, SetTargetAddressEvents {
             set_name_events: account::new_event_handle<SetTargetAddressEvent>(account),
@@ -217,7 +217,7 @@ module aptos_names_v2::domains {
         collection::create_unlimited_collection(
             &token_resource,
             utf8(COLLECTION_DESCRIPTION),
-            config::domain_collection_name_v1(),
+            config::domain_collection_name(),
             option::none(),
             utf8(COLLECTION_URI),
         );
@@ -225,7 +225,7 @@ module aptos_names_v2::domains {
         collection::create_unlimited_collection(
             &token_resource,
             utf8(COLLECTION_DESCRIPTION),
-            config::subdomain_collection_name_v1(),
+            config::subdomain_collection_name(),
             option::none(),
             utf8(COLLECTION_URI),
         );
@@ -313,9 +313,9 @@ module aptos_names_v2::domains {
 
     inline fun get_collection_name(is_subdomain: bool): String {
         if (is_subdomain) {
-            config::subdomain_collection_name_v1()
+            config::subdomain_collection_name()
         } else {
-            config::domain_collection_name_v1()
+            config::domain_collection_name()
         }
     }
 
@@ -379,7 +379,7 @@ module aptos_names_v2::domains {
 
         let length = validate_name_string(domain_name);
 
-        let price = price_model::price_for_domain_v1(length, registration_duration_secs);
+        let price = price_model::price_for_domain(length, registration_duration_secs);
         coin::transfer<AptosCoin>(sign, config::fund_destination_address(), price);
 
         register_name_internal(sign, subdomain_name, domain_name, registration_duration_secs, price);
@@ -438,7 +438,7 @@ module aptos_names_v2::domains {
 
         let registration_duration_secs = expiration_time_sec - timestamp::now_seconds();
 
-        let price = price_model::price_for_subdomain_v1(registration_duration_secs);
+        let price = price_model::price_for_subdomain(registration_duration_secs);
         coin::transfer<AptosCoin>(sign, config::fund_destination_address(), price);
 
         register_name_internal(sign, option::some(subdomain_name), domain_name, registration_duration_secs, price);
@@ -657,7 +657,7 @@ module aptos_names_v2::domains {
 
         validate_registration_duration(renewal_duration_secs);
         assert!(is_domain_in_renewal_window(domain_name), error::invalid_state(EDOMAIN_NOT_AVAILABLE_TO_RENEW));
-        let price = price_model::price_for_domain_v1(length, renewal_duration_secs);
+        let price = price_model::price_for_domain(length, renewal_duration_secs);
         // pay the price
         coin::transfer<AptosCoin>(sign, config::fund_destination_address(), price);
         renew_domain_internal(domain_name, renewal_duration_secs, price);
@@ -997,7 +997,7 @@ module aptos_names_v2::domains {
         assert!(name_is_registered(subdomain_name, domain_name), error::not_found(ENAME_NOT_EXIST));
         let record = get_record_mut(domain_name, subdomain_name);
         record.target_address = option::some(new_address);
-        emit_set_target_address_event_v1(
+        emit_set_target_address_event(
             subdomain_name,
             domain_name,
             record.expiration_time_sec,
@@ -1050,7 +1050,7 @@ module aptos_names_v2::domains {
 
         let record = get_record_mut(domain_name, subdomain_name);
         record.target_address = option::none();
-        emit_set_target_address_event_v1(
+        emit_set_target_address_event(
             subdomain_name,
             domain_name,
             record.expiration_time_sec,
@@ -1137,7 +1137,7 @@ module aptos_names_v2::domains {
         };
 
         let record = borrow_global<NameRecord>(token_addr);
-        emit_set_reverse_lookup_event_v1(
+        emit_set_reverse_lookup_event(
             account_addr,
             prev_subdomain_name,
             prev_domain_name,
@@ -1167,7 +1167,7 @@ module aptos_names_v2::domains {
         let reverse_record = borrow_global_mut<ReverseRecord>(account_addr);
         reverse_record.token_addr = option::none();
 
-        emit_set_reverse_lookup_event_v1(
+        emit_set_reverse_lookup_event(
             account_addr,
             prev_subdomain_name,
             prev_domain_name,
@@ -1197,7 +1197,7 @@ module aptos_names_v2::domains {
         };
     }
 
-    fun emit_set_target_address_event_v1(
+    fun emit_set_target_address_event(
         subdomain_name: Option<String>,
         domain_name: String,
         expiration_time_secs: u64,
@@ -1216,7 +1216,7 @@ module aptos_names_v2::domains {
         );
     }
 
-    fun emit_set_reverse_lookup_event_v1(
+    fun emit_set_reverse_lookup_event(
         account_addr: address,
         prev_subdomain_name: Option<String>,
         prev_domain_name: Option<String>,
@@ -1243,7 +1243,7 @@ module aptos_names_v2::domains {
         );
     }
 
-    public fun get_name_record_v1_props_for_name(
+    public fun get_name_record_props_for_name(
         subdomain: Option<String>,
         domain: String,
     ): (u64, Option<address>) acquires CollectionCapability, NameRecord {
@@ -1270,17 +1270,17 @@ module aptos_names_v2::domains {
     }
 
     #[test_only]
-    public fun get_set_target_address_event_v1_count(): u64 acquires SetTargetAddressEvents {
+    public fun get_set_target_address_event_count(): u64 acquires SetTargetAddressEvents {
         event::counter(&borrow_global<SetTargetAddressEvents>(@aptos_names_v2).set_name_events)
     }
 
     #[test_only]
-    public fun get_register_name_event_v1_count(): u64 acquires RegisterNameEvents {
+    public fun get_register_name_event_count(): u64 acquires RegisterNameEvents {
         event::counter(&borrow_global<RegisterNameEvents>(@aptos_names_v2).register_name_events)
     }
 
     #[test_only]
-    public fun get_set_reverse_lookup_event_v1_count(): u64 acquires SetReverseLookupEvents {
+    public fun get_set_reverse_lookup_event_count(): u64 acquires SetReverseLookupEvents {
         event::counter(&borrow_global<SetReverseLookupEvents>(@aptos_names_v2).set_reverse_lookup_events)
     }
 
