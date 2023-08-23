@@ -261,8 +261,8 @@ module aptos_names_v2::test_helper {
     /// Set the domain address, and verify the address was set correctly
     public fun set_target_address(
         user: &signer,
-        subdomain_name: Option<String>,
         domain_name: String,
+        subdomain_name: Option<String>,
         expected_target_address: address
     ) {
         let user_addr = signer::address_of(user);
@@ -272,7 +272,7 @@ module aptos_names_v2::test_helper {
         let set_reverse_lookup_event_event_count_before = domains::get_set_reverse_lookup_event_count();
         let maybe_reverse_lookup_before = domains::get_reverse_lookup(user_addr);
 
-        domains::set_target_address(user, subdomain_name, domain_name, expected_target_address);
+        domains::set_target_address(user, domain_name, subdomain_name, expected_target_address);
         let (_expiration_time_sec, target_address) = domains::get_name_record_props_for_name(
             subdomain_name,
             domain_name
