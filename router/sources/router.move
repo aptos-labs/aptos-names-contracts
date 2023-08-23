@@ -329,7 +329,7 @@ module router::router {
             let now = timestamp::now_seconds();
             let new_expiration_time_sec = if (option::is_some(&subdomain_name)) {
                 // Subdomains inherit the expiration of their domain
-                let (domain_expiration_time_sec, _domain_target_addr) = aptos_names_v2::domains::get_name_record_v1_props_for_name(
+                let (domain_expiration_time_sec, _domain_target_addr) = aptos_names_v2::domains::get_name_record_props_for_name(
                     option::none(),
                     domain_name,
                 );
@@ -675,7 +675,7 @@ module router::router {
             // Cannot be implemented with token v1
             abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
         } else if (mode == MODE_V1_AND_V2) {
-            aptos_names_v2::domains::name_owner_addr(subdomain_name, domain_name)
+            aptos_names_v2::domains::get_name_owner_addr(subdomain_name, domain_name)
         } else {
             abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
         }
