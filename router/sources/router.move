@@ -405,7 +405,7 @@ module router::router {
 
             // TODO: Probably good idea to clear entries in v1
         } else if (mode == MODE_V1_AND_V2) {
-            let token_addr = aptos_names_v2::domains::token_addr(domain_name, subdomain_name);
+            let token_addr = aptos_names_v2::domains::get_token_addr(domain_name, subdomain_name);
             object::transfer(
                 user,
                 object::address_to_object<aptos_names_v2::domains::NameRecord>(token_addr),
@@ -620,7 +620,7 @@ module router::router {
 
     /// Returns true if the name is tracked in v2
     inline fun exists_in_v2(domain_name: String, subdomain_name: Option<String>): bool {
-        object::is_object(aptos_names_v2::domains::token_addr(domain_name, subdomain_name))
+        object::is_object(aptos_names_v2::domains::get_token_addr(domain_name, subdomain_name))
     }
 
     inline fun get_v1_target_addr(

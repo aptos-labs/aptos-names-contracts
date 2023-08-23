@@ -654,7 +654,7 @@ module aptos_names_v2::subdomain_e2e_tests {
         test_helper::register_name(router_signer, user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1);
         test_helper::register_name(router_signer, user, option::some(test_helper::subdomain_name()), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_subdomain_name(), 1);
 
-        domains::force_set_subdomain_address(aptos_names_v2, test_helper::domain_name(), test_helper::subdomain_name(), rando_addr);
+        domains::force_set_target_address(aptos_names_v2, test_helper::domain_name(), option::some(test_helper::subdomain_name()), rando_addr);
         let (_expiration_time_sec, target_address) = domains::get_name_record_props_for_name(option::some(test_helper::subdomain_name()), test_helper::domain_name());
         test_utils::print_actual_expected(b"set_subdomain_address: ", target_address, option::some(rando_addr), false);
         assert!(target_address == option::some(rando_addr), 33);
@@ -689,7 +689,7 @@ module aptos_names_v2::subdomain_e2e_tests {
         test_helper::register_name(router_signer, user, option::some(test_helper::subdomain_name()), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_subdomain_name(), 1);
 
         // Rando is not allowed to do this
-        domains::force_set_subdomain_address(rando, test_helper::subdomain_name(), test_helper::domain_name(), rando_addr);
+        domains::force_set_target_address(rando, test_helper::domain_name(), option::some(test_helper::subdomain_name()), rando_addr);
     }
 
     #[test(

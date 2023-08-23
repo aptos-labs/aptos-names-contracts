@@ -83,12 +83,12 @@ module aptos_names_v2::test_helper {
 
         let user_balance_before = coin::balance<AptosCoin>(user_addr);
         let user_reverse_lookup_before = domains::get_reverse_lookup(user_addr);
-        let maybe_target_address = domains::name_resolved_address(subdomain_name, domain_name);
+        let maybe_target_address = domains::get_name_resolved_address(subdomain_name, domain_name);
         let was_primary_name_before = if (option::is_some(&maybe_target_address)) {
             let maybe_primary_name = domains::get_reverse_lookup(*option::borrow(&maybe_target_address));
             if (option::is_some(&maybe_primary_name)) {
                 // Even if target_addr has a primary name, it may not necessarily point to this `(domain_name, subdomain_name)`
-                *option::borrow(&maybe_primary_name) == domains::token_addr(domain_name, subdomain_name)
+                *option::borrow(&maybe_primary_name) == domains::get_token_addr(domain_name, subdomain_name)
             } else {
                 // No primary name, so definitely was not primary name before
                 false
@@ -218,7 +218,7 @@ module aptos_names_v2::test_helper {
             );
             if (option::is_some(&maybe_reverse_lookup_after)) {
                 let reverse_lookup_after = option::borrow(&maybe_reverse_lookup_after);
-                assert!(*reverse_lookup_after == domains::token_addr(domain_name, subdomain_name), 36);
+                assert!(*reverse_lookup_after == domains::get_token_addr(domain_name, subdomain_name), 36);
                 assert!(subdomain_name_lookup_result == subdomain_name, 136);
                 assert!(domain_name_lookup_result == option::some(domain_name), 137);
             } else {
@@ -346,7 +346,7 @@ module aptos_names_v2::test_helper {
 
         if (option::is_some(&maybe_reverse_lookup_before)) {
             let reverse_lookup_before = option::borrow(&maybe_reverse_lookup_before);
-            if (*reverse_lookup_before == domains::token_addr(domain_name, subdomain_name)) {
+            if (*reverse_lookup_before == domains::get_token_addr(domain_name, subdomain_name)) {
                 let reverse_lookup_after = domains::get_reverse_lookup(user_addr);
                 assert!(option::is_none(&reverse_lookup_after), 35);
 
