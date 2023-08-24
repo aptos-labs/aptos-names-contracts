@@ -119,7 +119,7 @@ module aptos_names_v2::test_helper {
 
         // It should now be: not expired, registered, and not registerable
         assert!(!domains::is_name_expired(subdomain_name, domain_name), 12);
-        assert!(!domains::name_is_registerable(subdomain_name, domain_name), 13);
+        assert!(!domains::is_name_registerable(domain_name, subdomain_name), 13);
         assert!(domains::is_name_registered(subdomain_name, domain_name), 14);
 
         if (is_subdomain) {

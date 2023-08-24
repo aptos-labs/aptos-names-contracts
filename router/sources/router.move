@@ -150,7 +150,7 @@ module router::router {
             );
             is_burned
         } else {
-            aptos_names_v2::domains::name_is_registerable(subdomain_name, domain_name)
+            aptos_names_v2::domains::is_name_registerable(domain_name, subdomain_name)
         }
     }
 

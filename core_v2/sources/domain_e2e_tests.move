@@ -153,7 +153,7 @@ module aptos_names_v2::domain_e2e_tests {
         // It should now be: expired, registered, AND registerable
         assert!(domains::is_name_expired(option::none(), test_helper::domain_name()), 80);
         assert!(domains::is_name_registered(option::none(), test_helper::domain_name()), 81);
-        assert!(domains::name_is_registerable(option::none(), test_helper::domain_name()), 82);
+        assert!(domains::is_name_registerable(test_helper::domain_name(), option::none()), 82);
 
         // Lets try to register it again, now that it is expired
         test_helper::register_name(router_signer, rando, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 2);
@@ -168,7 +168,7 @@ module aptos_names_v2::domain_e2e_tests {
         // It should now be: expired, registered, AND registerable
         assert!(domains::is_name_expired(option::none(), test_helper::domain_name()), 80);
         assert!(domains::is_name_registered(option::none(), test_helper::domain_name()), 81);
-        assert!(domains::name_is_registerable(option::none(), test_helper::domain_name()), 82);
+        assert!(domains::is_name_registerable(test_helper::domain_name(), option::none()), 82);
 
         // Lets try to register it again, now that it is expired
         test_helper::register_name(router_signer, rando, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 3);
