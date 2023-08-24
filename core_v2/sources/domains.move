@@ -358,7 +358,7 @@ module aptos_names_v2::domains {
 
         let subdomain_name = option::none<String>();
 
-        assert!(name_is_registerable(subdomain_name, domain_name), error::invalid_state(ENAME_NOT_AVAILABLE));
+        assert!(is_name_registerable(domain_name, subdomain_name), error::invalid_state(ENAME_NOT_AVAILABLE));
 
         let length = validate_name_string(domain_name);
 
@@ -405,7 +405,7 @@ module aptos_names_v2::domains {
         assert!(config::is_enabled(), error::unavailable(ENOT_ENABLED));
 
         assert!(
-            name_is_registerable(option::some(subdomain_name), domain_name),
+            is_name_registerable(domain_name, option::some(subdomain_name)),
             error::invalid_state(ENAME_NOT_AVAILABLE)
         );
 
@@ -448,7 +448,7 @@ module aptos_names_v2::domains {
     ) acquires CollectionCapability, NameRecord, RegisterNameEvents, ReverseRecord, SetReverseLookupEvents {
         assert!(address_of(router_signer) == @router_signer, error::permission_denied(ENOT_ROUTER));
         // For subdomains, this will check that the domain exists first
-        assert!(name_is_registerable(subdomain_name, domain_name), error::invalid_state(ENAME_NOT_AVAILABLE));
+        assert!(is_name_registerable(domain_name, subdomain_name), error::invalid_state(ENAME_NOT_AVAILABLE));
         if (option::is_some(&subdomain_name)) {
             validate_name_string(*option::borrow(&subdomain_name));
         } else {
@@ -780,13 +780,13 @@ module aptos_names_v2::domains {
     /// Returns true if the name is available for registration
     /// if this is a subdomain, and the domain doesn't exist, returns false
     /// Doesn't use the `name_is_expired` or `name_is_registered` internally to share the borrow
-    public fun name_is_registerable(
+    public fun is_name_registerable(
+        domain_name: String,
         subdomain_name: Option<String>,
-        domain_name: String
     ): bool acquires CollectionCapability, NameRecord {
         // If this is a subdomain, ensure the domain also exists, and is not expired: i.e not registerable
         // So if the domain name is registerable, we return false, as the subdomain is not registerable
-        if (is_subdomain(subdomain_name) && name_is_registerable(option::none(), domain_name)) {
+        if (is_subdomain(subdomain_name) && is_name_registerable(domain_name, option::none())) {
             return false
         };
         // Check to see if the domain expired

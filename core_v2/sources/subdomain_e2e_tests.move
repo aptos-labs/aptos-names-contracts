@@ -501,19 +501,19 @@ module aptos_names_v2::subdomain_e2e_tests {
         // The domain should now be: expired, registered, AND registerable
         assert!(domains::is_name_expired(option::none(), test_helper::domain_name()), 80);
         assert!(domains::is_name_registered(option::none(), test_helper::domain_name()), 81);
-        assert!(domains::name_is_registerable(option::none(), test_helper::domain_name()), 82);
+        assert!(domains::is_name_registerable(test_helper::domain_name(), option::none()), 82);
 
         // The subdomain now be: expired, registered, AND NOT registerable (because the domain is expired, too)
         assert!(domains::is_name_expired(option::some(test_helper::subdomain_name()), test_helper::domain_name()), 90);
         assert!(domains::is_name_registered(option::some(test_helper::subdomain_name()), test_helper::domain_name()), 91);
-        assert!(!domains::name_is_registerable(option::some(test_helper::subdomain_name()), test_helper::domain_name()), 92);
+        assert!(!domains::is_name_registerable(test_helper::domain_name(), option::some(test_helper::subdomain_name())), 92);
 
         // Lets try to register it again, now that it is expired
         test_helper::register_name(router_signer, rando, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 2);
         // The subdomain should now be registerable: it's both expired AND the domain is registered
         assert!(domains::is_name_expired(option::some(test_helper::subdomain_name()), test_helper::domain_name()), 93);
         assert!(domains::is_name_registered(option::some(test_helper::subdomain_name()), test_helper::domain_name()), 94);
-        assert!(domains::name_is_registerable(option::some(test_helper::subdomain_name()), test_helper::domain_name()), 95);
+        assert!(domains::is_name_registerable(test_helper::domain_name(), option::some(test_helper::subdomain_name())), 95);
 
         // and likewise for the subdomain
         test_helper::register_name(router_signer, rando, option::some(test_helper::subdomain_name()), test_helper::domain_name(), timestamp::now_seconds() + test_helper::one_year_secs(), test_helper::fq_subdomain_name(), 2);
@@ -526,19 +526,19 @@ module aptos_names_v2::subdomain_e2e_tests {
         // The domain should now be: expired, registered, AND registerable
         assert!(domains::is_name_expired(option::none(), test_helper::domain_name()), 80);
         assert!(domains::is_name_registered(option::none(), test_helper::domain_name()), 81);
-        assert!(domains::name_is_registerable(option::none(), test_helper::domain_name()), 82);
+        assert!(domains::is_name_registerable(test_helper::domain_name(), option::none()), 82);
 
         // The subdomain now be: expired, registered, AND NOT registerable (because the domain is expired, too)
         assert!(domains::is_name_expired(option::some(test_helper::subdomain_name()), test_helper::domain_name()), 90);
         assert!(domains::is_name_registered(option::some(test_helper::subdomain_name()), test_helper::domain_name()), 91);
-        assert!(!domains::name_is_registerable(option::some(test_helper::subdomain_name()), test_helper::domain_name()), 92);
+        assert!(!domains::is_name_registerable(test_helper::domain_name(), option::some(test_helper::subdomain_name())), 92);
 
         // Lets try to register it again, now that it is expired
         test_helper::register_name(router_signer, rando, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 3);
         // The subdomain should now be registerable: it's both expired AND the domain is registered
         assert!(domains::is_name_expired(option::some(test_helper::subdomain_name()), test_helper::domain_name()), 93);
         assert!(domains::is_name_registered(option::some(test_helper::subdomain_name()), test_helper::domain_name()), 94);
-        assert!(domains::name_is_registerable(option::some(test_helper::subdomain_name()), test_helper::domain_name()), 95);
+        assert!(domains::is_name_registerable(test_helper::domain_name(), option::some(test_helper::subdomain_name())), 95);
 
         // and likewise for the subdomain
         test_helper::register_name(router_signer, rando, option::some(test_helper::subdomain_name()), test_helper::domain_name(), timestamp::now_seconds() + test_helper::one_year_secs(), test_helper::fq_subdomain_name(), 3);
