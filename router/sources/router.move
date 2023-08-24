@@ -359,8 +359,8 @@ module router::router {
             } else if (option::is_some(&target_addr)) {
                 aptos_names_v2::domains::set_target_address(
                     user,
-                    subdomain_name,
                     domain_name,
+                    subdomain_name,
                     *option::borrow(&target_addr)
                 );
             };
@@ -490,8 +490,8 @@ module router::router {
         } else if (mode == MODE_V1_AND_V2) {
             aptos_names_v2::domains::set_target_address(
                 user,
-                subdomain_name,
                 domain_name,
+                subdomain_name,
                 target_addr,
             )
         } else {

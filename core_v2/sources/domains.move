@@ -868,27 +868,10 @@ module aptos_names_v2::domains {
         }
     }
 
-    public entry fun set_domain_address(
-        sign: &signer,
-        domain_name: String,
-        new_address: address
-    ) acquires CollectionCapability, NameRecord, ReverseRecord, SetTargetAddressEvents, SetReverseLookupEvents {
-        set_target_address(sign, option::none(), domain_name, new_address);
-    }
-
-    public entry fun set_subdomain_address(
-        sign: &signer,
-        subdomain_name: String,
-        domain_name: String,
-        new_address: address
-    ) acquires CollectionCapability, NameRecord, ReverseRecord, SetTargetAddressEvents, SetReverseLookupEvents {
-        set_target_address(sign, option::some(subdomain_name), domain_name, new_address);
-    }
-
     public fun set_target_address(
         sign: &signer,
-        subdomain_name: Option<String>,
         domain_name: String,
+        subdomain_name: Option<String>,
         new_address: address
     ) acquires CollectionCapability, NameRecord, ReverseRecord, SetTargetAddressEvents, SetReverseLookupEvents {
         // If the domain name is a primary name, clear it.
@@ -988,7 +971,7 @@ module aptos_names_v2::domains {
             return
         };
         let token_addr = get_token_addr_inline(domain_name, subdomain_name);
-        set_target_address(account, subdomain_name, domain_name, address_of(account));
+        set_target_address(account, domain_name, subdomain_name, address_of(account));
         set_reverse_lookup_internal(account, token_addr);
     }
 
