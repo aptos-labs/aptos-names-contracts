@@ -98,8 +98,8 @@ module aptos_names_v2::test_helper {
             false
         };
         let is_registered_and_expired_before = domains::is_name_registered(
+            domain_name,
             subdomain_name,
-            domain_name
         ) && domains::is_name_expired(domain_name, subdomain_name);
         let register_name_event_event_count_before = domains::get_register_name_event_count();
         let set_target_address_event_event_count_before = domains::get_set_target_address_event_count();
@@ -120,7 +120,7 @@ module aptos_names_v2::test_helper {
         // It should now be: not expired, registered, and not registerable
         assert!(!domains::is_name_expired(domain_name, subdomain_name), 12);
         assert!(!domains::is_name_registerable(domain_name, subdomain_name), 13);
-        assert!(domains::is_name_registered(subdomain_name, domain_name), 14);
+        assert!(domains::is_name_registered(domain_name, subdomain_name), 14);
 
         if (is_subdomain) {
             let subdomain_name_copy = subdomain_name;
