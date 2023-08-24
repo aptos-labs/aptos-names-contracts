@@ -677,7 +677,7 @@ module aptos_names_v2::domains {
         domain_name: String,
     ): bool acquires CollectionCapability, NameRecord {
         // check if the domain is registered
-        assert!(is_name_registered(option::none(), domain_name), error::not_found(ENAME_NOT_EXIST));
+        assert!(is_name_registered(domain_name, option::none()), error::not_found(ENAME_NOT_EXIST));
         // check if the domain is expired already
         assert!(!is_name_expired(domain_name, option::none()), error::invalid_state(ENAME_EXPIRED));
         let record = get_record_mut(domain_name, option::none());
@@ -760,7 +760,7 @@ module aptos_names_v2::domains {
         domain_name: String,
         subdomain_name: String,
     ) acquires CollectionCapability, NameRecord {
-        assert!(is_name_registered(option::some(subdomain_name), domain_name), error::not_found(ESUBDOMAIN_NOT_EXIST));
+        assert!(is_name_registered(domain_name, option::some(subdomain_name)), error::not_found(ESUBDOMAIN_NOT_EXIST));
         // Ensure signer owns the domain we're registering a subdomain for
         let signer_addr = signer::address_of(sign);
         assert!(
@@ -791,7 +791,7 @@ module aptos_names_v2::domains {
         domain_name: String,
         subdomain_name: Option<String>,
     ): bool acquires CollectionCapability, NameRecord {
-        if (!is_name_registered(subdomain_name, domain_name)) {
+        if (!is_name_registered(domain_name, subdomain_name)) {
             true
         } else {
             let record = get_record(domain_name, subdomain_name);
@@ -810,8 +810,8 @@ module aptos_names_v2::domains {
 
     /// Returns true if the object exists AND the owner is not the `token_resource` account
     public fun is_name_registered(
+        domain_name: String,
         subdomain_name: Option<String>,
-        domain_name: String
     ): bool acquires CollectionCapability {
         object::is_object(get_token_addr_inline(domain_name, subdomain_name)) &&
             !object::is_owner(get_record_obj(domain_name, subdomain_name), get_token_signer_address())
@@ -824,8 +824,8 @@ module aptos_names_v2::domains {
         subdomain_name: Option<String>,
         domain_name: String
     ): bool acquires CollectionCapability, NameRecord {
-        if (!is_name_registered(subdomain_name, domain_name) || is_name_expired(
-            domain_name,
+        if (!is_name_registered(domain_name, subdomain_name) || is_name_expired(
+        domain_name,
             subdomain_name,
         )) return false;
         let record_obj = object::address_to_object<NameRecord>(get_token_addr_inline(domain_name, subdomain_name));
@@ -838,8 +838,8 @@ module aptos_names_v2::domains {
         domain_name: String,
     ): Option<address> acquires CollectionCapability, NameRecord {
         // check if the name is registered
-        if (!is_name_registered(subdomain_name, domain_name) || is_name_expired(
-            domain_name,
+        if (!is_name_registered(domain_name, subdomain_name) || is_name_expired(
+        domain_name,
             subdomain_name,
         )) return option::none();
         let record_obj = object::address_to_object<NameRecord>(get_token_addr_inline(domain_name, subdomain_name));
@@ -853,7 +853,7 @@ module aptos_names_v2::domains {
         domain_name: String
     ): Option<address> acquires CollectionCapability, NameRecord {
         // TODO: Why does this not check expiration?
-        if (!is_name_registered(subdomain_name, domain_name)) {
+        if (!is_name_registered(domain_name, subdomain_name)) {
             option::none()
         } else {
             let record = get_record(domain_name, subdomain_name);
@@ -903,7 +903,7 @@ module aptos_names_v2::domains {
         domain_name: String,
         new_address: address
     ) acquires CollectionCapability, NameRecord, SetTargetAddressEvents {
-        assert!(is_name_registered(subdomain_name, domain_name), error::not_found(ENAME_NOT_EXIST));
+        assert!(is_name_registered(domain_name, subdomain_name), error::not_found(ENAME_NOT_EXIST));
         let record = get_record_mut(domain_name, subdomain_name);
         record.target_address = option::some(new_address);
         emit_set_target_address_event(
@@ -921,7 +921,7 @@ module aptos_names_v2::domains {
         subdomain_name: Option<String>,
         domain_name: String
     ) acquires CollectionCapability, NameRecord, ReverseRecord, SetTargetAddressEvents, SetReverseLookupEvents {
-        assert!(is_name_registered(subdomain_name, domain_name), error::not_found(ENAME_NOT_EXIST));
+        assert!(is_name_registered(domain_name, subdomain_name), error::not_found(ENAME_NOT_EXIST));
 
         let signer_addr = signer::address_of(sign);
 
@@ -960,7 +960,7 @@ module aptos_names_v2::domains {
         domain_name: String
     ) acquires CollectionCapability, NameRecord, ReverseRecord, SetTargetAddressEvents, SetReverseLookupEvents {
         // Name must be registered before assigning reverse lookup
-        if (!is_name_registered(subdomain_name, domain_name)) {
+        if (!is_name_registered(domain_name, subdomain_name)) {
             return
         };
         let token_addr = get_token_addr_inline(domain_name, subdomain_name);
@@ -1047,7 +1047,7 @@ module aptos_names_v2::domains {
         subdomain_name: Option<String>,
         domain_name: String
     ) acquires CollectionCapability, NameRecord, ReverseRecord, SetReverseLookupEvents {
-        if (!is_name_registered(subdomain_name, domain_name)) return;
+        if (!is_name_registered(domain_name, subdomain_name)) return;
 
         // If the name is a primary name, clear it
         let record = get_record(domain_name, subdomain_name);

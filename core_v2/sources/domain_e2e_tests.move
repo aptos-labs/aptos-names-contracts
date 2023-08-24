@@ -89,7 +89,7 @@ module aptos_names_v2::domain_e2e_tests {
 
         // Ensure the domain is still registered after the original expiration time
         timestamp::update_global_time_for_test_secs(expiration_time_sec + 5);
-        assert!(domains::is_name_registered(option::none(), test_helper::domain_name()), 4);
+        assert!(domains::is_name_registered(test_helper::domain_name(), option::none()), 4);
 
         let (new_expiration_time_sec, _) = domains::get_name_record_props_for_name(option::none(), test_helper::domain_name());
         // Ensure the domain is still expired after the new expiration time
@@ -152,7 +152,7 @@ module aptos_names_v2::domain_e2e_tests {
 
         // It should now be: expired, registered, AND registerable
         assert!(domains::is_name_expired(test_helper::domain_name(), option::none()), 80);
-        assert!(domains::is_name_registered(option::none(), test_helper::domain_name()), 81);
+        assert!(domains::is_name_registered(test_helper::domain_name(), option::none()), 81);
         assert!(domains::is_name_registerable(test_helper::domain_name(), option::none()), 82);
 
         // Lets try to register it again, now that it is expired
@@ -167,7 +167,7 @@ module aptos_names_v2::domain_e2e_tests {
 
         // It should now be: expired, registered, AND registerable
         assert!(domains::is_name_expired(test_helper::domain_name(), option::none()), 80);
-        assert!(domains::is_name_registered(option::none(), test_helper::domain_name()), 81);
+        assert!(domains::is_name_registered(test_helper::domain_name(), option::none()), 81);
         assert!(domains::is_name_registerable(test_helper::domain_name(), option::none()), 82);
 
         // Lets try to register it again, now that it is expired
@@ -520,7 +520,7 @@ module aptos_names_v2::domain_e2e_tests {
         let _ = test_helper::e2e_test_setup(aptos_names_v2, user, &aptos, rando, &foundation);
 
         // No domain is registered yet
-        assert!(!domains::is_name_registered(option::none(), test_helper::domain_name()), 1);
+        assert!(!domains::is_name_registered(test_helper::domain_name(), option::none()), 1);
 
         // Take the domain name for much longer than users are allowed to register it for
         domains::force_create_or_seize_name(aptos_names_v2, test_helper::domain_name(), option::none(), test_helper::two_hundred_year_secs());
@@ -532,9 +532,9 @@ module aptos_names_v2::domain_e2e_tests {
         assert!(time_helper::seconds_to_years(expiration_time_sec) == 200, time_helper::seconds_to_years(expiration_time_sec));
 
         // Try to nuke the domain
-        assert!(domains::is_name_registered(option::none(), test_helper::domain_name()), 3);
+        assert!(domains::is_name_registered(test_helper::domain_name(), option::none()), 3);
         domains::force_clear_registration(aptos_names_v2, test_helper::domain_name(), option::none());
-        assert!(!domains::is_name_registered(option::none(), test_helper::domain_name()), 4);
+        assert!(!domains::is_name_registered(test_helper::domain_name(), option::none()), 4);
     }
 
     #[test(
@@ -586,7 +586,7 @@ module aptos_names_v2::domain_e2e_tests {
         let rando = vector::borrow(&users, 1);
 
         // No domain is registered yet
-        assert!(!domains::is_name_registered(option::none(), test_helper::domain_name()), 1);
+        assert!(!domains::is_name_registered(test_helper::domain_name(), option::none()), 1);
 
         // Take the domain name for much longer than users are allowed to register it for
         domains::force_create_or_seize_name(rando, test_helper::domain_name(), option::none(), test_helper::two_hundred_year_secs());
