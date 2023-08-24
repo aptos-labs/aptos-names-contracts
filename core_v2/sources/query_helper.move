@@ -94,7 +94,7 @@ module aptos_names_v2::query_helper {
     public fun domain_name_resolved_address(
         domain_name: String
     ): Option<address> {
-        domains::name_resolved_address(option::none(), domain_name)
+        domains::get_name_resolved_address(option::none(), domain_name)
     }
 
     #[view]
@@ -104,6 +104,6 @@ module aptos_names_v2::query_helper {
         subdomain_name: String,
         domain_name: String
     ): Option<address> {
-        domains::name_resolved_address(option::some(subdomain_name), domain_name)
+        domains::get_name_resolved_address(option::some(subdomain_name), domain_name)
     }
 }
