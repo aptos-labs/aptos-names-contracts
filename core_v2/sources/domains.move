@@ -349,11 +349,17 @@ module aptos_names_v2::domains {
         object::transfer(&get_token_signer(), record_obj, to_addr);
     }
 
-    fun register_domain_generic(
+    /// A wrapper around `register_name` as an entry function.
+    /// Option<String> is not currently serializable, so we have these convenience methods
+    public fun register_domain(
+        router_signer: &signer,
         sign: &signer,
         domain_name: String,
         registration_duration_secs: u64,
     ) acquires CollectionCapability, NameRecord, RegisterNameEvents, ReverseRecord, SetTargetAddressEvents, SetReverseLookupEvents {
+        assert!(address_of(router_signer) == @router_signer, error::permission_denied(ENOT_ROUTER));
+        assert!(config::unrestricted_mint_enabled(), error::permission_denied(EVALID_SIGNATURE_REQUIRED));
+
         validate_registration_duration(registration_duration_secs);
 
         let subdomain_name = option::none<String>();
@@ -376,19 +382,6 @@ module aptos_names_v2::domains {
             // Automatically set the name to point to the sender's address
             set_target_address_internal(subdomain_name, domain_name, signer::address_of(sign));
         };
-    }
-
-    /// A wrapper around `register_name` as an entry function.
-    /// Option<String> is not currently serializable, so we have these convenience methods
-    public fun register_domain(
-        router_signer: &signer,
-        sign: &signer,
-        domain_name: String,
-        registration_duration_secs: u64,
-    ) acquires CollectionCapability, NameRecord, RegisterNameEvents, ReverseRecord, SetTargetAddressEvents, SetReverseLookupEvents {
-        assert!(address_of(router_signer) == @router_signer, error::permission_denied(ENOT_ROUTER));
-        assert!(config::unrestricted_mint_enabled(), error::permission_denied(EVALID_SIGNATURE_REQUIRED));
-        register_domain_generic(sign, domain_name, registration_duration_secs);
     }
 
     /// A wrapper around `register_name` as an entry function.
