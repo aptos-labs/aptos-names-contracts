@@ -686,7 +686,7 @@ module aptos_names_v2::domains {
         // check if the domain is registered
         assert!(is_name_registered(option::none(), domain_name), error::not_found(ENAME_NOT_EXIST));
         // check if the domain is expired already
-        assert!(!is_name_expired(option::none(), domain_name), error::invalid_state(ENAME_EXPIRED));
+        assert!(!is_name_expired(domain_name, option::none()), error::invalid_state(ENAME_EXPIRED));
         let record = get_record_mut(domain_name, option::none());
 
         record.expiration_time_sec <= timestamp::now_seconds() + MAX_REMAINING_TIME_FOR_RENEWAL_SEC
@@ -790,13 +790,13 @@ module aptos_names_v2::domains {
             return false
         };
         // Check to see if the domain expired
-        is_name_expired(subdomain_name, domain_name)
+        is_name_expired(domain_name, subdomain_name)
     }
 
     /// Returns true if the is not registered OR (name is registered AND is expired)
     public fun is_name_expired(
+        domain_name: String,
         subdomain_name: Option<String>,
-        domain_name: String
     ): bool acquires CollectionCapability, NameRecord {
         if (!is_name_registered(subdomain_name, domain_name)) {
             true
@@ -832,8 +832,8 @@ module aptos_names_v2::domains {
         domain_name: String
     ): bool acquires CollectionCapability, NameRecord {
         if (!is_name_registered(subdomain_name, domain_name) || is_name_expired(
+            domain_name,
             subdomain_name,
-            domain_name
         )) return false;
         let record_obj = object::address_to_object<NameRecord>(get_token_addr_inline(domain_name, subdomain_name));
         object::owns(record_obj, owner_addr)
@@ -846,8 +846,8 @@ module aptos_names_v2::domains {
     ): Option<address> acquires CollectionCapability, NameRecord {
         // check if the name is registered
         if (!is_name_registered(subdomain_name, domain_name) || is_name_expired(
+            domain_name,
             subdomain_name,
-            domain_name
         )) return option::none();
         let record_obj = object::address_to_object<NameRecord>(get_token_addr_inline(domain_name, subdomain_name));
         option::some(object::owner(record_obj))
