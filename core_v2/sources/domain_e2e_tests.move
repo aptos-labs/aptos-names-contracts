@@ -94,7 +94,7 @@ module aptos_names_v2::domain_e2e_tests {
         let (new_expiration_time_sec, _) = domains::get_name_record_props_for_name(option::none(), test_helper::domain_name());
         // Ensure the domain is still expired after the new expiration time
         timestamp::update_global_time_for_test_secs(new_expiration_time_sec + 5);
-        assert!(domains::is_name_expired(option::none(), test_helper::domain_name()), 5);
+        assert!(domains::is_name_expired(test_helper::domain_name(), option::none()), 5);
     }
 
     #[test(
@@ -151,7 +151,7 @@ module aptos_names_v2::domain_e2e_tests {
         timestamp::update_global_time_for_test_secs(expiration_time_sec + 5);
 
         // It should now be: expired, registered, AND registerable
-        assert!(domains::is_name_expired(option::none(), test_helper::domain_name()), 80);
+        assert!(domains::is_name_expired(test_helper::domain_name(), option::none()), 80);
         assert!(domains::is_name_registered(option::none(), test_helper::domain_name()), 81);
         assert!(domains::is_name_registerable(test_helper::domain_name(), option::none()), 82);
 
@@ -166,7 +166,7 @@ module aptos_names_v2::domain_e2e_tests {
         timestamp::update_global_time_for_test_secs(expiration_time_sec + 5);
 
         // It should now be: expired, registered, AND registerable
-        assert!(domains::is_name_expired(option::none(), test_helper::domain_name()), 80);
+        assert!(domains::is_name_expired(test_helper::domain_name(), option::none()), 80);
         assert!(domains::is_name_registered(option::none(), test_helper::domain_name()), 81);
         assert!(domains::is_name_registerable(test_helper::domain_name(), option::none()), 82);
 
@@ -808,15 +808,15 @@ module aptos_names_v2::domain_e2e_tests {
 
         // Non-registered domain should be expired
         {
-            let is_expired = domains::is_name_expired(option::none(), test_helper::domain_name());
+            let is_expired = domains::is_name_expired(test_helper::domain_name(), option::none());
             assert!(is_expired, 1);
         };
 
         // Non-registered subdomain should be expired
         {
             let is_expired = domains::is_name_expired(
+                test_helper::domain_name(),
                 option::some(test_helper::subdomain_name()),
-                test_helper::domain_name()
             );
             assert!(is_expired, 1);
         };
