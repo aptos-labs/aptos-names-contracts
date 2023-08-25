@@ -5,6 +5,7 @@ module router::router {
     use aptos_framework::timestamp;
     use std::error;
     use std::option::{Self, Option};
+    use std::signer;
     use std::signer::address_of;
     use std::string::{String};
 
@@ -450,11 +451,28 @@ module router::router {
             );
             aptos_names::domains::set_reverse_lookup(user, &record);
         } else if (mode == MODE_V1_AND_V2) {
-            aptos_names_v2::domains::set_reverse_lookup(
-                user,
-                subdomain_name,
-                domain_name,
-            );
+            if (exists_in_v2(domain_name, subdomain_name)) {
+                aptos_names_v2::domains::set_reverse_lookup(
+                    user,
+                    subdomain_name,
+                    domain_name,
+                );
+            } else {
+                if (option::is_none(&subdomain_name)) {
+                    migrate_name(user, domain_name, subdomain_name);
+                    aptos_names_v2::domains::set_reverse_lookup(
+                        user,
+                        subdomain_name,
+                        domain_name,
+                    );
+                } else {
+                    let record = aptos_names::domains::create_name_record_key_v1(
+                        subdomain_name,
+                        domain_name,
+                    );
+                    aptos_names::domains::set_reverse_lookup(user, &record);
+                };
+            };
         } else {
             abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
         }
@@ -465,7 +483,19 @@ module router::router {
         if (mode == MODE_V1) {
             aptos_names::domains::clear_reverse_lookup(user);
         } else if (mode == MODE_V1_AND_V2) {
-            aptos_names_v2::domains::clear_reverse_lookup(user);
+            let user_address = signer::address_of(user);
+            let (domain_name_in_v1, subdomain_name_in_v1) = get_v1_primary_name(user_address);
+            let (domain_name_in_v2, _) = get_primary_name(user_address);
+            if (option::is_some(&domain_name_in_v2)) {
+                aptos_names_v2::domains::clear_reverse_lookup(user);
+            } else {
+                if (option::is_some(&domain_name_in_v1)) {
+                    migrate_name(user, *option::borrow(&domain_name_in_v1), subdomain_name_in_v1);
+                    aptos_names_v2::domains::clear_reverse_lookup(user);
+                } else {
+                    aptos_names::domains::clear_reverse_lookup(user);
+                };
+            };
         } else {
             abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
         }
@@ -488,6 +518,11 @@ module router::router {
                 target_addr,
             )
         } else if (mode == MODE_V1_AND_V2) {
+            // Migrate if the name is still in v1 and is a domain.
+            // We do not migrate the subdomain because it might fail due to domain hasn't been migrated
+            if (!exists_in_v2(domain_name, subdomain_name) && option::is_none(&subdomain_name)) {
+                migrate_name(user, domain_name, subdomain_name);
+            };
             aptos_names_v2::domains::set_target_address(
                 user,
                 domain_name,
@@ -512,6 +547,11 @@ module router::router {
                 domain_name,
             )
         } else if (mode == MODE_V1_AND_V2) {
+            // Migrate if the name is still in v1 and is a domain.
+            // We do not migrate the subdomain because it might fail due to domain hasn't been migrated
+            if (!exists_in_v2(domain_name, subdomain_name) && option::is_none(&subdomain_name)) {
+                migrate_name(user, domain_name, subdomain_name);
+            };
             aptos_names_v2::domains::clear_target_address(
                 user,
                 subdomain_name,
