@@ -38,7 +38,7 @@ module aptos_names_v2::query_helper {
     #[view]
     /// Returns true if domain is not registered OR (name is registered AND is expired)
     public fun domain_name_is_expired(domain_name: String): bool {
-        domains::is_name_expired(option::none(), domain_name)
+        domains::is_name_expired(domain_name, option::none())
     }
 
     #[view]
@@ -47,7 +47,7 @@ module aptos_names_v2::query_helper {
         subdomain_name: String,
         domain_name: String
     ): bool {
-        domains::is_name_expired(option::some(subdomain_name), domain_name)
+        domains::is_name_expired(domain_name, option::some(subdomain_name))
     }
 
     #[view]
@@ -55,7 +55,7 @@ module aptos_names_v2::query_helper {
     public fun domain_name_is_registered(
         domain_name: String
     ): bool {
-        domains::is_name_registered(option::none(), domain_name)
+        domains::is_name_registered(domain_name, option::none())
     }
 
     #[view]
@@ -64,7 +64,7 @@ module aptos_names_v2::query_helper {
         subdomain_name: String,
         domain_name: String
     ): bool {
-        domains::is_name_registered(option::some(subdomain_name), domain_name)
+        domains::is_name_registered(domain_name, option::some(subdomain_name))
     }
 
     #[view]
