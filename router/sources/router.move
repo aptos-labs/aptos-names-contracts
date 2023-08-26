@@ -451,11 +451,6 @@ module router::router {
             );
             aptos_names::domains::set_reverse_lookup(user, &record);
         } else if (mode == MODE_V1_AND_V2) {
-            // Migrate if the name is still in v1 and is a domain.
-            // We do not migrate the subdomain because it might fail due to domain hasn't been migrated.
-            if (!exists_in_v2(domain_name, subdomain_name) && option::is_none(&subdomain_name)) {
-                migrate_name(user, domain_name, subdomain_name);
-            };
             aptos_names_v2::domains::set_reverse_lookup(
                 user,
                 subdomain_name,
@@ -471,12 +466,6 @@ module router::router {
         if (mode == MODE_V1) {
             aptos_names::domains::clear_reverse_lookup(user);
         } else if (mode == MODE_V1_AND_V2) {
-            let user_address = signer::address_of(user);
-            let (domain_name_in_v1, subdomain_name_in_v1) = get_v1_primary_name(user_address);
-            let (domain_name_in_v2, _) = get_primary_name(user_address);
-            if (option::is_none(&domain_name_in_v2) && option::is_none(&subdomain_name_in_v1)) {
-                migrate_name(user, *option::borrow(&domain_name_in_v1), subdomain_name_in_v1);
-            } ;
             aptos_names_v2::domains::clear_reverse_lookup(user);
         } else {
             abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
@@ -802,24 +791,6 @@ module router::router {
         }
     }
 
-    public inline fun get_v2_primary_name(
-        user_addr: address
-    ): (Option<String>, Option<String>) {
-        if (!aptos_names_v2::domains::reverse_record_exists(user_addr)) {
-            (option::none(), option::none())
-        } else {
-            let token_addr = aptos_names_v2::domains::get_reverse_lookup(user_addr);
-            if (option::is_none(&token_addr)) {
-                (option::none(), option::none())
-            } else {
-                let (subdomain_name, domain_name) = aptos_names_v2::domains::get_record_props_from_token_addr(
-                    *option::borrow(&token_addr)
-                );
-                (subdomain_name, option::some(domain_name))
-            }
-        }
-    }
-
     #[view]
     /// @returns a tuple of (subdomain, domain). If user_addr has no primary name, two `option::none()` will be returned
     public fun get_primary_name(user_addr: address): (Option<String>, Option<String>) acquires RouterConfig {
@@ -830,7 +801,15 @@ module router::router {
             if (!aptos_names_v2::domains::reverse_record_exists(user_addr)) {
                 get_v1_primary_name(user_addr)
             } else {
-                get_v2_primary_name(user_addr)
+                let token_addr = aptos_names_v2::domains::get_reverse_lookup(user_addr);
+                if (option::is_none(&token_addr)) {
+                    (option::none(), option::none())
+                } else {
+                    let (subdomain_name, domain_name) = aptos_names_v2::domains::get_record_props_from_token_addr(
+                        *option::borrow(&token_addr)
+                    );
+                    (subdomain_name, option::some(domain_name))
+                }
             }
         } else {
             abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
