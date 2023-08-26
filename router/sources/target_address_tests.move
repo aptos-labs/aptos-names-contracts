@@ -185,7 +185,7 @@ module router::target_address_tests {
             assert!(*option::borrow(&v2_target_address) == user2_addr, 2);
         };
         // Set subdomain target address to user2_addr
-        // This should throw error because we do not auto migrate subdomain and set target address for v1 name in MODE_V1_AND_V2 is not allowed
+        // This should throw ENOT_OWNER_OF_NAME error because we do not auto migrate subdomain and set target address for v1 name in MODE_V1_AND_V2 is not allowed
         // User needs to migrate manually
         router::set_target_addr(user, domain_name, subdomain_name_opt, user2_addr);
     }
@@ -241,7 +241,7 @@ module router::target_address_tests {
             assert!(option::is_none(&v2_target_address), 2);
         };
         // Clear subdomain target address
-        // This should throw error because we do not auto migrate subdomain and set target address for v1 name in MODE_V1_AND_V2 is not allowed
+        // This should throw error ENAME_NOT_EXIST because we do not auto migrate subdomain and set target address for v1 name in MODE_V1_AND_V2 is not allowed
         // User needs to migrate manually
         router::clear_target_addr(user, domain_name, subdomain_name_opt);
     }

@@ -5,7 +5,6 @@ module router::router {
     use aptos_framework::timestamp;
     use std::error;
     use std::option::{Self, Option};
-    use std::signer;
     use std::signer::address_of;
     use std::string::{String};
 
