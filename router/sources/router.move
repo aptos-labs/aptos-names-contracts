@@ -777,7 +777,7 @@ module router::router {
         }
     }
 
-    public inline fun get_v1_primary_name(
+    inline fun get_v1_primary_name(
         user_addr: address
     ): (Option<String>, Option<String>) {
         let record = aptos_names::domains::get_reverse_lookup(user_addr);
