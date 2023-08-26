@@ -6,7 +6,6 @@ module router::primary_name_tests {
     use std::signer::address_of;
     use std::string::utf8;
     use std::vector;
-    // use aptos_std::debug;
 
     const SECONDS_PER_YEAR: u64 = 60 * 60 * 24 * 365;
 
@@ -242,7 +241,6 @@ module router::primary_name_tests {
     //     assert!(router::is_name_owner(user_addr, domain_name, option::none()), 1);
     //     {
     //         let (primary_subdomain_name, primary_domain_name) = router::get_primary_name(user_addr);
-    //         debug::print(&primary_domain_name);
     //
     //         assert!(option::is_some(&primary_domain_name), 2);
     //         assert!(option::is_none(&primary_subdomain_name), 3);

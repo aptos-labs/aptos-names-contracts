@@ -8,7 +8,6 @@ module router::router {
     use std::signer;
     use std::signer::address_of;
     use std::string::{String};
-    use aptos_std::debug;
 
     // == ROUTER MODE ENUMS ==
 
@@ -457,7 +456,6 @@ module router::router {
             if (!exists_in_v2(domain_name, subdomain_name) && option::is_none(&subdomain_name)) {
                 migrate_name(user, domain_name, subdomain_name);
             };
-            debug::print(&1);
             aptos_names_v2::domains::set_reverse_lookup(
                 user,
                 subdomain_name,
