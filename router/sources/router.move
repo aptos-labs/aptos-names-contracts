@@ -455,9 +455,9 @@ module router::router {
             // Migrate if the name is still in v1 and is a domain.
             // We do not migrate the subdomain because it might fail due to domain hasn't been migrated.
             if (!exists_in_v2(domain_name, subdomain_name) && option::is_none(&subdomain_name)) {
-                debug::print(&1);
                 migrate_name(user, domain_name, subdomain_name);
             };
+            debug::print(&1);
             aptos_names_v2::domains::set_reverse_lookup(
                 user,
                 subdomain_name,
@@ -647,7 +647,7 @@ module router::router {
         object::is_object(aptos_names_v2::domains::get_token_addr(domain_name, subdomain_name))
     }
 
-    inline fun get_v1_target_addr(
+    public inline fun get_v1_target_addr(
         domain_name: String,
         subdomain_name: Option<String>
     ): Option<address> {
@@ -656,6 +656,21 @@ module router::router {
             domain_name,
         );
         target_addr
+    }
+
+    public inline fun get_v2_target_addr(
+        domain_name: String,
+        subdomain_name: Option<String>
+    ): Option<address> {
+        if (!exists_in_v2(domain_name, subdomain_name)) {
+            option::none()
+        }else {
+            let (_expiration_time_sec, target_addr) = aptos_names_v2::domains::get_name_record_props_for_name(
+                subdomain_name,
+                domain_name
+            );
+            target_addr
+        }
     }
 
     #[view]
@@ -670,11 +685,7 @@ module router::router {
             if (!exists_in_v2(domain_name, subdomain_name)) {
                 get_v1_target_addr(domain_name, subdomain_name)
             } else {
-                let (_expiration_time_sec, target_addr) = aptos_names_v2::domains::get_name_record_props_for_name(
-                    subdomain_name,
-                    domain_name
-                );
-                target_addr
+                get_v2_target_addr(domain_name, subdomain_name)
             }
         } else {
             abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
@@ -779,7 +790,7 @@ module router::router {
         }
     }
 
-    inline fun get_v1_primary_name(
+    public inline fun get_v1_primary_name(
         user_addr: address
     ): (Option<String>, Option<String>) {
         let record = aptos_names::domains::get_reverse_lookup(user_addr);
@@ -793,6 +804,24 @@ module router::router {
         }
     }
 
+    public inline fun get_v2_primary_name(
+        user_addr: address
+    ): (Option<String>, Option<String>) {
+        if (!aptos_names_v2::domains::reverse_record_exists(user_addr)) {
+            (option::none(), option::none())
+        } else {
+            let token_addr = aptos_names_v2::domains::get_reverse_lookup(user_addr);
+            if (option::is_none(&token_addr)) {
+                (option::none(), option::none())
+            } else {
+                let (subdomain_name, domain_name) = aptos_names_v2::domains::get_record_props_from_token_addr(
+                    *option::borrow(&token_addr)
+                );
+                (subdomain_name, option::some(domain_name))
+            }
+        }
+    }
+
     #[view]
     /// @returns a tuple of (subdomain, domain). If user_addr has no primary name, two `option::none()` will be returned
     public fun get_primary_name(user_addr: address): (Option<String>, Option<String>) acquires RouterConfig {
@@ -803,16 +832,7 @@ module router::router {
             if (!aptos_names_v2::domains::reverse_record_exists(user_addr)) {
                 get_v1_primary_name(user_addr)
             } else {
-                let token_addr = aptos_names_v2::domains::get_reverse_lookup(user_addr);
-                if (option::is_none(&token_addr)) {
-                    (option::none(), option::none())
-                } else {
-                    let (subdomain_name, domain_name) = aptos_names_v2::domains::get_record_props_from_token_addr(
-                        *option::borrow(&token_addr)
-                    );
-                    debug::print(&domain_name);
-                    (subdomain_name, option::some(domain_name))
-                }
+                get_v2_primary_name(user_addr)
             }
         } else {
             abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)

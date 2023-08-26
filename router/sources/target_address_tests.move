@@ -52,39 +52,39 @@ module router::target_address_tests {
 
         // Domain target address should be default to user_addr
         {
-            let target_address = router::get_target_addr(domain_name, option::none());
+            let target_address = router::get_v1_target_addr(domain_name, option::none());
             assert!(*option::borrow(&target_address) == user_addr, 1);
         };
         // Subdomain target address should be none, because we don't auto set target address in v1
         {
-            let target_address= router::get_target_addr(domain_name, subdomain_name_opt);
+            let target_address= router::get_v1_target_addr(domain_name, subdomain_name_opt);
             assert!(option::is_none(&target_address), 2);
         };
 
         // Set domain target address to user2_addr
         router::set_target_addr(user, domain_name, option::none(), user2_addr);
         {
-            let target_address = router::get_target_addr(domain_name, option::none());
+            let target_address = router::get_v1_target_addr(domain_name, option::none());
             assert!(*option::borrow(&target_address) == user2_addr, 3);
         };
         // Set subdomain target address to user2_addr
         router::set_target_addr(user, domain_name, subdomain_name_opt, user2_addr);
         {
-            let target_address= router::get_target_addr(domain_name, subdomain_name_opt);
+            let target_address= router::get_v1_target_addr(domain_name, subdomain_name_opt);
             assert!(*option::borrow(&target_address) == user2_addr, 4);
         };
 
         // Clear domain target address
         router::clear_target_addr(user, domain_name, option::none());
         {
-            let target_address = router::get_target_addr(domain_name, option::none());
+            let target_address = router::get_v1_target_addr(domain_name, option::none());
             assert!(option::is_none(&target_address), 5);
         };
 
         // Clear domain target address
         router::clear_target_addr(user, domain_name, subdomain_name_opt);
         {
-            let target_address = router::get_target_addr(domain_name, subdomain_name_opt);
+            let target_address = router::get_v1_target_addr(domain_name, subdomain_name_opt);
             assert!(option::is_none(&target_address), 6);
         };
 
@@ -93,9 +93,9 @@ module router::target_address_tests {
 
         // Target should still be cleared after version bump
         {
-            let target_address = router::get_target_addr(domain_name, option::none());
+            let target_address = router::get_v2_target_addr(domain_name, option::none());
             assert!(option::is_none(&target_address), 7);
-            let target_address = router::get_target_addr(domain_name, subdomain_name_opt);
+            let target_address = router::get_v2_target_addr(domain_name, subdomain_name_opt);
             assert!(option::is_none(&target_address), 8);
         };
 
@@ -106,27 +106,27 @@ module router::target_address_tests {
         // Set domain target address to user2_addr
         router::set_target_addr(user, domain_name, option::none(), user2_addr);
         {
-            let target_address = router::get_target_addr(domain_name, option::none());
+            let target_address = router::get_v2_target_addr(domain_name, option::none());
             assert!(*option::borrow(&target_address) == user2_addr, 3);
         };
         // Set subdomain target address to user2_addr
         router::set_target_addr(user, domain_name, subdomain_name_opt, user2_addr);
         {
-            let target_address= router::get_target_addr(domain_name, subdomain_name_opt);
+            let target_address= router::get_v2_target_addr(domain_name, subdomain_name_opt);
             assert!(*option::borrow(&target_address) == user2_addr, 4);
         };
 
         // Clear domain target address
         router::clear_target_addr(user, domain_name, option::none());
         {
-            let target_address = router::get_target_addr(domain_name, option::none());
+            let target_address = router::get_v2_target_addr(domain_name, option::none());
             assert!(option::is_none(&target_address), 5);
         };
 
         // Clear domain target address
         router::clear_target_addr(user, domain_name, subdomain_name_opt);
         {
-            let target_address = router::get_target_addr(domain_name, subdomain_name_opt);
+            let target_address = router::get_v2_target_addr(domain_name, subdomain_name_opt);
             assert!(option::is_none(&target_address), 6);
         };
 
@@ -179,11 +179,13 @@ module router::target_address_tests {
         // Set domain target address to user2_addr, this should trigger auto migration
         router::set_target_addr(user, domain_name, option::none(), user2_addr);
         {
-            let target_address_in_v2 = router::get_target_addr(domain_name, option::none());
-            assert!(*option::borrow(&target_address_in_v2) == user2_addr, 1);
+            let v1_target_address = router::get_v1_target_addr(domain_name, option::none());
+            assert!(option::is_none(&v1_target_address), 1);
+            let v2_target_address = router::get_v2_target_addr(domain_name, option::none());
+            assert!(*option::borrow(&v2_target_address) == user2_addr, 2);
         };
         // Set subdomain target address to user2_addr
-        // This should throw error because we do not auto migrate subdomain and set target address for v1 name in MODE_V1_AND_V2 is disabled
+        // This should throw error because we do not auto migrate subdomain and set target address for v1 name in MODE_V1_AND_V2 is not allowed
         // User needs to migrate manually
         router::set_target_addr(user, domain_name, subdomain_name_opt, user2_addr);
     }
@@ -233,11 +235,13 @@ module router::target_address_tests {
         // Clear domain target address, this should trigger auto migration
         router::clear_target_addr(user, domain_name, option::none());
         {
-            let target_address_in_v2 = router::get_target_addr(domain_name, option::none());
-            assert!(option::is_none(&target_address_in_v2), 1);
+            let v1_target_address = router::get_v1_target_addr(domain_name, option::none());
+            assert!(option::is_none(&v1_target_address), 1);
+            let v2_target_address = router::get_v2_target_addr(domain_name, option::none());
+            assert!(option::is_none(&v2_target_address), 2);
         };
         // Clear subdomain target address
-        // This should throw error because we do not auto migrate subdomain and set target address for v1 name in MODE_V1_AND_V2 is disabled
+        // This should throw error because we do not auto migrate subdomain and set target address for v1 name in MODE_V1_AND_V2 is not allowed
         // User needs to migrate manually
         router::clear_target_addr(user, domain_name, subdomain_name_opt);
     }
