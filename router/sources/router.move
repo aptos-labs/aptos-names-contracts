@@ -633,7 +633,7 @@ module router::router {
         object::is_object(aptos_names_v2::domains::get_token_addr(domain_name, subdomain_name))
     }
 
-    public inline fun get_v1_target_addr(
+    inline fun get_v1_target_addr(
         domain_name: String,
         subdomain_name: Option<String>
     ): Option<address> {
@@ -644,7 +644,7 @@ module router::router {
         target_addr
     }
 
-    public inline fun get_v2_target_addr(
+    inline fun get_v2_target_addr(
         domain_name: String,
         subdomain_name: Option<String>
     ): Option<address> {
