@@ -114,7 +114,7 @@ module router::target_address_tests {
             assert!(option::is_none(&target_address), 5);
         };
 
-        // Clear domain target address
+        // Clear subdomain target address
         router::clear_target_addr(user, domain_name, subdomain_name_opt);
         {
             let target_address = get_v1_target_addr(domain_name, subdomain_name_opt);
@@ -156,7 +156,7 @@ module router::target_address_tests {
             assert!(option::is_none(&target_address), 5);
         };
 
-        // Clear domain target address
+        // Clear subdomain target address
         router::clear_target_addr(user, domain_name, subdomain_name_opt);
         {
             let target_address = get_v2_target_addr(domain_name, subdomain_name_opt);
@@ -186,6 +186,7 @@ module router::target_address_tests {
         router::init_module_for_test(router);
         let users = test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user1, &aptos, user2, &foundation);
         let user = vector::borrow(&users, 0);
+        let user_addr = address_of(user);
         let user2 = vector::borrow(&users, 1);
         let user2_addr = address_of(user2);
         let domain_name = utf8(b"test");
@@ -211,10 +212,11 @@ module router::target_address_tests {
         // Set domain target address to user2_addr, this should trigger auto migration
         router::set_target_addr(user, domain_name, option::none(), user2_addr);
         {
+            assert!(aptos_names_v2::domains::is_owner_of_name(user_addr, option::none(), domain_name), 1);
             let v1_target_address = get_v1_target_addr(domain_name, option::none());
-            assert!(option::is_none(&v1_target_address), 1);
+            assert!(option::is_none(&v1_target_address), 2);
             let v2_target_address = get_v2_target_addr(domain_name, option::none());
-            assert!(*option::borrow(&v2_target_address) == user2_addr, 2);
+            assert!(*option::borrow(&v2_target_address) == user2_addr, 3);
         };
         // Set subdomain target address to user2_addr
         // This should throw ESUBDOMAIN_NOT_MIGRATED error because we do not auto migrate subdomain and set target address for v1 name in MODE_V1_AND_V2 is not allowed
@@ -244,6 +246,7 @@ module router::target_address_tests {
         router::init_module_for_test(router);
         let users = test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user1, &aptos, user2, &foundation);
         let user = vector::borrow(&users, 0);
+        let user_addr = address_of(user);
         let domain_name = utf8(b"test");
         let subdomain_name = utf8(b"test");
         let subdomain_name_opt = option::some(subdomain_name);
@@ -267,6 +270,7 @@ module router::target_address_tests {
         // Clear domain target address, this should trigger auto migration
         router::clear_target_addr(user, domain_name, option::none());
         {
+            assert!(aptos_names_v2::domains::is_owner_of_name(user_addr, option::none(), domain_name), 1);
             let v1_target_address = get_v1_target_addr(domain_name, option::none());
             assert!(option::is_none(&v1_target_address), 1);
             let v2_target_address = get_v2_target_addr(domain_name, option::none());
