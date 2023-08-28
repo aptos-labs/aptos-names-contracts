@@ -35,6 +35,8 @@ module router::router {
     const EMIGRATION_ALREADY_EXPIRED: u64 = 7;
     /// User is not owner of the name
     const ENOT_NAME_OWNER: u64 = 8;
+    /// Subdomain has not been migrated
+    const ESUBDOMAIN_NOT_MIGRATED: u64 = 9;
 
     // == OTHER CONSTANTS ==
 
@@ -490,9 +492,16 @@ module router::router {
         } else if (mode == MODE_V1_AND_V2) {
             // Migrate if the name is still in v1 and is a domain.
             // We do not migrate the subdomain because it might fail due to domain hasn't been migrated
-            if (!exists_in_v2(domain_name, subdomain_name) && option::is_none(&subdomain_name)) {
-                migrate_name(user, domain_name, subdomain_name);
+            if (!exists_in_v2(domain_name, subdomain_name)) {
+                if (option::is_none(&subdomain_name)) {
+                    migrate_name(user, domain_name, subdomain_name);
+                } else {
+                    abort error::invalid_argument(ESUBDOMAIN_NOT_MIGRATED)
+                };
             };
+            // if (option::is_some(&subdomain_name) && is_v1_name_owner(user_addr, domain_name, subdomain_name) && !exists_in_v2(domain_name, subdomain_name)) {
+            //
+            // };
             aptos_names_v2::domains::set_target_address(
                 user,
                 domain_name,
@@ -519,8 +528,12 @@ module router::router {
         } else if (mode == MODE_V1_AND_V2) {
             // Migrate if the name is still in v1 and is a domain.
             // We do not migrate the subdomain because it might fail due to domain hasn't been migrated
-            if (!exists_in_v2(domain_name, subdomain_name) && option::is_none(&subdomain_name)) {
-                migrate_name(user, domain_name, subdomain_name);
+            if (!exists_in_v2(domain_name, subdomain_name)) {
+                if (option::is_none(&subdomain_name)) {
+                    migrate_name(user, domain_name, subdomain_name);
+                } else {
+                    abort error::invalid_argument(ESUBDOMAIN_NOT_MIGRATED)
+                };
             };
             aptos_names_v2::domains::clear_target_address(
                 user,
