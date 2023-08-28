@@ -453,6 +453,24 @@ module router::router {
             );
             aptos_names::domains::set_reverse_lookup(user, &record);
         } else if (mode == MODE_V1_AND_V2) {
+            // Migrate if the name is still in v1 and is a domain.
+            // We do not migrate the subdomain because it might fail due to domain hasn't been migrated
+            if (!exists_in_v2(domain_name, subdomain_name) && is_v1_name_owner(
+                signer::address_of(user),
+                domain_name,
+                subdomain_name
+            )) {
+                if (option::is_none(&subdomain_name)) {
+                    migrate_name(user, domain_name, subdomain_name);
+                } else {
+                    abort error::invalid_argument(ESUBDOMAIN_NOT_MIGRATED)
+                };
+            };
+            // Clear primary name in v1 if exists so we do not have primary name in both v1 and v2
+            let (_, v1_primary_domain_name) = get_v1_primary_name(signer::address_of(user));
+            if (option::is_some(&v1_primary_domain_name)) {
+                aptos_names::domains::clear_reverse_lookup(user);
+            };
             aptos_names_v2::domains::set_reverse_lookup(
                 user,
                 subdomain_name,
