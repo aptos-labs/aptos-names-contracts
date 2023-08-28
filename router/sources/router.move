@@ -5,6 +5,7 @@ module router::router {
     use aptos_framework::timestamp;
     use std::error;
     use std::option::{Self, Option};
+    use std::signer;
     use std::signer::address_of;
     use std::string::{String};
 
@@ -492,16 +493,17 @@ module router::router {
         } else if (mode == MODE_V1_AND_V2) {
             // Migrate if the name is still in v1 and is a domain.
             // We do not migrate the subdomain because it might fail due to domain hasn't been migrated
-            if (!exists_in_v2(domain_name, subdomain_name)) {
+            if (!exists_in_v2(domain_name, subdomain_name) && is_v1_name_owner(
+                signer::address_of(user),
+                domain_name,
+                subdomain_name
+            )) {
                 if (option::is_none(&subdomain_name)) {
                     migrate_name(user, domain_name, subdomain_name);
                 } else {
                     abort error::invalid_argument(ESUBDOMAIN_NOT_MIGRATED)
                 };
             };
-            // if (option::is_some(&subdomain_name) && is_v1_name_owner(user_addr, domain_name, subdomain_name) && !exists_in_v2(domain_name, subdomain_name)) {
-            //
-            // };
             aptos_names_v2::domains::set_target_address(
                 user,
                 domain_name,
@@ -528,7 +530,11 @@ module router::router {
         } else if (mode == MODE_V1_AND_V2) {
             // Migrate if the name is still in v1 and is a domain.
             // We do not migrate the subdomain because it might fail due to domain hasn't been migrated
-            if (!exists_in_v2(domain_name, subdomain_name)) {
+            if (!exists_in_v2(domain_name, subdomain_name) && is_v1_name_owner(
+                signer::address_of(user),
+                domain_name,
+                subdomain_name
+            )) {
                 if (option::is_none(&subdomain_name)) {
                     migrate_name(user, domain_name, subdomain_name);
                 } else {
@@ -657,21 +663,6 @@ module router::router {
         target_addr
     }
 
-    inline fun get_v2_target_addr(
-        domain_name: String,
-        subdomain_name: Option<String>
-    ): Option<address> {
-        if (!exists_in_v2(domain_name, subdomain_name)) {
-            option::none()
-        }else {
-            let (_expiration_time_sec, target_addr) = aptos_names_v2::domains::get_name_record_props_for_name(
-                subdomain_name,
-                domain_name
-            );
-            target_addr
-        }
-    }
-
     #[view]
     public fun get_target_addr(
         domain_name: String,
@@ -684,7 +675,11 @@ module router::router {
             if (!exists_in_v2(domain_name, subdomain_name)) {
                 get_v1_target_addr(domain_name, subdomain_name)
             } else {
-                get_v2_target_addr(domain_name, subdomain_name)
+                let (_expiration_time_sec, target_addr) = aptos_names_v2::domains::get_name_record_props_for_name(
+                    subdomain_name,
+                    domain_name
+                );
+                target_addr
             }
         } else {
             abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
