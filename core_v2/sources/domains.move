@@ -669,9 +669,7 @@ module aptos_names_v2::domains {
         domain_name: String
     ) acquires CollectionCapability, NameRecord, ReverseRecord, SetTargetAddressEvents, SetReverseLookupEvents {
         // Name must be registered before assigning reverse lookup
-        if (!is_name_registered(domain_name, subdomain_name)) {
-            return
-        };
+        assert!(is_name_registered(domain_name, subdomain_name), error::not_found(ENAME_NOT_EXIST));
         let token_addr = get_token_addr_inline(domain_name, subdomain_name);
         set_target_address(account, domain_name, subdomain_name, address_of(account));
         set_reverse_lookup_internal(account, token_addr);
