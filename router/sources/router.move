@@ -366,6 +366,11 @@ module router::router {
                 aptos_names::domains::clear_domain_address(user, domain_name);
             };
 
+            // Clear the primary name in v1
+            if (is_primary_name) {
+                aptos_names::domains::clear_reverse_lookup(user);
+            };
+
             // Burn by sending to `router_signer`
             let router_signer = get_router_signer();
             aptos_token::token::direct_transfer(
