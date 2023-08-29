@@ -211,7 +211,7 @@ module router::registration_tests {
         assert!(router::is_name_owner(user_addr, domain_name2, option::some(subdomain_name2)), 2);
         assert!(router::get_subdomain_expiration_policy(domain_name2, subdomain_name2) == 0, 3);
 
-        // Register again with a different subdomain expiration policy
+        // Register another subdomain with a different subdomain expiration policy
         let subdomain_name3 = utf8(b"sub3");
         router::register_subdomain(
             user,
