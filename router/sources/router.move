@@ -585,19 +585,7 @@ module router::router {
                 target_addr,
             )
         } else if (mode == MODE_V1_AND_V2) {
-            // Migrate if the name is still in v1 and is a domain.
-            // We do not migrate the subdomain because it might fail due to domain hasn't been migrated
-            if (!exists_in_v2(domain_name, subdomain_name) && is_v1_name_owner(
-                signer::address_of(user),
-                domain_name,
-                subdomain_name
-            )) {
-                if (option::is_none(&subdomain_name)) {
-                    migrate_name(user, domain_name, subdomain_name);
-                } else {
-                    abort error::invalid_argument(ESUBDOMAIN_NOT_MIGRATED)
-                };
-            };
+            migrate_if_eligible(user, domain_name, subdomain_name);
             aptos_names_v2::domains::set_target_address(
                 user,
                 domain_name,
@@ -622,19 +610,7 @@ module router::router {
                 domain_name,
             )
         } else if (mode == MODE_V1_AND_V2) {
-            // Migrate if the name is still in v1 and is a domain.
-            // We do not migrate the subdomain because it might fail due to domain hasn't been migrated
-            if (!exists_in_v2(domain_name, subdomain_name) && is_v1_name_owner(
-                signer::address_of(user),
-                domain_name,
-                subdomain_name
-            )) {
-                if (option::is_none(&subdomain_name)) {
-                    migrate_name(user, domain_name, subdomain_name);
-                } else {
-                    abort error::invalid_argument(ESUBDOMAIN_NOT_MIGRATED)
-                };
-            };
+            migrate_if_eligible(user, domain_name, subdomain_name);
             aptos_names_v2::domains::clear_target_address(
                 user,
                 subdomain_name,
