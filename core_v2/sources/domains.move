@@ -126,9 +126,17 @@ module aptos_names_v2::domains {
     /// the reverse lookup has been cleared (in which case |target_address|
     /// will be none)
     struct SetReverseLookupEvent has drop, store {
-        domain_name: String,
-        subdomain_name: Option<String>,
-        target_address: Option<address>,
+        /// The address this reverse lookup belongs to
+        account_addr: address,
+
+        /// Indexer needs knowledge of previous state
+        prev_domain_name: Option<String>,
+        prev_subdomain_name: Option<String>,
+        prev_expiration_time_secs: Option<u64>,
+
+        curr_domain_name: Option<String>,
+        curr_subdomain_name: Option<String>,
+        curr_expiration_time_secs: Option<u64>,
     }
 
     /// A name (potentially subdomain) has had it's address changed
@@ -156,6 +164,10 @@ module aptos_names_v2::domains {
         subdomain_name: Option<String>,
         renewal_fee_octas: u64,
         expiration_time_secs: u64,
+
+        // Extras for indexing
+        target_address: Option<address>,
+        is_primary_name: bool,
     }
 
     /// This is only callable during publishing
@@ -433,7 +445,7 @@ module aptos_names_v2::domains {
         sign: &signer,
         domain_name: String,
         renewal_duration_secs: u64,
-    ) acquires CollectionCapability, NameRecord, RenewNameEvents {
+    ) acquires CollectionCapability, NameRecord, RenewNameEvents, ReverseRecord {
         // check the domain eligibility
         let length = validate_name_string(domain_name);
 
@@ -449,9 +461,22 @@ module aptos_names_v2::domains {
         domain_name: String,
         renewal_duration_secs: u64,
         price: u64,
-    ) acquires CollectionCapability, NameRecord, RenewNameEvents {
+    ) acquires CollectionCapability, NameRecord, RenewNameEvents, ReverseRecord {
         let record = get_record_mut(domain_name, option::none());
         record.expiration_time_sec = record.expiration_time_sec + renewal_duration_secs;
+
+        // Idea here is that if this is a primary name, then the target_addr's reverse lookup should point back to this domain
+        let is_primary_name = if (option::is_some(&record.target_address)) {
+            let maybe_reverse_record = get_reverse_lookup(*option::borrow(&record.target_address));
+            if (option::is_some(&maybe_reverse_record)) {
+                let reverse_record_addr = *option::borrow(&maybe_reverse_record);
+                get_token_addr_inline(domain_name, option::none()) == reverse_record_addr
+            } else {
+                false
+            }
+        } else {
+            false
+        };
 
         // log the event
         event::emit_event<RenewNameEvent>(
@@ -461,6 +486,9 @@ module aptos_names_v2::domains {
                 subdomain_name: option::none(),
                 renewal_fee_octas: price,
                 expiration_time_secs: record.expiration_time_sec,
+
+                target_address: record.target_address,
+                is_primary_name,
             },
         );
     }
@@ -705,23 +733,40 @@ module aptos_names_v2::domains {
         token_addr: address,
     ) acquires NameRecord, ReverseRecord, SetReverseLookupEvents {
         let account_addr = signer::address_of(account);
-        let record = borrow_global<NameRecord>(token_addr);
         let record_obj = object::address_to_object<NameRecord>(token_addr);
         assert!(object::owns(record_obj, account_addr), error::permission_denied(ENOT_AUTHORIZED));
 
+        let prev_subdomain_name = option::none<String>();
+        let prev_domain_name = option::none<String>();
+        let prev_expiration_time_secs = option::none<u64>();
         if (!exists<ReverseRecord>(account_addr)) {
             move_to(account, ReverseRecord {
                 token_addr: option::some(token_addr)
             })
         } else {
             let reverse_record = borrow_global_mut<ReverseRecord>(account_addr);
+
+            // Lookup the previous reverse lookup
+            if (option::is_some(&reverse_record.token_addr)) {
+                let prev_token_addr = *option::borrow(&reverse_record.token_addr);
+                let prev_record = borrow_global_mut<NameRecord>(prev_token_addr);
+                prev_subdomain_name = extract_subdomain_name(prev_record);
+                prev_domain_name = option::some(prev_record.domain_name);
+                // TODO: Should this be dynamic for subdomains?
+                prev_expiration_time_secs = option::some(prev_record.expiration_time_sec);
+            };
             reverse_record.token_addr = option::some(token_addr);
         };
 
+        let record = borrow_global<NameRecord>(token_addr);
         emit_set_reverse_lookup_event(
+            account_addr,
+            prev_subdomain_name,
+            prev_domain_name,
+            prev_expiration_time_secs,
             extract_subdomain_name(record),
-            record.domain_name,
-            option::some(account_addr)
+            option::some(record.domain_name),
+            option::some(record.expiration_time_sec)
         );
     }
 
@@ -732,13 +777,25 @@ module aptos_names_v2::domains {
         if (option::is_none(&maybe_reverse_lookup)) {
             return
         };
+
+        // Lookup the previous reverse lookup
         let token_addr = *option::borrow(&maybe_reverse_lookup);
-        let record = borrow_global<NameRecord>(token_addr);
+        let record = borrow_global_mut<NameRecord>(token_addr);
+        let prev_subdomain_name = extract_subdomain_name(record);
+        let prev_domain_name = option::some(record.domain_name);
+        let prev_expiration_time_secs = option::some(record.expiration_time_sec);
+
+        // Clear the reverse lookup
         let reverse_record = borrow_global_mut<ReverseRecord>(account_addr);
         reverse_record.token_addr = option::none();
+
         emit_set_reverse_lookup_event(
-            extract_subdomain_name(record),
-            record.domain_name,
+            account_addr,
+            prev_subdomain_name,
+            prev_domain_name,
+            prev_expiration_time_secs,
+            option::none(),
+            option::none(),
             option::none()
         );
     }
@@ -1111,14 +1168,24 @@ module aptos_names_v2::domains {
     }
 
     fun emit_set_reverse_lookup_event(
-        subdomain_name: Option<String>,
-        domain_name: String,
-        target_address: Option<address>
+        account_addr: address,
+        prev_subdomain_name: Option<String>,
+        prev_domain_name: Option<String>,
+        prev_expiration_time_secs: Option<u64>,
+        curr_subdomain_name: Option<String>,
+        curr_domain_name: Option<String>,
+        curr_expiration_time_secs: Option<u64>,
     ) acquires SetReverseLookupEvents {
         let event = SetReverseLookupEvent {
-            domain_name,
-            subdomain_name,
-            target_address,
+            account_addr,
+
+            prev_domain_name,
+            prev_subdomain_name,
+            prev_expiration_time_secs,
+
+            curr_domain_name,
+            curr_subdomain_name,
+            curr_expiration_time_secs,
         };
 
         event::emit_event<SetReverseLookupEvent>(
