@@ -5,6 +5,7 @@ module router::router {
     use aptos_framework::timestamp;
     use std::error;
     use std::option::{Self, Option};
+    use std::signer;
     use std::signer::address_of;
     use std::string::{String};
 
@@ -35,6 +36,8 @@ module router::router {
     const EMIGRATION_ALREADY_EXPIRED: u64 = 7;
     /// User is not owner of the name
     const ENOT_NAME_OWNER: u64 = 8;
+    /// Subdomain has not been migrated
+    const ESUBDOMAIN_NOT_MIGRATED: u64 = 9;
 
     // == OTHER CONSTANTS ==
 
@@ -150,7 +153,7 @@ module router::router {
             );
             is_burned
         } else {
-            aptos_names_v2::domains::name_is_registerable(subdomain_name, domain_name)
+            aptos_names_v2::domains::is_name_registerable(domain_name, subdomain_name)
         }
     }
 
@@ -201,6 +204,39 @@ module router::router {
         if (option::is_some(&to_addr)) {
             transfer_name(user, domain_name, option::none(), *option::borrow(&to_addr));
         };
+
+        set_primary_name_when_register(
+            user,
+            target_addr,
+            to_addr,
+            domain_name,
+            option::none(),
+        );
+    }
+
+    fun set_primary_name_when_register(
+        user: &signer,
+        target_addr: Option<address>,
+        to_addr: Option<address>,
+        domain_name: String,
+        subdomain_name: Option<String>,
+    ) acquires RouterConfig {
+        let owner_addr = address_of(user);
+
+        // if the owner address is not the buyer address
+        if (option::is_some(&to_addr) && to_addr != option::some(owner_addr)) {
+            return
+        };
+
+        // if the target address is not the buyer address
+        if (option::is_some(&target_addr) && target_addr != option::some(owner_addr)) {
+            return
+        };
+
+        let has_primary_name = has_primary_name(user);
+        if (!has_primary_name) {
+            set_primary_name(user, domain_name, subdomain_name);
+        };
     }
 
     /// @param user The user who is paying for the registration
@@ -216,7 +252,7 @@ module router::router {
         domain_name: String,
         subdomain_name: String,
         expiration_time_sec: u64,
-        _expiration_policy: u8,
+        expiration_policy: u8,
         transferrable: bool,
         target_addr: Option<address>,
         to_addr: Option<address>,
@@ -235,6 +271,12 @@ module router::router {
                 domain_name,
                 subdomain_name,
                 expiration_time_sec,
+            );
+            aptos_names_v2::domains::set_subdomain_expiration_policy(
+                user,
+                domain_name,
+                subdomain_name,
+                expiration_policy,
             )
         } else {
             abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
@@ -260,7 +302,15 @@ module router::router {
                 subdomain_name,
                 transferrable
             )
-        }
+        };
+
+        set_primary_name_when_register(
+            user,
+            target_addr,
+            to_addr,
+            domain_name,
+            option::some(subdomain_name),
+        );
     }
 
     // ==== MIGRATION ====
@@ -328,12 +378,7 @@ module router::router {
             // Calculate new expiration
             let now = timestamp::now_seconds();
             let new_expiration_time_sec = if (option::is_some(&subdomain_name)) {
-                // Subdomains inherit the expiration of their domain
-                let (domain_expiration_time_sec, _domain_target_addr) = aptos_names_v2::domains::get_name_record_props_for_name(
-                    option::none(),
-                    domain_name,
-                );
-                domain_expiration_time_sec
+                expiration_time_sec
             } else {
                 assert!(expiration_time_sec >= now, error::invalid_state(EMIGRATION_ALREADY_EXPIRED));
                 if (expiration_time_sec <= AUTO_RENEWAL_EXPIRATION_CUTOFF_SEC) {
@@ -359,8 +404,8 @@ module router::router {
             } else if (option::is_some(&target_addr)) {
                 aptos_names_v2::domains::set_target_address(
                     user,
-                    subdomain_name,
                     domain_name,
+                    subdomain_name,
                     *option::borrow(&target_addr)
                 );
             };
@@ -405,7 +450,7 @@ module router::router {
 
             // TODO: Probably good idea to clear entries in v1
         } else if (mode == MODE_V1_AND_V2) {
-            let token_addr = aptos_names_v2::domains::token_addr(domain_name, subdomain_name);
+            let token_addr = aptos_names_v2::domains::get_token_addr(domain_name, subdomain_name);
             object::transfer(
                 user,
                 object::address_to_object<aptos_names_v2::domains::NameRecord>(token_addr),
@@ -436,6 +481,21 @@ module router::router {
     }
 
     // ==== REVERSE REGISTRATION ====
+
+    fun has_primary_name(
+        user: &signer,
+    ): bool acquires RouterConfig {
+        let mode = get_mode();
+        if (mode == MODE_V1) {
+            let reverse_lookup_result = aptos_names::domains::get_reverse_lookup(address_of(user));
+            return (option::is_some(&reverse_lookup_result))
+        } else if (mode == MODE_V1_AND_V2) {
+            let reverse_lookup_result = aptos_names_v2::domains::get_reverse_lookup(address_of(user));
+            return (option::is_some(&reverse_lookup_result))
+        } else {
+            abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
+        }
+    }
 
     public entry fun set_primary_name(
         user: &signer,
@@ -488,11 +548,60 @@ module router::router {
                 target_addr,
             )
         } else if (mode == MODE_V1_AND_V2) {
+            // Migrate if the name is still in v1 and is a domain.
+            // We do not migrate the subdomain because it might fail due to domain hasn't been migrated
+            if (!exists_in_v2(domain_name, subdomain_name) && is_v1_name_owner(
+                signer::address_of(user),
+                domain_name,
+                subdomain_name
+            )) {
+                if (option::is_none(&subdomain_name)) {
+                    migrate_name(user, domain_name, subdomain_name);
+                } else {
+                    abort error::invalid_argument(ESUBDOMAIN_NOT_MIGRATED)
+                };
+            };
             aptos_names_v2::domains::set_target_address(
+                user,
+                domain_name,
+                subdomain_name,
+                target_addr,
+            )
+        } else {
+            abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
+        }
+    }
+
+    public entry fun clear_target_addr(
+        user: &signer,
+        domain_name: String,
+        subdomain_name: Option<String>,
+    ) acquires RouterConfig {
+        let mode = get_mode();
+        if (mode == MODE_V1) {
+            aptos_names::domains::clear_name_address(
                 user,
                 subdomain_name,
                 domain_name,
-                target_addr,
+            )
+        } else if (mode == MODE_V1_AND_V2) {
+            // Migrate if the name is still in v1 and is a domain.
+            // We do not migrate the subdomain because it might fail due to domain hasn't been migrated
+            if (!exists_in_v2(domain_name, subdomain_name) && is_v1_name_owner(
+                signer::address_of(user),
+                domain_name,
+                subdomain_name
+            )) {
+                if (option::is_none(&subdomain_name)) {
+                    migrate_name(user, domain_name, subdomain_name);
+                } else {
+                    abort error::invalid_argument(ESUBDOMAIN_NOT_MIGRATED)
+                };
+            };
+            aptos_names_v2::domains::clear_target_address(
+                user,
+                subdomain_name,
+                domain_name,
             )
         } else {
             abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
@@ -597,7 +706,7 @@ module router::router {
 
     /// Returns true if the name is tracked in v2
     inline fun exists_in_v2(domain_name: String, subdomain_name: Option<String>): bool {
-        object::is_object(aptos_names_v2::domains::token_addr(domain_name, subdomain_name))
+        object::is_object(aptos_names_v2::domains::get_token_addr(domain_name, subdomain_name))
     }
 
     inline fun get_v1_target_addr(
@@ -675,7 +784,7 @@ module router::router {
             // Cannot be implemented with token v1
             abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
         } else if (mode == MODE_V1_AND_V2) {
-            aptos_names_v2::domains::name_owner_addr(subdomain_name, domain_name)
+            aptos_names_v2::domains::get_name_owner_addr(subdomain_name, domain_name)
         } else {
             abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
         }

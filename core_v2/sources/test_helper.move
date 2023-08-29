@@ -83,12 +83,12 @@ module aptos_names_v2::test_helper {
 
         let user_balance_before = coin::balance<AptosCoin>(user_addr);
         let user_reverse_lookup_before = domains::get_reverse_lookup(user_addr);
-        let maybe_target_address = domains::name_resolved_address(subdomain_name, domain_name);
+        let maybe_target_address = domains::get_name_resolved_address(subdomain_name, domain_name);
         let was_primary_name_before = if (option::is_some(&maybe_target_address)) {
             let maybe_primary_name = domains::get_reverse_lookup(*option::borrow(&maybe_target_address));
             if (option::is_some(&maybe_primary_name)) {
                 // Even if target_addr has a primary name, it may not necessarily point to this `(domain_name, subdomain_name)`
-                *option::borrow(&maybe_primary_name) == domains::token_addr(domain_name, subdomain_name)
+                *option::borrow(&maybe_primary_name) == domains::get_token_addr(domain_name, subdomain_name)
             } else {
                 // No primary name, so definitely was not primary name before
                 false
@@ -97,10 +97,10 @@ module aptos_names_v2::test_helper {
             // No target address, so definitely was not primary name before
             false
         };
-        let is_registered_and_expired_before = domains::name_is_registered(
+        let is_registered_and_expired_before = domains::is_name_registered(
+            domain_name,
             subdomain_name,
-            domain_name
-        ) && domains::name_is_expired(subdomain_name, domain_name);
+        ) && domains::is_name_expired(domain_name, subdomain_name);
         let register_name_event_event_count_before = domains::get_register_name_event_count();
         let set_target_address_event_event_count_before = domains::get_set_target_address_event_count();
         let set_reverse_lookup_event_event_count_before = domains::get_set_reverse_lookup_event_count();
@@ -118,9 +118,9 @@ module aptos_names_v2::test_helper {
         };
 
         // It should now be: not expired, registered, and not registerable
-        assert!(!domains::name_is_expired(subdomain_name, domain_name), 12);
-        assert!(!domains::name_is_registerable(subdomain_name, domain_name), 13);
-        assert!(domains::name_is_registered(subdomain_name, domain_name), 14);
+        assert!(!domains::is_name_expired(domain_name, subdomain_name), 12);
+        assert!(!domains::is_name_registerable(domain_name, subdomain_name), 13);
+        assert!(domains::is_name_registered(domain_name, subdomain_name), 14);
 
         if (is_subdomain) {
             let subdomain_name_copy = subdomain_name;
@@ -218,7 +218,7 @@ module aptos_names_v2::test_helper {
             );
             if (option::is_some(&maybe_reverse_lookup_after)) {
                 let reverse_lookup_after = option::borrow(&maybe_reverse_lookup_after);
-                assert!(*reverse_lookup_after == domains::token_addr(domain_name, subdomain_name), 36);
+                assert!(*reverse_lookup_after == domains::get_token_addr(domain_name, subdomain_name), 36);
                 assert!(subdomain_name_lookup_result == subdomain_name, 136);
                 assert!(domain_name_lookup_result == option::some(domain_name), 137);
             } else {
@@ -261,8 +261,8 @@ module aptos_names_v2::test_helper {
     /// Set the domain address, and verify the address was set correctly
     public fun set_target_address(
         user: &signer,
-        subdomain_name: Option<String>,
         domain_name: String,
+        subdomain_name: Option<String>,
         expected_target_address: address
     ) {
         let user_addr = signer::address_of(user);
@@ -272,7 +272,7 @@ module aptos_names_v2::test_helper {
         let set_reverse_lookup_event_event_count_before = domains::get_set_reverse_lookup_event_count();
         let maybe_reverse_lookup_before = domains::get_reverse_lookup(user_addr);
 
-        domains::set_target_address(user, subdomain_name, domain_name, expected_target_address);
+        domains::set_target_address(user, domain_name, subdomain_name, expected_target_address);
         let (_expiration_time_sec, target_address) = domains::get_name_record_props_for_name(
             subdomain_name,
             domain_name
@@ -336,12 +336,7 @@ module aptos_names_v2::test_helper {
         let set_reverse_lookup_event_event_count_before = domains::get_set_reverse_lookup_event_count();
         let maybe_reverse_lookup_before = domains::get_reverse_lookup(user_addr);
 
-        // And also can clear if is registered address, but not owner
-        if (option::is_none(&subdomain_name)) {
-            domains::clear_domain_address(user, domain_name);
-        } else {
-            domains::clear_subdomain_address(user, *option::borrow(&subdomain_name), domain_name);
-        };
+        domains::clear_target_address(user, subdomain_name, domain_name);
         let (_expiration_time_sec, target_address) = domains::get_name_record_props_for_name(
             subdomain_name,
             domain_name
@@ -351,7 +346,7 @@ module aptos_names_v2::test_helper {
 
         if (option::is_some(&maybe_reverse_lookup_before)) {
             let reverse_lookup_before = option::borrow(&maybe_reverse_lookup_before);
-            if (*reverse_lookup_before == domains::token_addr(domain_name, subdomain_name)) {
+            if (*reverse_lookup_before == domains::get_token_addr(domain_name, subdomain_name)) {
                 let reverse_lookup_after = domains::get_reverse_lookup(user_addr);
                 assert!(option::is_none(&reverse_lookup_after), 35);
 
