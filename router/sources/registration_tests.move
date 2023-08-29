@@ -189,7 +189,7 @@ module router::registration_tests {
             option::none(),
             option::none(),
         );
-        router::is_name_owner(user_addr, domain_name1, option::some(subdomain_name1));
+        assert!(router::is_name_owner(user_addr, domain_name1, option::some(subdomain_name1)), 1);
 
         // Bump mode
         router::set_mode(router, 1);
@@ -208,7 +208,23 @@ module router::registration_tests {
             option::none(),
             option::none(),
         );
-        router::is_name_owner(user_addr, domain_name2, option::some(subdomain_name2));
+        assert!(router::is_name_owner(user_addr, domain_name2, option::some(subdomain_name2)), 2);
+        assert!(router::get_subdomain_expiration_policy(domain_name2, subdomain_name2) == 0, 3);
+
+        // Register again with a different subdomain expiration policy
+        let subdomain_name3 = utf8(b"sub3");
+        router::register_subdomain(
+            user,
+            domain_name2,
+            subdomain_name3,
+            SECONDS_PER_YEAR,
+            1,
+            false,
+            option::none(),
+            option::none(),
+        );
+        assert!(router::is_name_owner(user_addr, domain_name2, option::some(subdomain_name3)), 2);
+        assert!(router::get_subdomain_expiration_policy(domain_name2, subdomain_name3) == 1, 3);
     }
 
     #[test(

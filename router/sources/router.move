@@ -219,7 +219,7 @@ module router::router {
         domain_name: String,
         subdomain_name: String,
         expiration_time_sec: u64,
-        _expiration_policy: u8,
+        expiration_policy: u8,
         transferrable: bool,
         target_addr: Option<address>,
         to_addr: Option<address>,
@@ -238,6 +238,12 @@ module router::router {
                 domain_name,
                 subdomain_name,
                 expiration_time_sec,
+            );
+            aptos_names_v2::domains::set_subdomain_expiration_policy(
+                user,
+                domain_name,
+                subdomain_name,
+                expiration_policy,
             )
         } else {
             abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
