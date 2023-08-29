@@ -204,6 +204,39 @@ module router::router {
         if (option::is_some(&to_addr)) {
             transfer_name(user, domain_name, option::none(), *option::borrow(&to_addr));
         };
+
+        set_primary_name_when_register(
+            user,
+            target_addr,
+            to_addr,
+            domain_name,
+            option::none(),
+        );
+    }
+
+    fun set_primary_name_when_register(
+        user: &signer,
+        target_addr: Option<address>,
+        to_addr: Option<address>,
+        domain_name: String,
+        subdomain_name: Option<String>,
+    ) acquires RouterConfig {
+        let owner_addr = address_of(user);
+
+        // if the owner address is not the buyer address
+        if (option::is_some(&to_addr) && to_addr != option::some(owner_addr)) {
+            return
+        };
+
+        // if the target address is not the buyer address
+        if (option::is_some(&target_addr) && target_addr != option::some(owner_addr)) {
+            return
+        };
+
+        let has_primary_name = has_primary_name(user);
+        if (!has_primary_name) {
+            set_primary_name(user, domain_name, subdomain_name);
+        };
     }
 
     /// @param user The user who is paying for the registration
@@ -269,7 +302,15 @@ module router::router {
                 subdomain_name,
                 transferrable
             )
-        }
+        };
+
+        set_primary_name_when_register(
+            user,
+            target_addr,
+            to_addr,
+            domain_name,
+            option::some(subdomain_name),
+        );
     }
 
     // ==== MIGRATION ====
@@ -445,6 +486,21 @@ module router::router {
     }
 
     // ==== REVERSE REGISTRATION ====
+
+    fun has_primary_name(
+        user: &signer,
+    ): bool acquires RouterConfig {
+        let mode = get_mode();
+        if (mode == MODE_V1) {
+            let reverse_lookup_result = aptos_names::domains::get_reverse_lookup(address_of(user));
+            return (option::is_some(&reverse_lookup_result))
+        } else if (mode == MODE_V1_AND_V2) {
+            let reverse_lookup_result = aptos_names_v2::domains::get_reverse_lookup(address_of(user));
+            return (option::is_some(&reverse_lookup_result))
+        } else {
+            abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
+        }
+    }
 
     public entry fun set_primary_name(
         user: &signer,
