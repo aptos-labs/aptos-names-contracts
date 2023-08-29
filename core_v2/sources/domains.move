@@ -286,7 +286,7 @@ module aptos_names_v2::domains {
         sign: &signer,
         domain_name: String,
         registration_duration_secs: u64,
-    ) acquires CollectionCapability, NameRecord, RegisterNameEvents, ReverseRecord, SetTargetAddressEvents, SetReverseLookupEvents {
+    ) acquires CollectionCapability, NameRecord, RegisterNameEvents, ReverseRecord, SetReverseLookupEvents {
         assert!(address_of(router_signer) == @router_signer, error::permission_denied(ENOT_ROUTER));
         assert!(config::unrestricted_mint_enabled(), error::permission_denied(EVALID_SIGNATURE_REQUIRED));
 
@@ -303,15 +303,6 @@ module aptos_names_v2::domains {
 
         register_name_internal(sign, subdomain_name, domain_name, registration_duration_secs, price);
 
-        // Automatically assign primary name if not exists. If exists, just assign target_addr
-        let reverse_lookup_result = get_reverse_lookup(address_of(sign));
-        if (option::is_none(&reverse_lookup_result)) {
-            // If the user has no reverse lookup set, set the user's reverse lookup.
-            set_reverse_lookup(sign, subdomain_name, domain_name);
-        } else {
-            // Automatically set the name to point to the sender's address
-            set_target_address_internal(subdomain_name, domain_name, signer::address_of(sign));
-        };
     }
 
     /// A wrapper around `register_name` as an entry function.
@@ -323,7 +314,7 @@ module aptos_names_v2::domains {
         domain_name: String,
         subdomain_name: String,
         expiration_time_sec: u64
-    ) acquires CollectionCapability, NameRecord, RegisterNameEvents, ReverseRecord, SetTargetAddressEvents, SetReverseLookupEvents {
+    ) acquires CollectionCapability, NameRecord, RegisterNameEvents, ReverseRecord, SetReverseLookupEvents {
         assert!(address_of(router_signer) == @router_signer, error::permission_denied(ENOT_ROUTER));
         assert!(config::is_enabled(), error::unavailable(ENOT_ENABLED));
 
@@ -348,16 +339,6 @@ module aptos_names_v2::domains {
         coin::transfer<AptosCoin>(sign, config::fund_destination_address(), price);
 
         register_name_internal(sign, option::some(subdomain_name), domain_name, registration_duration_secs, price);
-
-        // Automatically assign primary name if not exists. If exists, just assign target_addr
-        let reverse_lookup_result = get_reverse_lookup(address_of(sign));
-        if (option::is_none(&reverse_lookup_result)) {
-            // If the user has no reverse lookup set, set the user's reverse lookup.
-            set_reverse_lookup(sign, option::some(subdomain_name), domain_name);
-        } else {
-            // Automatically set the name to point to the sender's address
-            set_target_address_internal(option::some(subdomain_name), domain_name, signer::address_of(sign));
-        };
     }
 
     /// Router-only registration that does not take registration fees. Should only be used for v1=>v2 migrations.
