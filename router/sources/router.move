@@ -551,26 +551,6 @@ module router::router {
         if (mode == MODE_V1) {
             aptos_names::domains::clear_reverse_lookup(user);
         } else if (mode == MODE_V1_AND_V2) {
-
-            // Clear primary name in v1 if exists so we do not have primary name in both v1 and v2
-
-            //
-            // let (primary_subdoamain_name, primary_domain_name) = get_primary_name(signer::address_of(user));
-            // let primary_domain_name_extracted = *option::borrow(&primary_domain_name);
-            // // Migrate if the name is still in v1 and is a domain.
-            // // We do not migrate the subdomain because it might fail due to domain hasn't been migrated
-            // if (!exists_in_v2(primary_domain_name_extracted, primary_subdoamain_name) && is_v1_name_owner(
-            //     signer::address_of(user),
-            //     primary_domain_name_extracted,
-            //     primary_subdoamain_name
-            // )) {
-            //     if (option::is_none(&primary_subdoamain_name)) {
-            //         migrate_name(user, primary_domain_name_extracted, primary_subdoamain_name);
-            //     } else {
-            //         abort error::invalid_argument(ESUBDOMAIN_NOT_MIGRATED)
-            //     };
-            // };
-
             // Clear primary name in v1 if exists so we do not have primary name in both v1 and v2
             let (v1_primary_subdomain_name, v1_primary_domain_name) = get_v1_primary_name(signer::address_of(user));
             if (option::is_some(&v1_primary_domain_name)) {

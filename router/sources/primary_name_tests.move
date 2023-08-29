@@ -270,70 +270,83 @@ module router::primary_name_tests {
 
         // Clear domain primary name, this should trigger auto migration of previous primary name
         router::clear_primary_name(user);
-        assert!(router::is_name_owner(user_addr, domain_name, option::none()), 1);
         {
-            let (primary_subdomain_name, primary_domain_name) = router::get_primary_name(user_addr);
-
-            assert!(option::is_some(&primary_domain_name), 2);
-            assert!(option::is_none(&primary_subdomain_name), 3);
+            // domain should be successfully migrated to v2
+            let (is_ower_of_v1_name, _) = aptos_names::domains::is_owner_of_name(user_addr, option::none(), domain_name);
+            assert!(!is_ower_of_v1_name, 1);
+            assert!(aptos_names_v2::domains::is_owner_of_name(user_addr, option::none(), domain_name), 2);
+            // v1 primary name should be cleared
+            let (v1_primary_subdomain_name, v1_primary_domain_name) = get_v1_primary_name(user_addr);
+            assert!(option::is_none(&v1_primary_domain_name), 3);
+            assert!(option::is_none(&v1_primary_subdomain_name), 4);
+            // v2 primary name should be empty
+            let (v2_primary_subdomain_name, v2_primary_domain_name) = get_v2_primary_name(user_addr);
+            assert!(option::is_none(&v2_primary_domain_name), 5);
+            assert!(option::is_none(&v2_primary_subdomain_name), 6);
         };
     }
 
+    #[test(
+        router = @router,
+        aptos_names = @aptos_names,
+        aptos_names_v2 = @aptos_names_v2,
+        user1 = @0x077,
+        user2 = @0x266f,
+        aptos = @0x1,
+        foundation = @0xf01d
+    )]
+    fun test_clear_subdomain_primary_name_should_not_trigger_auto_migration(
+        router: &signer,
+        aptos_names: &signer,
+        aptos_names_v2: &signer,
+        user1: signer,
+        user2: signer,
+        aptos: signer,
+        foundation: signer
+    ) {
+        router::init_module_for_test(router);
+        let users = test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user1, &aptos, user2, &foundation);
+        let user = vector::borrow(&users, 0);
+        let user_addr = address_of(user);
+        let domain_name = utf8(b"test");
+        let subdomain_name = utf8(b"test");
+        let subdomain_name_opt = option::some(subdomain_name);
 
-    // #[test(
-    //     router = @router,
-    //     aptos_names = @aptos_names,
-    //     aptos_names_v2 = @aptos_names_v2,
-    //     user1 = @0x077,
-    //     user2 = @0x266f,
-    //     aptos = @0x1,
-    //     foundation = @0xf01d
-    // )]
-    // fun test_clear_subdomain_primary_name_should_not_trigger_auto_migration(
-    //     router: &signer,
-    //     aptos_names: &signer,
-    //     aptos_names_v2: &signer,
-    //     user1: signer,
-    //     user2: signer,
-    //     aptos: signer,
-    //     foundation: signer
-    // ) {
-    //     router::init_module_for_test(router);
-    //     let users = test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user1, &aptos, user2, &foundation);
-    //     let user = vector::borrow(&users, 0);
-    //     let user_addr = address_of(user);
-    //     let domain_name = utf8(b"test");
-    //     let subdomain_name = utf8(b"test");
-    //     let subdomain_name_opt = option::some(subdomain_name);
-    //
-    //     // Register with v1
-    //     router::register_domain(user, domain_name, SECONDS_PER_YEAR, option::none(), option::none());
-    //
-    //     router::register_subdomain(
-    //         user,
-    //         domain_name,
-    //         subdomain_name,
-    //         SECONDS_PER_YEAR,
-    //         0,
-    //         false,
-    //         option::none(),
-    //         option::none(),
-    //     );
-    //
-    //     router::set_primary_name(user, domain_name, subdomain_name_opt);
-    //
-    //     // Bump mode
-    //     router::set_mode(router, 1);
-    //
-    //     // Clear subdomain primary name
-    //     // This has no effect because we do not auto migrate subdomain and in MODE_V1_AND_V2 if name not exist nothing will happen
-    //     // User needs to migrate manually
-    //     router::clear_primary_name(user);
-    //     assert!(router::is_name_owner(user_addr, domain_name, option::none()), 1);
-    //     {
-    //         let (primary_subdomain_name, primary_domain_name) = router::get_primary_name(user_addr);
-    //         assert!(option::is_none(&primary_domain_name), 2);
-    //         assert!(option::is_none(&primary_subdomain_name), 3);
-    //     };
-    // }
+        // Register with v1
+        router::register_domain(user, domain_name, SECONDS_PER_YEAR, option::none(), option::none());
+
+        router::register_subdomain(
+            user,
+            domain_name,
+            subdomain_name,
+            SECONDS_PER_YEAR,
+            0,
+            false,
+            option::none(),
+            option::none(),
+        );
+
+        router::set_primary_name(user, domain_name, subdomain_name_opt);
+
+        // Bump mode
+        router::set_mode(router, 1);
+
+        // Clear subdomain primary name
+        // This should not auto migrate the previous primary name because we do not auto migrate subdomain
+        router::clear_primary_name(user);
+        {
+            // subdomain should still remain in v1
+            let (is_ower_of_v1_name, _) = aptos_names::domains::is_owner_of_name(user_addr, subdomain_name_opt, domain_name);
+            assert!(is_ower_of_v1_name, 1);
+            assert!(!aptos_names_v2::domains::is_owner_of_name(user_addr, subdomain_name_opt, domain_name), 2);
+            // v1 primary name should be cleared
+            let (v1_primary_subdomain_name, v1_primary_domain_name) = get_v1_primary_name(user_addr);
+            assert!(option::is_none(&v1_primary_domain_name), 2);
+            assert!(option::is_none(&v1_primary_subdomain_name), 3);
+            // v2 primary name should be empty
+            let (v2_primary_subdomain_name, v2_primary_domain_name) = get_v2_primary_name(user_addr);
+            assert!(option::is_none(&v2_primary_domain_name), 4);
+            assert!(option::is_none(&v2_primary_subdomain_name), 5);
+        };
+    }
 }
