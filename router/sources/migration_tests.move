@@ -204,6 +204,7 @@ module router::migration_tests {
         assert!(router::is_name_owner(user_addr, domain_name, subdomain_name_opt), 7);
         assert!(*option::borrow(&router::get_target_addr(domain_name, subdomain_name_opt)) == user_addr, 8);
         assert!(router::get_expiration(domain_name, option::none()) == now + SECONDS_PER_YEAR, 9);
+        assert!(router::get_expiration(domain_name, subdomain_name_opt) == now + SECONDS_PER_YEAR, 9);
         {
             let (primary_subdomain_name, primary_domain_name) = router::get_primary_name(user_addr);
             assert!(*option::borrow(&primary_domain_name) == domain_name, 10);
@@ -215,12 +216,9 @@ module router::migration_tests {
         router::migrate_name(user, domain_name, subdomain_name_opt);
         assert!(router::is_name_owner(user_addr, domain_name, subdomain_name_opt), 7);
         assert!(*option::borrow(&router::get_target_addr(domain_name, subdomain_name_opt)) == user_addr, 8);
-        // Auto-renewal will not happen for subdomain. Instead, it will be the same as the parent domain
+        // Auto-renewal will not happen for subdomain. Its expiration remains the same
         assert!(
-            router::get_expiration(domain_name, subdomain_name_opt) == router::get_expiration(
-                domain_name,
-                option::none()
-            ),
+            router::get_expiration(domain_name, subdomain_name_opt) == now + SECONDS_PER_YEAR,
             9
         );
         {
