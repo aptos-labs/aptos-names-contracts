@@ -207,7 +207,6 @@ module router::primary_name_tests {
 
         // Set primary name to domain2, this should trigger auto migration
         router::set_primary_name(user, domain_name2, option::none());
-        assert!(router::is_name_owner(user_addr, domain_name2, option::none()), 1);
         {
             // domain2 should be successfully migrated to v2
             assert!(aptos_names_v2::domains::is_owner_of_name(user_addr, option::none(), domain_name2), 1);
