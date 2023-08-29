@@ -129,6 +129,7 @@ module aptos_names_v2::domains {
         /// The address this reverse lookup belongs to
         account_addr: address,
 
+        /// Indexer needs knowledge of previous state
         prev_domain_name: Option<String>,
         prev_subdomain_name: Option<String>,
         prev_expiration_time_secs: Option<u64>,
