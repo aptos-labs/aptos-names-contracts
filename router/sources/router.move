@@ -8,6 +8,7 @@ module router::router {
     use std::signer;
     use std::signer::address_of;
     use std::string::{String};
+    use aptos_framework::vesting::operator;
 
     // == ROUTER MODE ENUMS ==
 
@@ -202,7 +203,18 @@ module router::router {
             );
         };
         if (option::is_some(&to_addr)) {
-            transfer_name(user, domain_name, option::none(), *option::borrow(&to_addr));
+            if (mode == MODE_V1) {
+                abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
+            } else if (mode == MODE_V1_AND_V2) {
+                let token_addr = aptos_names_v2::domains::get_token_addr(domain_name, option::none());
+                object::transfer(
+                    user,
+                    object::address_to_object<aptos_names_v2::domains::NameRecord>(token_addr),
+                    *option::borrow(&to_addr),
+                );
+            } else {
+                abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
+            };
         };
 
         set_primary_name_when_register(
@@ -292,7 +304,18 @@ module router::router {
             );
         };
         if (option::is_some(&to_addr)) {
-            transfer_name(user, domain_name, option::some(subdomain_name), *option::borrow(&to_addr));
+            if (mode == MODE_V1) {
+                abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
+            } else if (mode == MODE_V1_AND_V2) {
+                let token_addr = aptos_names_v2::domains::get_token_addr(domain_name, subdomain_name);
+                object::transfer(
+                    user,
+                    object::address_to_object<aptos_names_v2::domains::NameRecord>(token_addr),
+                    *option::borrow(&to_addr),
+                );
+            } else {
+                abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
+            };
         };
         if (mode == MODE_V1_AND_V2) {
             aptos_names_v2::domains::set_subdomain_transferability_as_domain_owner(
@@ -416,51 +439,6 @@ module router::router {
             };
 
             // Carry over the primary name
-        } else {
-            abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
-        }
-    }
-
-    // ==== TRANSFER ====
-
-    public entry fun transfer_name(
-        user: &signer,
-        domain_name: String,
-        subdomain_name: Option<String>,
-        to_addr: address
-    ) acquires RouterConfig {
-        let mode = get_mode();
-        if (mode == MODE_V1) {
-            // Get the v1 token info
-            let (
-                _property_version,
-                _expiration_time_sec,
-                _target_addr
-            ) = aptos_names::domains::get_name_record_v1_props_for_name(
-                subdomain_name,
-                domain_name,
-            );
-            let tokendata_id = aptos_names::token_helper::build_tokendata_id(
-                aptos_names::token_helper::get_token_signer_address(),
-                subdomain_name,
-                domain_name,
-            );
-            let token_id = aptos_names::token_helper::latest_token_id(&tokendata_id);
-            aptos_token::token::transfer(
-                user,
-                token_id,
-                to_addr,
-                1,
-            );
-
-            // TODO: Probably good idea to clear entries in v1
-        } else if (mode == MODE_V1_AND_V2) {
-            let token_addr = aptos_names_v2::domains::get_token_addr(domain_name, subdomain_name);
-            object::transfer(
-                user,
-                object::address_to_object<aptos_names_v2::domains::NameRecord>(token_addr),
-                to_addr,
-            );
         } else {
             abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
         }
