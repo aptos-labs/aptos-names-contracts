@@ -479,6 +479,7 @@ module router::router {
             // Will not be implemented in v1
             abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
         } else if (mode == MODE_V1_AND_V2) {
+            migrate_if_eligible(user, domain_name, option::none());
             aptos_names_v2::domains::renew_domain(user, domain_name, renewal_duration_secs)
         } else {
             abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
