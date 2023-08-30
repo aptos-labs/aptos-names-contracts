@@ -8,7 +8,6 @@ module router::router {
     use std::signer;
     use std::signer::address_of;
     use std::string::{String};
-    use aptos_framework::vesting::operator;
 
     // == ROUTER MODE ENUMS ==
 
