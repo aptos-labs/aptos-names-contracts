@@ -203,7 +203,26 @@ module router::router {
         };
         if (option::is_some(&to_addr)) {
             if (mode == MODE_V1) {
-                abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
+                let (
+                    _property_version,
+                    _expiration_time_sec,
+                    _target_addr
+                ) = aptos_names::domains::get_name_record_v1_props_for_name(
+                    option::none(),
+                    domain_name,
+                );
+                let tokendata_id = aptos_names::token_helper::build_tokendata_id(
+                    aptos_names::token_helper::get_token_signer_address(),
+                    option::none(),
+                    domain_name,
+                );
+                let token_id = aptos_names::token_helper::latest_token_id(&tokendata_id);
+                aptos_token::token::transfer(
+                    user,
+                    token_id,
+                    *option::borrow(&to_addr),
+                    1,
+                );
             } else if (mode == MODE_V1_AND_V2) {
                 let token_addr = aptos_names_v2::domains::get_token_addr(domain_name, option::none());
                 object::transfer(
@@ -304,9 +323,28 @@ module router::router {
         };
         if (option::is_some(&to_addr)) {
             if (mode == MODE_V1) {
-                abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
+                let (
+                    _property_version,
+                    _expiration_time_sec,
+                    _target_addr
+                ) = aptos_names::domains::get_name_record_v1_props_for_name(
+                    option::some(subdomain_name),
+                    domain_name,
+                );
+                let tokendata_id = aptos_names::token_helper::build_tokendata_id(
+                    aptos_names::token_helper::get_token_signer_address(),
+                    option::some(subdomain_name),
+                    domain_name,
+                );
+                let token_id = aptos_names::token_helper::latest_token_id(&tokendata_id);
+                aptos_token::token::transfer(
+                    user,
+                    token_id,
+                    *option::borrow(&to_addr),
+                    1,
+                );
             } else if (mode == MODE_V1_AND_V2) {
-                let token_addr = aptos_names_v2::domains::get_token_addr(domain_name, subdomain_name);
+                let token_addr = aptos_names_v2::domains::get_token_addr(domain_name, option::some(subdomain_name));
                 object::transfer(
                     user,
                     object::address_to_object<aptos_names_v2::domains::NameRecord>(token_addr),
