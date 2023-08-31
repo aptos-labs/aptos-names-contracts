@@ -1,5 +1,5 @@
 #[test_only]
-module router::test_helper {
+module router::router_test_helper {
     use aptos_framework::account;
     use aptos_framework::aptos_coin::AptosCoin;
     use aptos_framework::coin;
@@ -26,13 +26,15 @@ module router::test_helper {
         foundation: &signer
     ): vector<signer> {
         account::create_account_for_test(@aptos_names);
-        account::create_account_for_test(@aptos_names_v2);
+        if (aptos_names_v2 != aptos_names) {
+            account::create_account_for_test(@aptos_names_v2);
+        };
         let new_accounts = setup_and_fund_accounts(aptos, foundation, vector[user, rando]);
         timestamp::set_time_has_started_for_testing(aptos);
         aptos_names::domains::init_module_for_test(aptos_names);
-        aptos_names_v2::domains::init_module_for_test(aptos_names_v2);
+        aptos_names_v2::v2_domains::init_module_for_test(aptos_names_v2);
         aptos_names::config::set_fund_destination_address_test_only(signer::address_of(foundation));
-        aptos_names_v2::config::set_fund_destination_address_test_only(signer::address_of(foundation));
+        aptos_names_v2::v2_config::set_fund_destination_address_test_only(signer::address_of(foundation));
         new_accounts
     }
 

@@ -1,7 +1,7 @@
-module aptos_names_v2::token_helper {
-    friend aptos_names_v2::domains;
+module aptos_names_v2::v2_token_helper {
+    friend aptos_names_v2::v2_domains;
 
-    use aptos_names_v2::utf8_utils;
+    use aptos_names_v2::v2_utf8_utils;
     use std::option::{Self, Option};
     use std::string::{Self, String};
 
@@ -12,10 +12,10 @@ module aptos_names_v2::token_helper {
     const ECOLLECTION_NOT_EXISTS: u64 = 1;
 
     public fun get_fully_qualified_domain_name(subdomain_name: Option<String>, domain_name: String): String {
-        let (domain_is_allowed, _length) = utf8_utils::string_is_allowed(&domain_name);
+        let (domain_is_allowed, _length) = v2_utf8_utils::string_is_allowed(&domain_name);
         assert!(domain_is_allowed, 1);
         let subdomain_is_allowed = if (option::is_some(&subdomain_name)) {
-            let (subdomain_is_allowed, _length) = utf8_utils::string_is_allowed(option::borrow(&subdomain_name));
+            let (subdomain_is_allowed, _length) = v2_utf8_utils::string_is_allowed(option::borrow(&subdomain_name));
             subdomain_is_allowed
         } else {
             true

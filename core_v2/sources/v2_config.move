@@ -5,13 +5,13 @@ This includes things like the maximum number of years that a name can be registe
 Anyone can read, but only admins can write, as all write methods are gated via permissions checks
 */
 
-module aptos_names_v2::config {
-    friend aptos_names_v2::domains;
+module aptos_names_v2::v2_config {
+    friend aptos_names_v2::v2_domains;
 
     use aptos_framework::account;
     use aptos_framework::aptos_account;
     use aptos_std::ed25519::{Self, UnvalidatedPublicKey};
-    use aptos_names_v2::utf8_utils;
+    use aptos_names_v2::v2_utf8_utils;
     use aptos_token::property_map::{Self, PropertyMap};
     use std::error;
     use std::signer;
@@ -292,7 +292,7 @@ module aptos_names_v2::config {
 
     public fun config_key_domain_price(domain_length: u64): String {
         let key = string::utf8(CONFIG_KEY_DOMAIN_PRICE_PREFIX);
-        string::append(&mut key, utf8_utils::u128_to_string((domain_length as u128)));
+        string::append(&mut key, v2_utf8_utils::u128_to_string((domain_length as u128)));
         key
     }
 
@@ -354,7 +354,7 @@ module aptos_names_v2::config {
     //
 
     #[test_only]
-    friend aptos_names_v2::price_model;
+    friend aptos_names_v2::v2_price_model;
     #[test_only]
     use aptos_framework::coin;
     #[test_only]
@@ -466,7 +466,7 @@ module aptos_names_v2::config {
     }
 
     #[test(myself = @aptos_names_v2, rando = @0x266f, aptos = @0x1)]
-    #[expected_failure(abort_code = 327681, location = aptos_names_v2::config)]
+    #[expected_failure(abort_code = 327681, location = aptos_names_v2::v2_config)]
     fun test_foundation_config_requires_admin(myself: &signer, rando: &signer, aptos: &signer) acquires Config {
         account::create_account_for_test(signer::address_of(myself));
         account::create_account_for_test(signer::address_of(rando));
@@ -480,7 +480,7 @@ module aptos_names_v2::config {
     }
 
     #[test(myself = @aptos_names_v2, rando = @0x266f, aptos = @0x1)]
-    #[expected_failure(abort_code = 327681, location = aptos_names_v2::config)]
+    #[expected_failure(abort_code = 327681, location = aptos_names_v2::v2_config)]
     fun test_admin_config_requires_admin(myself: &signer, rando: &signer, aptos: &signer) acquires Config {
         account::create_account_for_test(signer::address_of(myself));
         account::create_account_for_test(signer::address_of(rando));
