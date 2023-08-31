@@ -35,7 +35,7 @@ module aptos_names::config {
     const CONFIG_KEY_CAPTCHA_PUBLIC_KEY: vector<u8> = b"captcha_public_key";
     const CONFIG_KEY_UNRESTRICTED_MINT_ENABLED: vector<u8> = b"unrestricted_mint_enabled";
     /// The number of seconds after a name expires that it can be re-registered
-    const CONFIG_KEY_REREGISTRATION_GRACE_SEC: vector<u8> = b"reregistration_gap_sec";
+    const CONFIG_KEY_REREGISTRATION_GRACE_SEC: vector<u8> = b"reregistration_grace_sec";
 
     const DOMAIN_TYPE: vector<u8> = b"domain";
     const SUBDOMAIN_TYPE: vector<u8> = b"subdomain";
