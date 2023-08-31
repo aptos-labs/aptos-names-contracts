@@ -15,8 +15,6 @@ ROUTER_SIGNER=0x$(./aptos account derive-resource-account-address \
   grep "Result" | \
   sed -n 's/.*"Result": "\([^"]*\)".*/\1/p')
 
-echo "ROUTER_SIGNER: $ROUTER_SIGNER"
-
 ./aptos move test \
   --package-dir core \
   --named-addresses aptos_names=$APTOS_NAMES,aptos_names_admin=$ADMIN,aptos_names_funds=$FUNDS
