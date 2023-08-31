@@ -1035,7 +1035,7 @@ module aptos_names_v2::v2_domains {
         let expired = is_name_expired(domain_name, subdomain_name);
         // Name is not expired, so not registerable
         if (!expired) {
-            false
+            return false
         };
 
         let (expiration_time_sec, _) = get_name_record_props_for_name(subdomain_name, domain_name);
@@ -1044,13 +1044,12 @@ module aptos_names_v2::v2_domains {
 
         // Name is expired and passed grace period, so name is registerable
         if (expired_for > v2_config::reregistration_grace_sec()) {
-            true
+            return true
         } else {
             // Name is expired but haven't passed grace period, so name is not registerable
-            false
+            return false
         }
     }
-
 
     /// Returns true if the is not registered OR (name is registered AND is expired)
     public fun is_name_expired(

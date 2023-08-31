@@ -829,7 +829,7 @@ module aptos_names_v2::v2_domain_e2e_tests {
         let (is_owner) = v2_domains::is_owner_of_name(user_addr, option::none(), v2_test_helper::domain_name());
         assert!(!is_owner, 2);
 
-        // Register the domain again. Should fail because it's still in the grace period
+        // Register the domain again. Should succeeds because it's out of the grace period
         v2_test_helper::register_name(
             router_signer,
             user,
