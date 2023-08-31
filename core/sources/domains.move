@@ -403,6 +403,20 @@ module aptos_names::domains {
         register_name_internal(sign, subdomain_name, domain_name, registration_duration_secs, 0);
     }
 
+    public entry fun force_set_expiration(
+        sign: &signer,
+        subdomain_name: Option<String>,
+        domain_name: String,
+        expiration_time_sec: u64
+    ) acquires NameRegistryV1 {
+        config::assert_signer_is_admin(sign);
+        assert!(name_is_registered(subdomain_name, domain_name), error::not_found(ENAME_NOT_EXIST));
+        let name_record_key = create_name_record_key_v1(subdomain_name, domain_name);
+        let aptos_names = borrow_global_mut<NameRegistryV1>(@aptos_names);
+        let name_record = table::borrow_mut(&mut aptos_names.registry, name_record_key);
+        name_record.expiration_time_sec = expiration_time_sec;
+    }
+
     #[legacy_entry_fun]
     /// This removes a name mapping from the registry; functionally this 'expires' it.
     /// This is a privileged operation, used via governance.
