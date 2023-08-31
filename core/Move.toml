@@ -7,6 +7,7 @@ aptos_names = "_"
 aptos_names_admin = "_"
 aptos_names_funds = "_"
 
+
 [dependencies.AptosFramework]
 git = 'https://github.com/aptos-labs/aptos-core.git'
 rev = 'main'

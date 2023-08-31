@@ -53,6 +53,50 @@ module router::primary_name_tests {
         aptos = @0x1,
         foundation = @0xf01d
     )]
+    fun test_set_primary_name_when_register(
+        router: &signer,
+        aptos_names: &signer,
+        aptos_names_v2: &signer,
+        user1: signer,
+        user2: signer,
+        aptos: signer,
+        foundation: signer
+    ) {
+        router::init_module_for_test(router);
+        let users = test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user1, &aptos, user2, &foundation);
+        let user = vector::borrow(&users, 0);
+        let user_addr = address_of(user);
+        let domain_name = utf8(b"test");
+
+        router::register_domain(user, domain_name, SECONDS_PER_YEAR, option::none(), option::none());
+
+        let (primary_subdomain_name, primary_domain_name) = router::get_primary_name(user_addr);
+        assert!(*option::borrow(&primary_domain_name) == domain_name, 1);
+        assert!(option::is_none(&primary_subdomain_name), 2);
+
+        // Bump mode
+        router::set_mode(router, 1);
+
+        let user = vector::borrow(&users, 1);
+        let user_addr = address_of(user);
+        let domain_name = utf8(b"test1");
+
+        router::register_domain(user, domain_name, SECONDS_PER_YEAR, option::none(), option::none());
+
+        let (primary_subdomain_name, primary_domain_name) = router::get_primary_name(user_addr);
+        assert!(*option::borrow(&primary_domain_name) == domain_name, 1);
+        assert!(option::is_none(&primary_subdomain_name), 2);
+    }
+
+    #[test(
+        router = @router,
+        aptos_names = @aptos_names,
+        aptos_names_v2 = @aptos_names_v2,
+        user1 = @0x077,
+        user2 = @0x266f,
+        aptos = @0x1,
+        foundation = @0xf01d
+    )]
     fun test_set_primary_name(
         router: &signer,
         aptos_names: &signer,
