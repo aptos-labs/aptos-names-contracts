@@ -311,6 +311,44 @@ module aptos_names::domain_e2e_tests {
     }
 
     #[test(myself = @aptos_names, user = @0x077, aptos = @0x1, rando = @0x266f, foundation = @0xf01d)]
+    fun admin_can_force_set_expiration(myself: &signer, user: signer, aptos: signer, rando: signer, foundation: signer) {
+        let users = test_helper::e2e_test_setup(myself, user, &aptos, rando, &foundation);
+        let user = vector::borrow(&users, 0);
+
+        // Register the domain
+        test_helper::register_name(
+            user,
+            option::none(),
+            test_helper::domain_name(),
+            test_helper::one_year_secs(),
+            test_helper::fq_domain_name(),
+            1,
+            vector::empty<u8>()
+        );
+        {
+            let (_, expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(
+                option::none(),
+                test_helper::domain_name()
+            );
+            assert!(time_helper::seconds_to_years(expiration_time_sec) == 1, 1);
+        };
+
+        domains::force_set_expiration(
+            myself,
+            option::none(),
+            test_helper::domain_name(),
+            test_helper::two_hundred_year_secs()
+        );
+        {
+            let (_, expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(
+                option::none(),
+                test_helper::domain_name()
+            );
+            assert!(time_helper::seconds_to_years(expiration_time_sec) == 200, 1);
+        }
+    }
+
+    #[test(myself = @aptos_names, user = @0x077, aptos = @0x1, rando = @0x266f, foundation = @0xf01d)]
     #[expected_failure(abort_code = 327681, location = aptos_names::config)]
     fun rando_cant_force_seize_domain_name_e2e_test(myself: &signer, user: signer, aptos: signer, rando: signer, foundation: signer) {
         let users = test_helper::e2e_test_setup(myself, user, &aptos, rando, &foundation);
