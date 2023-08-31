@@ -33,6 +33,8 @@ module aptos_names_v2::v2_config {
     const CONFIG_KEY_SUBDOMAIN_PRICE: vector<u8> = b"subdomain_price";
     const CONFIG_KEY_CAPTCHA_PUBLIC_KEY: vector<u8> = b"captcha_public_key";
     const CONFIG_KEY_UNRESTRICTED_MINT_ENABLED: vector<u8> = b"unrestricted_mint_enabled";
+    /// The number of seconds after a name expires that it can be re-registered
+    const CONFIG_KEY_REREGISTRATION_GRACE_SEC: vector<u8> = b"reregistration_grace_sec";
 
     const DOMAIN_TYPE: vector<u8> = b"domain";
     const SUBDOMAIN_TYPE: vector<u8> = b"subdomain";
@@ -168,6 +170,18 @@ module aptos_names_v2::v2_config {
         read_bool(@aptos_names_v2, &config_key_unrestricted_mint_enabled())
     }
 
+    #[view]
+    public fun reregistration_grace_sec(): u64 acquires Config {
+        let key = config_key_reregistration_grace_sec();
+        let key_exists = property_map::contains_key(&borrow_global<Config>(@aptos_names).config, &key);
+        if (key_exists) {
+            read_u64(@aptos_names, &key)
+        } else {
+            // Default to 0 if key DNE
+            0
+        }
+    }
+
     //
     // Setters
     //
@@ -242,6 +256,11 @@ module aptos_names_v2::v2_config {
         set(@aptos_names_v2, config_key_unrestricted_mint_enabled(), &unrestricted_mint_enabled);
     }
 
+    public entry fun set_reregistration_grace_sec(sign: &signer, reregistration_grace_sec: u64) acquires Config {
+        assert_signer_is_admin(sign);
+        set(@aptos_names, config_key_reregistration_grace_sec(), &reregistration_grace_sec);
+    }
+
     //
     // Configuration Methods
     //
@@ -306,6 +325,10 @@ module aptos_names_v2::v2_config {
 
     public fun config_key_unrestricted_mint_enabled(): String {
         string::utf8(CONFIG_KEY_UNRESTRICTED_MINT_ENABLED)
+    }
+
+    public fun config_key_reregistration_grace_sec(): String {
+        string::utf8(CONFIG_KEY_REREGISTRATION_GRACE_SEC)
     }
 
     fun set<T: copy>(addr: address, config_name: String, value: &T) acquires Config {

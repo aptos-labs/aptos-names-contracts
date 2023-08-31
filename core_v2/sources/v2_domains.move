@@ -1027,8 +1027,28 @@ module aptos_names_v2::v2_domains {
         if (is_subdomain(subdomain_name) && is_name_registerable(domain_name, option::none())) {
             return false
         };
-        // Check to see if the domain expired
-        is_name_expired(domain_name, subdomain_name)
+
+        // Name is not registered, so name is registerable
+        if (!is_name_registered(domain_name, subdomain_name)) {
+            return true
+        };
+        let expired = is_name_expired(domain_name, subdomain_name);
+        // Name is not expired, so not registerable
+        if (!expired) {
+            return false
+        };
+
+        let (expiration_time_sec, _) = get_name_record_props_for_name(subdomain_name, domain_name);
+        let now = timestamp::now_seconds();
+        let expired_for = now - expiration_time_sec;
+
+        // Name is expired and passed grace period, so name is registerable
+        if (expired_for > v2_config::reregistration_grace_sec()) {
+            return true
+        } else {
+            // Name is expired but haven't passed grace period, so name is not registerable
+            return false
+        }
     }
 
     /// Returns true if the is not registered OR (name is registered AND is expired)
