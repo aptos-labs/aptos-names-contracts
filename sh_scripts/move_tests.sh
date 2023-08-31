@@ -15,12 +15,14 @@ ROUTER_SIGNER=0x$(aptos account derive-resource-account-address \
   grep "Result" | \
   sed -n 's/.*"Result": "\([^"]*\)".*/\1/p')
 
-#./aptos move test \
-#  --package-dir core \
-#  --named-addresses aptos_names=$APTOS_NAMES,aptos_names_admin=$ADMIN,aptos_names_funds=$FUNDS
-#./aptos move test \
-#  --package-dir core_v2 \
-#  --named-addresses aptos_names=$APTOS_NAMES,aptos_names_v2=$APTOS_NAMES_V2,aptos_names_admin=$ADMIN,aptos_names_funds=$FUNDS,router=$ROUTER,router_signer=$ROUTER_SIGNER
+echo "ROUTER_SIGNER: $ROUTER_SIGNER"
+
+./aptos move test \
+  --package-dir core \
+  --named-addresses aptos_names=$APTOS_NAMES,aptos_names_admin=$ADMIN,aptos_names_funds=$FUNDS
+./aptos move test \
+  --package-dir core_v2 \
+  --named-addresses aptos_names=$APTOS_NAMES,aptos_names_v2=$APTOS_NAMES_V2,aptos_names_admin=$ADMIN,aptos_names_funds=$FUNDS,router=$ROUTER,router_signer=$ROUTER_SIGNER
 ./aptos move test \
   --package-dir router \
   --named-addresses aptos_names=$APTOS_NAMES,aptos_names_v2=$APTOS_NAMES_V2,aptos_names_admin=$ADMIN,aptos_names_funds=$FUNDS,router=$ROUTER,router_signer=$ROUTER_SIGNER
