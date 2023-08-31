@@ -1,4 +1,4 @@
-module aptos_names_v2::domains {
+module aptos_names_v2::v2_domains {
     use aptos_framework::account::{Self, SignerCapability};
     use aptos_framework::aptos_account;
     use aptos_framework::aptos_coin::AptosCoin;
@@ -6,11 +6,11 @@ module aptos_names_v2::domains {
     use aptos_framework::event;
     use aptos_framework::object::{Self, Object};
     use aptos_framework::timestamp;
-    use aptos_names_v2::config;
-    use aptos_names_v2::price_model;
-    use aptos_names_v2::time_helper;
-    use aptos_names_v2::token_helper;
-    use aptos_names_v2::utf8_utils;
+    use aptos_names_v2::v2_config;
+    use aptos_names_v2::v2_price_model;
+    use aptos_names_v2::v2_time_helper;
+    use aptos_names_v2::v2_token_helper;
+    use aptos_names_v2::v2_utf8_utils;
     use aptos_token_objects::collection;
     use aptos_token_objects::token;
     use std::error;
@@ -183,7 +183,7 @@ module aptos_names_v2::domains {
             aptos_account::create_account(admin_address);
         };
 
-        config::initialize_config(account, admin_address, funds_address);
+        v2_config::initialize_config(account, admin_address, funds_address);
 
         move_to(account, SetTargetAddressEvents {
             set_name_events: account::new_event_handle<SetTargetAddressEvent>(account),
@@ -217,14 +217,14 @@ module aptos_names_v2::domains {
         collection::create_unlimited_collection(
             &token_resource,
             utf8(COLLECTION_DESCRIPTION),
-            config::domain_collection_name(),
+            v2_config::domain_collection_name(),
             option::none(),
             utf8(COLLECTION_URI),
         );
         collection::create_unlimited_collection(
             &token_resource,
             utf8(SUBDOMAIN_COLLECTION_DESCRIPTION),
-            config::subdomain_collection_name(),
+            v2_config::subdomain_collection_name(),
             option::none(),
             utf8(COLLECTION_URI),
         );
@@ -238,9 +238,9 @@ module aptos_names_v2::domains {
         subdomain_name: Option<String>,
         expiration_time_sec: u64,
     ) acquires CollectionCapability {
-        let name = token_helper::get_fully_qualified_domain_name(subdomain_name, domain_name);
-        let description = config::tokendata_description();
-        let uri: string::String = config::tokendata_url_prefix();
+        let name = v2_token_helper::get_fully_qualified_domain_name(subdomain_name, domain_name);
+        let description = v2_config::tokendata_description();
+        let uri: string::String = v2_config::tokendata_url_prefix();
         string::append(&mut uri, name);
 
         let subdomain_ext: Option<SubdomainExt>;
@@ -288,7 +288,7 @@ module aptos_names_v2::domains {
         registration_duration_secs: u64,
     ) acquires CollectionCapability, NameRecord, RegisterNameEvents, ReverseRecord, SetReverseLookupEvents {
         assert!(address_of(router_signer) == @router_signer, error::permission_denied(ENOT_ROUTER));
-        assert!(config::unrestricted_mint_enabled(), error::permission_denied(EVALID_SIGNATURE_REQUIRED));
+        assert!(v2_config::unrestricted_mint_enabled(), error::permission_denied(EVALID_SIGNATURE_REQUIRED));
 
         validate_registration_duration(registration_duration_secs);
 
@@ -298,8 +298,8 @@ module aptos_names_v2::domains {
 
         let length = validate_name_string(domain_name);
 
-        let price = price_model::price_for_domain(length, registration_duration_secs);
-        coin::transfer<AptosCoin>(sign, config::fund_destination_address(), price);
+        let price = v2_price_model::price_for_domain(length, registration_duration_secs);
+        coin::transfer<AptosCoin>(sign, v2_config::fund_destination_address(), price);
 
         register_name_internal(sign, subdomain_name, domain_name, registration_duration_secs, price);
 
@@ -316,7 +316,7 @@ module aptos_names_v2::domains {
         expiration_time_sec: u64
     ) acquires CollectionCapability, NameRecord, RegisterNameEvents, ReverseRecord, SetReverseLookupEvents {
         assert!(address_of(router_signer) == @router_signer, error::permission_denied(ENOT_ROUTER));
-        assert!(config::is_enabled(), error::unavailable(ENOT_ENABLED));
+        assert!(v2_config::is_enabled(), error::unavailable(ENOT_ENABLED));
 
         assert!(
             is_name_registerable(domain_name, option::some(subdomain_name)),
@@ -335,8 +335,8 @@ module aptos_names_v2::domains {
 
         let registration_duration_secs = expiration_time_sec - timestamp::now_seconds();
 
-        let price = price_model::price_for_subdomain(registration_duration_secs);
-        coin::transfer<AptosCoin>(sign, config::fund_destination_address(), price);
+        let price = v2_price_model::price_for_subdomain(registration_duration_secs);
+        coin::transfer<AptosCoin>(sign, v2_config::fund_destination_address(), price);
 
         register_name_internal(sign, option::some(subdomain_name), domain_name, registration_duration_secs, price);
     }
@@ -432,9 +432,9 @@ module aptos_names_v2::domains {
 
         validate_registration_duration(renewal_duration_secs);
         assert!(is_domain_in_renewal_window(domain_name), error::invalid_state(EDOMAIN_NOT_AVAILABLE_TO_RENEW));
-        let price = price_model::price_for_domain(length, renewal_duration_secs);
+        let price = v2_price_model::price_for_domain(length, renewal_duration_secs);
         // pay the price
-        coin::transfer<AptosCoin>(sign, config::fund_destination_address(), price);
+        coin::transfer<AptosCoin>(sign, v2_config::fund_destination_address(), price);
         renew_domain_internal(domain_name, renewal_duration_secs, price);
     }
 
@@ -811,7 +811,7 @@ module aptos_names_v2::domains {
         subdomain_name: Option<String>,
         new_owner: address
     ) acquires CollectionCapability, NameRecord, ReverseRecord, SetTargetAddressEvents, SetReverseLookupEvents {
-        config::assert_signer_is_admin(sign);
+        v2_config::assert_signer_is_admin(sign);
         // If the domain name is a primary name, clear it.
         clear_reverse_lookup_for_name(subdomain_name, domain_name);
         set_target_address_internal(subdomain_name, domain_name, new_owner);
@@ -828,7 +828,7 @@ module aptos_names_v2::domains {
         subdomain_name: Option<String>,
         registration_duration_secs: u64
     ) acquires CollectionCapability, NameRecord, RegisterNameEvents, ReverseRecord, SetReverseLookupEvents {
-        config::assert_signer_is_admin(sign);
+        v2_config::assert_signer_is_admin(sign);
         // Register the name
         register_name_internal(sign, subdomain_name, domain_name, registration_duration_secs, 0);
     }
@@ -840,7 +840,7 @@ module aptos_names_v2::domains {
         domain_name: String,
         subdomain_name: Option<String>,
     ) acquires CollectionCapability, NameRecord {
-        config::assert_signer_is_admin(sign);
+        v2_config::assert_signer_is_admin(sign);
         let record = get_record_mut(domain_name, subdomain_name);
         object::transfer_with_ref(
             object::generate_linear_transfer_ref(&record.transfer_ref),
@@ -856,7 +856,7 @@ module aptos_names_v2::domains {
         new_expiration_secs: u64
     ) acquires CollectionCapability, NameRecord {
         // check the signer eligibility
-        config::assert_signer_is_admin(sign);
+        v2_config::assert_signer_is_admin(sign);
 
         let record = get_record_mut(domain_name, subdomain_name);
         record.expiration_time_sec = new_expiration_secs;
@@ -868,10 +868,10 @@ module aptos_names_v2::domains {
     fun validate_name_string(
         name: String,
     ): u64 {
-        let (is_valid, length) = utf8_utils::string_is_allowed(&name);
+        let (is_valid, length) = v2_utf8_utils::string_is_allowed(&name);
         assert!(is_valid, error::invalid_argument(ENAME_HAS_INVALID_CHARACTERS));
-        assert!(length <= config::max_domain_length(), error::out_of_range(ENAME_TOO_LONG));
-        assert!(length >= config::min_domain_length(), error::out_of_range(ENAME_TOO_SHORT));
+        assert!(length <= v2_config::max_domain_length(), error::out_of_range(ENAME_TOO_LONG));
+        assert!(length >= v2_config::min_domain_length(), error::out_of_range(ENAME_TOO_SHORT));
 
         return length
     }
@@ -919,7 +919,7 @@ module aptos_names_v2::domains {
         token::create_token_address(
             &get_token_signer_address(),
             &get_collection_name(is_subdomain(subdomain_name)),
-            &token_helper::get_fully_qualified_domain_name(subdomain_name, domain_name),
+            &v2_token_helper::get_fully_qualified_domain_name(subdomain_name, domain_name),
         )
     }
 
@@ -930,7 +930,7 @@ module aptos_names_v2::domains {
         token::create_token_address(
             &get_token_signer_address(),
             &get_collection_name(is_subdomain(subdomain_name)),
-            &token_helper::get_fully_qualified_domain_name(subdomain_name, domain_name),
+            &v2_token_helper::get_fully_qualified_domain_name(subdomain_name, domain_name),
         )
     }
 
@@ -966,9 +966,9 @@ module aptos_names_v2::domains {
 
     inline fun get_collection_name(is_subdomain: bool): String {
         if (is_subdomain) {
-            config::subdomain_collection_name()
+            v2_config::subdomain_collection_name()
         } else {
-            config::domain_collection_name()
+            v2_config::domain_collection_name()
         }
     }
 
@@ -980,9 +980,9 @@ module aptos_names_v2::domains {
             error::invalid_argument(EDURATION_MUST_BE_WHOLE_YEARS)
         );
 
-        let num_years = (time_helper::seconds_to_years(registration_duration_secs) as u8);
+        let num_years = (v2_time_helper::seconds_to_years(registration_duration_secs) as u8);
         assert!(
-            num_years > 0 && num_years <= config::max_number_of_years_registered(),
+            num_years > 0 && num_years <= v2_config::max_number_of_years_registered(),
             error::out_of_range(EINVALID_NUMBER_YEARS)
         );
     }

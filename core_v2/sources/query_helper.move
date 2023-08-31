@@ -1,5 +1,6 @@
+#[test_only]
 module aptos_names_v2::query_helper {
-    use aptos_names_v2::domains;
+    use aptos_names_v2::v2_domains;
     use std::option::{Self, Option};
     use std::string::{String};
 
@@ -8,7 +9,7 @@ module aptos_names_v2::query_helper {
     public fun get_domain_props(
         domain: String,
     ): (u64, Option<address>) {
-        domains::get_name_record_props_for_name(option::none(), domain)
+        v2_domains::get_name_record_props_for_name(option::none(), domain)
     }
 
     #[view]
@@ -17,7 +18,7 @@ module aptos_names_v2::query_helper {
         subdomain: String,
         domain: String,
     ): (u64, Option<address>) {
-        domains::get_name_record_props_for_name(option::some(subdomain), domain)
+        v2_domains::get_name_record_props_for_name(option::some(subdomain), domain)
     }
 
     #[view]
@@ -25,10 +26,10 @@ module aptos_names_v2::query_helper {
     public fun get_reverse_lookup_name(
         account_addr: address
     ): (Option<String>, Option<String>) {
-        let reverse_record_address = domains::get_reverse_lookup(account_addr);
+        let reverse_record_address = v2_domains::get_reverse_lookup(account_addr);
         if (option::is_some(&reverse_record_address)) {
             let address = option::borrow(&reverse_record_address);
-            let (subdomain_name, domain_name) = domains::get_record_props_from_token_addr(*address);
+            let (subdomain_name, domain_name) = v2_domains::get_record_props_from_token_addr(*address);
             (subdomain_name, option::some(domain_name))
         } else {
             (option::none(), option::none())
@@ -38,7 +39,7 @@ module aptos_names_v2::query_helper {
     #[view]
     /// Returns true if domain is not registered OR (name is registered AND is expired)
     public fun domain_name_is_expired(domain_name: String): bool {
-        domains::is_name_expired(domain_name, option::none())
+        v2_domains::is_name_expired(domain_name, option::none())
     }
 
     #[view]
@@ -47,7 +48,7 @@ module aptos_names_v2::query_helper {
         subdomain_name: String,
         domain_name: String
     ): bool {
-        domains::is_name_expired(domain_name, option::some(subdomain_name))
+        v2_domains::is_name_expired(domain_name, option::some(subdomain_name))
     }
 
     #[view]
@@ -55,7 +56,7 @@ module aptos_names_v2::query_helper {
     public fun domain_name_is_registered(
         domain_name: String
     ): bool {
-        domains::is_name_registered(domain_name, option::none())
+        v2_domains::is_name_registered(domain_name, option::none())
     }
 
     #[view]
@@ -64,7 +65,7 @@ module aptos_names_v2::query_helper {
         subdomain_name: String,
         domain_name: String
     ): bool {
-        domains::is_name_registered(domain_name, option::some(subdomain_name))
+        v2_domains::is_name_registered(domain_name, option::some(subdomain_name))
     }
 
     #[view]
@@ -74,7 +75,7 @@ module aptos_names_v2::query_helper {
         owner_addr: address,
         domain_name: String
     ): bool {
-        domains::is_owner_of_name(owner_addr, option::none(), domain_name)
+        v2_domains::is_owner_of_name(owner_addr, option::none(), domain_name)
     }
 
     #[view]
@@ -85,7 +86,7 @@ module aptos_names_v2::query_helper {
         subdomain_name: String,
         domain_name: String
     ): bool {
-        domains::is_owner_of_name(owner_addr, option::some(subdomain_name), domain_name)
+        v2_domains::is_owner_of_name(owner_addr, option::some(subdomain_name), domain_name)
     }
 
     #[view]
@@ -94,7 +95,7 @@ module aptos_names_v2::query_helper {
     public fun domain_name_resolved_address(
         domain_name: String
     ): Option<address> {
-        domains::get_name_resolved_address(option::none(), domain_name)
+        v2_domains::get_name_resolved_address(option::none(), domain_name)
     }
 
     #[view]
@@ -104,6 +105,6 @@ module aptos_names_v2::query_helper {
         subdomain_name: String,
         domain_name: String
     ): Option<address> {
-        domains::get_name_resolved_address(option::some(subdomain_name), domain_name)
+        v2_domains::get_name_resolved_address(option::some(subdomain_name), domain_name)
     }
 }

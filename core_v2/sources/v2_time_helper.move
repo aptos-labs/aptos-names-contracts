@@ -1,4 +1,4 @@
-module aptos_names_v2::time_helper {
+module aptos_names_v2::v2_time_helper {
 
     const SECONDS_PER_MINUTE: u64 = 60;
     const SECONDS_PER_HOUR: u64 = 60 * 60;

@@ -1,7 +1,7 @@
 #[test_only]
 module router::domain_admin_tests {
     use router::router;
-    use router::test_helper;
+    use router::router_test_helper;
     use std::option;
     use std::signer::address_of;
     use std::string::utf8;
@@ -28,7 +28,7 @@ module router::domain_admin_tests {
         foundation: signer
     ) {
         router::init_module_for_test(router);
-        let users = test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user1, &aptos, user2, &foundation);
+        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user1, &aptos, user2, &foundation);
         let user1 = vector::borrow(&users, 0);
         let user2 = vector::borrow(&users, 1);
         let user1_addr = address_of(user1);
@@ -76,7 +76,7 @@ module router::domain_admin_tests {
         foundation: signer
     ) {
         router::init_module_for_test(router);
-        let users = test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user1, &aptos, user2, &foundation);
+        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user1, &aptos, user2, &foundation);
         let user1 = vector::borrow(&users, 0);
 
         // Bump mode
@@ -136,7 +136,7 @@ module router::domain_admin_tests {
         foundation: signer
     ) {
         router::init_module_for_test(router);
-        let users = test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user1, &aptos, user2, &foundation);
+        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user1, &aptos, user2, &foundation);
         let user1 = vector::borrow(&users, 0);
 
         // Bump mode

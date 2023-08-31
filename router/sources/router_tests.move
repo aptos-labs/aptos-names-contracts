@@ -1,7 +1,7 @@
 #[test_only]
 module router::router_tests {
     use router::router;
-    use router::test_helper;
+    use router::router_test_helper;
     use std::option;
     use std::signer::address_of;
     use std::vector;
@@ -27,7 +27,7 @@ module router::router_tests {
         foundation: signer
     ) {
         router::init_module_for_test(router);
-        test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user, &aptos, rando, &foundation);
+        router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user, &aptos, rando, &foundation);
         assert!(router::get_admin_addr() == @router, 0);
         assert!(option::is_none(&router::get_pending_admin_addr()), 1);
         assert!(router::get_mode() == 0, 2)
@@ -52,7 +52,7 @@ module router::router_tests {
         foundation: signer
     ) {
         router::init_module_for_test(router);
-        let users = test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user, &aptos, rando, &foundation);
+        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user, &aptos, rando, &foundation);
         let user = vector::borrow(&users, 0);
         let user_addr = address_of(user);
 
@@ -85,7 +85,7 @@ module router::router_tests {
         foundation: signer
     ) {
         router::init_module_for_test(router);
-        let users = test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user, &aptos, rando, &foundation);
+        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user, &aptos, rando, &foundation);
         let user = vector::borrow(&users, 0);
         let user_addr = address_of(user);
 
@@ -116,7 +116,7 @@ module router::router_tests {
         foundation: signer
     ) {
         router::init_module_for_test(router);
-        let users = test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user, &aptos, rando, &foundation);
+        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user, &aptos, rando, &foundation);
         let user = vector::borrow(&users, 0);
 
         router::set_pending_admin(user, address_of(user));
@@ -141,7 +141,7 @@ module router::router_tests {
         foundation: signer
     ) {
         router::init_module_for_test(router);
-        test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user, &aptos, rando, &foundation);
+        router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user, &aptos, rando, &foundation);
 
         let i = 0;
         while (i <= MAX_MODE) {
@@ -171,7 +171,7 @@ module router::router_tests {
         foundation: signer
     ) {
         router::init_module_for_test(router);
-        let users = test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user, &aptos, rando, &foundation);
+        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user, &aptos, rando, &foundation);
         let user = vector::borrow(&users, 0);
 
         router::set_mode(user, 0);
@@ -197,7 +197,7 @@ module router::router_tests {
         foundation: signer
     ) {
         router::init_module_for_test(router);
-        test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user, &aptos, rando, &foundation);
+        router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user, &aptos, rando, &foundation);
 
         router::set_mode(router, MAX_MODE + 1);
     }
