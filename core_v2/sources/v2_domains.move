@@ -20,7 +20,6 @@ module aptos_names_v2::v2_domains {
     use std::string::{Self, String, utf8};
 
     const APP_SIGNER_CAPABILITY_SEED: vector<u8> = b"APP_SIGNER_CAPABILITY";
-    const BURN_SIGNER_CAPABILITY_SEED: vector<u8> = b"BURN_SIGNER_CAPABILITY";
     const COLLECTION_DESCRIPTION: vector<u8> = b".apt names from Aptos Labs";
     const SUBDOMAIN_COLLECTION_DESCRIPTION: vector<u8> = b"subdomain of .apt names from Aptos Labs";
     const COLLECTION_URI: vector<u8> = b"https://aptosnames.com";
@@ -78,7 +77,6 @@ module aptos_names_v2::v2_domains {
     /// Tokens require a signer to create, so this is the signer for the collection
     struct CollectionCapability has key, drop {
         capability: SignerCapability,
-        burn_signer_capability: SignerCapability,
     }
 
     struct SubdomainExt has store {
@@ -206,13 +204,8 @@ module aptos_names_v2::v2_domains {
             account,
             APP_SIGNER_CAPABILITY_SEED,
         );
-        let (_, burn_signer_capability) = account::create_resource_account(
-            account,
-            BURN_SIGNER_CAPABILITY_SEED,
-        );
         move_to(account, CollectionCapability {
             capability: token_signer_cap,
-            burn_signer_capability,
         });
         collection::create_unlimited_collection(
             &token_resource,
@@ -898,18 +891,6 @@ module aptos_names_v2::v2_domains {
 
     fun get_token_signer(): signer acquires CollectionCapability {
         account::create_signer_with_capability(&borrow_global<CollectionCapability>(@aptos_names_v2).capability)
-    }
-
-    public fun get_burn_signer_address(): address acquires CollectionCapability {
-        account::get_signer_capability_address(
-            &borrow_global<CollectionCapability>(@aptos_names_v2).burn_signer_capability
-        )
-    }
-
-    fun get_burn_signer(): signer acquires CollectionCapability {
-        account::create_signer_with_capability(
-            &borrow_global<CollectionCapability>(@aptos_names_v2).burn_signer_capability
-        )
     }
 
     inline fun get_token_addr_inline(
