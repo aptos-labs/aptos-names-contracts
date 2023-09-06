@@ -361,17 +361,8 @@ module router::router {
             );
             let token_id = aptos_names::token_helper::latest_token_id(&tokendata_id);
 
-            // Clear the target_addr in v1
-            if (option::is_some(&subdomain_name)) {
-                domains::clear_subdomain_address(user, *option::borrow(&subdomain_name), domain_name);
-            } else {
-                domains::clear_domain_address(user, domain_name);
-            };
-
-            // Clear the primary name in v1
-            if (is_primary_name) {
-                domains::clear_reverse_lookup(user);
-            };
+            // Clear the registration in v1. This will also clear the primary name if applicable
+            domains::clear_registration(user, subdomain_name, domain_name);
 
             // Burn by sending to `router_signer`
             let router_signer = get_router_signer();
