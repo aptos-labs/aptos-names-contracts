@@ -24,3 +24,6 @@ ROUTER_SIGNER=0x$(./aptos account derive-resource-account-address \
 ./aptos move test \
   --package-dir router \
   --named-addresses aptos_names=$APTOS_NAMES,aptos_names_v2=$APTOS_NAMES_V2,aptos_names_admin=$ADMIN,aptos_names_funds=$FUNDS,router=$ROUTER,router_signer=$ROUTER_SIGNER
+./aptos move test \
+  --package-dir bulk_migrate \
+  --named-addresses aptos_names=$APTOS_NAMES,aptos_names_v2=$APTOS_NAMES_V2,aptos_names_admin=$ADMIN,aptos_names_funds=$FUNDS,router=$ROUTER,router_signer=$ROUTER_SIGNER,bulk_migrate=$ADMIN
