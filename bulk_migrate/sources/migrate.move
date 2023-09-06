@@ -19,8 +19,8 @@ module bulk_migrate::migrate {
         );
         let idx = 0;
         while (idx < vector::length(&domain_names)) {
-            let domain_name = domain_names[idx];
-            let subdomain_name = subdomain_names[idx];
+            let domain_name = *vector::borrow(&mut domain_names, idx);
+            let subdomain_name = *vector::borrow(&mut subdomain_names, idx);
             router::migrate_name(user, domain_name, subdomain_name);
             idx = idx + 1
         }
