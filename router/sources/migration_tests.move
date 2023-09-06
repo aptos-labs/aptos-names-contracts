@@ -331,10 +331,15 @@ module router::migration_tests {
         // Bump mode
         router::set_mode(router, 1);
 
-        router::bulk_migrate_name(user1, vector [
-            (domain_name, option::none()),
-            (domain_name, subdomain_name_opt),
-        ]);
+        router::bulk_migrate_name(
+            user1,
+            vector [
+                domain_name,
+                domain_name,
+            ], vector [
+                option::none(),
+                subdomain_name_opt,
+            ]);
 
         // Verify names no longer exist in v1
         {
