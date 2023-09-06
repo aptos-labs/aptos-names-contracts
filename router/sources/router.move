@@ -10,6 +10,7 @@ module router::router {
     use std::signer::address_of;
     use std::signer;
     use std::string::{String};
+    use std::vector;
 
     // == ROUTER MODE ENUMS ==
 
@@ -412,6 +413,16 @@ module router::router {
             domains::force_clear_registration(&router_signer, subdomain_name, domain_name)
         } else {
             abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
+        }
+    }
+
+    public entry fun bulk_migrate_name(
+        user: &signer,
+        names: vector<(String, Option<String>)>
+    ) acquires RouterConfig {
+        while (!vector::is_empty(&names)) {
+            let (domain_name, subdomain_name) = vector::pop_back(&mut names);
+            migrate_name(user, domain_name, subdomain_name);
         }
     }
 
