@@ -17,13 +17,12 @@ module bulk_migrate::migrate {
             vector::length(&domain_names) == vector::length(&subdomain_names),
             error::invalid_argument(EDOMAIN_AND_SUBDOMAIN_MUST_HAVE_SAME_LENGTH)
         );
-        // Need to reverse because we can only traverse backward
-        vector::reverse(&mut domain_names);
-        vector::reverse(&mut subdomain_names);
-        while (!vector::is_empty(&domain_names)) {
-            let domain_name = vector::pop_back(&mut domain_names);
-            let subdomain_name = vector::pop_back(&mut subdomain_names);
+        let idx = 0;
+        while (idx < vector::length(&domain_names)) {
+            let domain_name = domain_names[idx];
+            let subdomain_name = subdomain_names[idx];
             router::migrate_name(user, domain_name, subdomain_name);
+            idx = idx + 1
         }
     }
 }
