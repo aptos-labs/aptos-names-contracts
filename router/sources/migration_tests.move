@@ -8,7 +8,6 @@ module router::migration_tests {
     use std::signer::address_of;
     use std::string::utf8;
     use std::vector;
-    use aptos_names::domains::is_owner_of_name;
 
     const MAX_MODE: u8 = 1;
     const SECONDS_PER_YEAR: u64 = 60 * 60 * 24 * 365;
