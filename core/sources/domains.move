@@ -259,6 +259,23 @@ module aptos_names::domains {
         register_name_internal(sign, option::some(subdomain_name), domain_name, registration_duration_secs, price);
     }
 
+    /// Give up an owned registration. If it is a primary name, also clear it. This can only be done by the domain owner.
+    public entry fun clear_registration(
+        sign: &signer,
+        subdomain_name: Option<String>,
+        domain_name: String
+    ) acquires NameRegistryV1, ReverseLookupRegistryV1, SetReverseLookupEventsV1 {
+        let (is_owner, _token_id) = is_owner_of_name(signer::address_of(sign), subdomain_name, domain_name);
+        assert!(is_owner, error::permission_denied(ENOT_OWNER_OF_NAME));
+
+        // If this is a primary name, clear it.
+        clear_reverse_lookup_for_name(subdomain_name, domain_name);
+
+        let name_record_key = create_name_record_key_v1(subdomain_name, domain_name);
+        let aptos_names = borrow_global_mut<NameRegistryV1>(@aptos_names);
+        table::remove(&mut aptos_names.registry, name_record_key);
+    }
+
     /// Register a name. Accepts an optional subdomain name, a required domain name, and a registration duration in seconds.
     /// For domains, the registration duration is only allowed to be in increments of 1 year, for now
     /// Since the owner of the domain is the only one that can create the subdomain, we allow them to decide how long they want the underlying registration to be
