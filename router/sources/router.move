@@ -364,11 +364,6 @@ module router::router {
             );
             let token_id = aptos_names::token_helper::latest_token_id(&tokendata_id);
 
-            // Clear the primary name in v1
-            if (is_primary_name) {
-                domains::clear_reverse_lookup(user);
-            };
-
             // Burn by sending to `router_signer`
             let router_signer = get_router_signer();
             aptos_token::token::direct_transfer(
@@ -413,7 +408,7 @@ module router::router {
                 );
             };
 
-            // Clear the name in v1
+            // Clear the name in v1. Will also clear the primary name if it was a primary name
             domains::force_clear_registration(&router_signer, subdomain_name, domain_name)
         } else {
             abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)

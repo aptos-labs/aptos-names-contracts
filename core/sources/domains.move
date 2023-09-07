@@ -424,8 +424,12 @@ module aptos_names::domains {
         sign: &signer,
         subdomain_name: Option<String>,
         domain_name: String
-    ) acquires NameRegistryV1 {
+    ) acquires NameRegistryV1, ReverseLookupRegistryV1, SetReverseLookupEventsV1 {
         config::assert_signer_is_admin(sign);
+
+        // If this is a primary name, clear it.
+        clear_reverse_lookup_for_name(subdomain_name, domain_name);
+
         let name_record_key = create_name_record_key_v1(subdomain_name, domain_name);
         let aptos_names = borrow_global_mut<NameRegistryV1>(@aptos_names);
         if (table::contains(&aptos_names.registry, name_record_key)) {
