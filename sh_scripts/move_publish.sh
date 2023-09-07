@@ -4,12 +4,12 @@ set -e
 
 echo "##### Publishing packages #####"
 # Set these to the account address you want to deploy to.
-APTOS_NAMES="0x49b4c7efac4dff17b267191200054b7a3b736db3cd364552edb202ea3cb45884"
-APTOS_NAMES_V2="0x49b4c7efac4dff17b267191200054b7a3b736db3cd364552edb202ea3cb45884"
-BULK_MIGRATE="0x49b4c7efac4dff17b267191200054b7a3b736db3cd364552edb202ea3cb45884"
-ADMIN="0x49b4c7efac4dff17b267191200054b7a3b736db3cd364552edb202ea3cb45884"
-FUNDS="0x49b4c7efac4dff17b267191200054b7a3b736db3cd364552edb202ea3cb45884"
-ROUTER="0x49b4c7efac4dff17b267191200054b7a3b736db3cd364552edb202ea3cb45884"
+APTOS_NAMES=""
+APTOS_NAMES_V2=""
+BULK_MIGRATE=""
+ADMIN=""
+FUNDS=""
+ROUTER=""
 
 ROUTER_SIGNER=0x$(aptos account derive-resource-account-address \
   --address $ROUTER \
