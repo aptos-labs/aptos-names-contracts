@@ -2,29 +2,35 @@
 
 set -e
 
-echo "##### Running tests #####"
-APTOS_NAMES="0x867ed1f6bf916171b1de3ee92849b8978b7d1b9e0a8cc982a3d19d535dfd9c0c"
-APTOS_NAMES_V2="0x867ed1f6bf916171b1de3ee92849b8978b7d1b9e0a8cc982a3d19d535dfd9c0c"
-BULK_MIGRATE="0x867ed1f6bf916171b1de3ee92849b8978b7d1b9e0a8cc982a3d19d535dfd9c0c"
-ADMIN="0x91945b4672607a327019e768dd6045d1254d1102d882df434ca734250bb3581d"
-FUNDS="0x78ee3915e67ef5d19fa91d1e05e60ae08751efd12ce58e23fc1109de87ea7865"
-ROUTER="0x867ed1f6bf916171b1de3ee92849b8978b7d1b9e0a8cc982a3d19d535dfd9c0c"
-ROUTER_SIGNER=0x$(./aptos account derive-resource-account-address \
+echo "##### Publishing packages #####"
+# Set these to the account address you want to deploy to.
+APTOS_NAMES="_"
+APTOS_NAMES_V2="_"
+BULK_MIGRATE="_"
+ADMIN="_"
+FUNDS="_"
+ROUTER="_"
+
+ROUTER_SIGNER=0x$(aptos account derive-resource-account-address \
   --address $ROUTER \
   --seed "ANS ROUTER" \
   --seed-encoding utf8 | \
   grep "Result" | \
   sed -n 's/.*"Result": "\([^"]*\)".*/\1/p')
 
-./aptos move test \
+aptos move publish \
+  --profile core_profile \
   --package-dir core \
   --named-addresses aptos_names=$APTOS_NAMES,aptos_names_admin=$ADMIN,aptos_names_funds=$FUNDS,router_signer=$ROUTER_SIGNER
-./aptos move test \
+aptos move publish \
+  --profile core_v2_profile \
   --package-dir core_v2 \
   --named-addresses aptos_names=$APTOS_NAMES,aptos_names_v2=$APTOS_NAMES_V2,aptos_names_admin=$ADMIN,aptos_names_funds=$FUNDS,router=$ROUTER,router_signer=$ROUTER_SIGNER
-./aptos move test \
+aptos move publish \
+  --profile router_profile \
   --package-dir router \
   --named-addresses aptos_names=$APTOS_NAMES,aptos_names_v2=$APTOS_NAMES_V2,aptos_names_admin=$ADMIN,aptos_names_funds=$FUNDS,router=$ROUTER,router_signer=$ROUTER_SIGNER
-./aptos move test \
+aptos move publish \
+  --profile bulk_migrate_profile \
   --package-dir bulk_migrate \
   --named-addresses aptos_names=$APTOS_NAMES,aptos_names_v2=$APTOS_NAMES_V2,aptos_names_admin=$ADMIN,aptos_names_funds=$FUNDS,router=$ROUTER,router_signer=$ROUTER_SIGNER,bulk_migrate=$BULK_MIGRATE

@@ -8,7 +8,6 @@ module router::router {
     use std::error;
     use std::option::{Self, Option};
     use std::signer::address_of;
-    use std::signer;
     use std::string::{String};
 
     // == ROUTER MODE ENUMS ==
@@ -443,7 +442,7 @@ module router::router {
         // Migrate if the name is still in v1 and is a domain.
         // We do not migrate the subdomain because it might fail due to domain hasn't been migrated
         if (!exists_in_v2(domain_name, subdomain_name) && is_v1_name_owner(
-            signer::address_of(user),
+            address_of(user),
             domain_name,
             subdomain_name
         )) {
@@ -487,7 +486,7 @@ module router::router {
         } else if (mode == MODE_V1_AND_V2) {
             migrate_if_eligible(user, domain_name, subdomain_name);
             // Clear primary name in v1 if exists so we do not have primary name in both v1 and v2
-            let (_, v1_primary_domain_name) = get_v1_primary_name(signer::address_of(user));
+            let (_, v1_primary_domain_name) = get_v1_primary_name(address_of(user));
             if (option::is_some(&v1_primary_domain_name)) {
                 domains::clear_reverse_lookup(user);
             };
@@ -507,7 +506,7 @@ module router::router {
             domains::clear_reverse_lookup(user);
         } else if (mode == MODE_V1_AND_V2) {
             // Clear primary name in v1 if exists so we do not have primary name in both v1 and v2
-            let (v1_primary_subdomain_name, v1_primary_domain_name) = get_v1_primary_name(signer::address_of(user));
+            let (v1_primary_subdomain_name, v1_primary_domain_name) = get_v1_primary_name(address_of(user));
             if (option::is_some(&v1_primary_domain_name)) {
                 // If v1 primary name is a domain, migrate it to v2, this will automatically clear it as primary name in v1 and set again in v2
                 if (option::is_none(&v1_primary_subdomain_name)) {
