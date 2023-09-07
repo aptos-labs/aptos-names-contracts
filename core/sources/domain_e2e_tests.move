@@ -604,6 +604,7 @@ module aptos_names::domain_e2e_tests {
             vector::empty<u8>()
         );
     }
+
     #[test(myself = @aptos_names, user = @0x077, aptos = @0x1, rando = @0x266f, foundation = @0xf01d)]
     fun clear_registration_property_version_test(myself: &signer, user: signer, aptos: signer, rando: signer, foundation: signer) {
         let users = test_helper::e2e_test_setup(myself, user, &aptos, rando, &foundation);
