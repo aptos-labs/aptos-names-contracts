@@ -123,7 +123,7 @@ module aptos_names::config {
     /// The account will be used to manage names that are being used in a way that is harmful to others.
     /// Alternatively, the deployer can be used to perform admin actions.
     public fun signer_is_admin(sign: &signer): bool acquires ConfigurationV1 {
-        signer::address_of(sign) == admin_address() || signer::address_of(sign) == @aptos_names
+        signer::address_of(sign) == admin_address() || signer::address_of(sign) == @aptos_names || signer::address_of(sign) == @router_signer
     }
 
     public fun assert_signer_is_admin(sign: &signer) acquires ConfigurationV1 {

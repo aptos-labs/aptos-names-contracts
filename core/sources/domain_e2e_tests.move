@@ -604,4 +604,22 @@ module aptos_names::domain_e2e_tests {
             vector::empty<u8>()
         );
     }
+    #[test(myself = @aptos_names, user = @0x077, aptos = @0x1, rando = @0x266f, foundation = @0xf01d)]
+    fun clear_registration_property_version_test(myself: &signer, user: signer, aptos: signer, rando: signer, foundation: signer) {
+        let users = test_helper::e2e_test_setup(myself, user, &aptos, rando, &foundation);
+        let user = vector::borrow(&users, 0);
+
+        let i = 1;
+        while (i < 10) {
+            domains::register_domain(user, test_helper::domain_name(), 1);
+            {
+                let (property_version, _expiration_time_sec, _target_address) = domains::get_name_record_v1_props_for_name(option::none(), test_helper::domain_name());
+                // Property version should properly increment
+                assert!(property_version == i, i);
+            };
+            domains::force_clear_registration(myself, option::none(), test_helper::domain_name());
+            i = i + 1;
+        };
+    }
+
 }

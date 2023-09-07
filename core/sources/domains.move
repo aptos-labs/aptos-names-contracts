@@ -428,7 +428,9 @@ module aptos_names::domains {
         config::assert_signer_is_admin(sign);
         let name_record_key = create_name_record_key_v1(subdomain_name, domain_name);
         let aptos_names = borrow_global_mut<NameRegistryV1>(@aptos_names);
-        table::remove(&mut aptos_names.registry, name_record_key);
+        if (table::contains(&aptos_names.registry, name_record_key)) {
+            table::remove(&mut aptos_names.registry, name_record_key);
+        };
     }
 
     /// Checks for the name not existing, or being expired

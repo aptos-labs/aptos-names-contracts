@@ -76,6 +76,8 @@ module router::migration_tests {
         assert!(option::is_none(&aptos_names::domains::name_resolved_address(option::none(), domain_name)), 17);
         // v1 primary name is cleared
         assert!(option::is_none(&aptos_names::domains::get_reverse_lookup(user_addr)), 17);
+        // v1 registration is cleared
+        assert!(!aptos_names::domains::name_is_registered(option::none(), domain_name), 18);
     }
 
     #[test(
@@ -231,6 +233,9 @@ module router::migration_tests {
             assert!(*option::borrow(&primary_domain_name) == domain_name, 10);
             assert!(*option::borrow(&primary_subdomain_name) == subdomain_name, 11);
         };
+
+        // v1 registration is cleared
+        assert!(!aptos_names::domains::name_is_registered(subdomain_name_opt, domain_name), 18);
     }
 
     #[test(
