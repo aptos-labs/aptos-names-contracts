@@ -604,58 +604,22 @@ module aptos_names::domain_e2e_tests {
             vector::empty<u8>()
         );
     }
-
     #[test(myself = @aptos_names, user = @0x077, aptos = @0x1, rando = @0x266f, foundation = @0xf01d)]
-    fun clear_registration_test(myself: &signer, user: signer, aptos: signer, rando: signer, foundation: signer) {
+    fun clear_registration_property_version_test(myself: &signer, user: signer, aptos: signer, rando: signer, foundation: signer) {
         let users = test_helper::e2e_test_setup(myself, user, &aptos, rando, &foundation);
         let user = vector::borrow(&users, 0);
-        let user_addr = signer::address_of(user);
 
-        // Register the domain
-        test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>());
-        {
-            let (is_owner, _token_id) = domains::is_owner_of_name(user_addr, option::none(), test_helper::domain_name());
-            assert!(is_owner, 1);
-        };
-        {
-            let reverse_lookup = domains::get_reverse_lookup(user_addr);
-            assert!(option::is_some(&reverse_lookup), 1);
-            let (subdomain_name, domain_name) = domains::get_name_record_key_v1_props(option::borrow(&reverse_lookup));
-            assert!(subdomain_name == option::none(), 1);
-            assert!(domain_name == test_helper::domain_name(), 1);
-        };
-
-        // Clear the registration
-        domains::clear_registration(user, option::none(), test_helper::domain_name());
-
-        assert!(!domains::name_is_registered(option::none(), test_helper::domain_name()), 1);
-        assert!(domains::name_is_registerable(option::none(), test_helper::domain_name()), 1);
-        {
-            let (is_owner, _token_id) = domains::is_owner_of_name(user_addr, option::none(), test_helper::domain_name());
-            assert!(!is_owner, 1);
-        };
-        {
-            let reverse_lookup = domains::get_reverse_lookup(user_addr);
-            assert!(option::is_none(&reverse_lookup), 1);
+        let i = 1;
+        while (i < 10) {
+            domains::register_domain(user, test_helper::domain_name(), 1);
+            {
+                let (property_version, _expiration_time_sec, _target_address) = domains::get_name_record_v1_props_for_name(option::none(), test_helper::domain_name());
+                // Property version should properly increment
+                assert!(property_version == i, i);
+            };
+            domains::force_clear_registration(myself, option::none(), test_helper::domain_name());
+            i = i + 1;
         };
     }
 
-    #[test(myself = @aptos_names, user = @0x077, aptos = @0x1, rando = @0x266f, foundation = @0xf01d)]
-    #[expected_failure(abort_code = 327689, location = aptos_names::domains)]
-    fun rando_cant_clear_registration_test(myself: &signer, user: signer, aptos: signer, rando: signer, foundation: signer) {
-        let users = test_helper::e2e_test_setup(myself, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
-        let rando = vector::borrow(&users, 1);
-        let user_addr = signer::address_of(user);
-
-        // Register the domain
-        test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>());
-        {
-            let (is_owner, _token_id) = domains::is_owner_of_name(user_addr, option::none(), test_helper::domain_name());
-            assert!(is_owner, 1);
-        };
-
-        // Fails because rando is not the owner
-        domains::clear_registration(rando, option::none(), test_helper::domain_name());
-    }
 }

@@ -190,6 +190,8 @@ module router::router {
                 domain_name,
                 registration_duration_secs,
             );
+            // Clear the name in v1
+            domains::force_clear_registration(&get_router_signer(), option::none(), domain_name)
         } else {
             abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
         };
@@ -279,7 +281,8 @@ module router::router {
                 domain_name,
                 subdomain_name,
                 expiration_policy,
-            )
+            );
+            domains::force_clear_registration(&get_router_signer(), option::some(subdomain_name), domain_name)
         } else {
             abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
         };
@@ -303,7 +306,7 @@ module router::router {
                 domain_name,
                 subdomain_name,
                 transferrable
-            )
+            );
         };
 
         set_primary_name_when_register(
@@ -361,9 +364,6 @@ module router::router {
             );
             let token_id = aptos_names::token_helper::latest_token_id(&tokendata_id);
 
-            // Clear the registration in v1. This will also clear the primary name if applicable
-            domains::clear_registration(user, subdomain_name, domain_name);
-
             // Burn by sending to `router_signer`
             let router_signer = get_router_signer();
             aptos_token::token::direct_transfer(
@@ -408,7 +408,8 @@ module router::router {
                 );
             };
 
-            // Carry over the primary name
+            // Clear the name in v1. Will also clear the primary name if it was a primary name
+            domains::force_clear_registration(&router_signer, subdomain_name, domain_name)
         } else {
             abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
         }
