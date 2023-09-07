@@ -361,8 +361,17 @@ module router::router {
             );
             let token_id = aptos_names::token_helper::latest_token_id(&tokendata_id);
 
-            // Clear the registration in v1. This will also clear the primary name if applicable
-            domains::clear_registration(user, subdomain_name, domain_name);
+            // Clear the target_addr in v1
+            if (option::is_some(&subdomain_name)) {
+                domains::clear_subdomain_address(user, *option::borrow(&subdomain_name), domain_name);
+            } else {
+                domains::clear_domain_address(user, domain_name);
+            };
+
+            // Clear the primary name in v1
+            if (is_primary_name) {
+                domains::clear_reverse_lookup(user);
+            };
 
             // Burn by sending to `router_signer`
             let router_signer = get_router_signer();
@@ -680,15 +689,11 @@ module router::router {
         domain_name: String,
         subdomain_name: Option<String>
     ): Option<address> {
-        if (!aptos_names::domains::name_is_registered(subdomain_name, domain_name)) {
-            option::none()
-        } else {
-            let (_property_version, _expiration_time_sec, target_addr) = aptos_names::domains::get_name_record_v1_props_for_name(
-                subdomain_name,
-                domain_name,
-            );
-            target_addr
-        }
+        let (_property_version, _expiration_time_sec, target_addr) = domains::get_name_record_v1_props_for_name(
+            subdomain_name,
+            domain_name,
+        );
+        target_addr
     }
 
     #[view]

@@ -15,15 +15,11 @@ module router::target_address_tests {
         domain_name: String,
         subdomain_name: Option<String>
     ): Option<address> {
-        if (!aptos_names::domains::name_is_registered(subdomain_name, domain_name)) {
-            option::none()
-        } else {
-            let (_property_version, _expiration_time_sec, target_addr) = aptos_names::domains::get_name_record_v1_props_for_name(
-                subdomain_name,
-                domain_name,
-            );
-            target_addr
-        }
+        let (_property_version, _expiration_time_sec, target_addr) = aptos_names::domains::get_name_record_v1_props_for_name(
+            subdomain_name,
+            domain_name,
+        );
+        target_addr
     }
 
     /// Returns true if the name is tracked in v2
