@@ -41,6 +41,8 @@ module router::router {
     const ESUBDOMAIN_NOT_MIGRATED: u64 = 9;
     /// Cannot migrate subdomain before migrate domain
     const ECANNOT_MIGRATE_SUBDOMAIN_BEFORE_MIGRATE_DOMAIN: u64 = 10;
+    /// Name is already migrated
+    const ENAME_ALREADY_MIGRATED: u64 = 11;
 
     // == OTHER CONSTANTS ==
 
@@ -331,6 +333,12 @@ module router::router {
             abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
         } else if (mode == MODE_V1_AND_V2) {
             let user_addr = address_of(user);
+            // Check name is not already migrated
+            assert!(
+                !exists_in_v2(domain_name, subdomain_name),
+                error::invalid_state(ENAME_ALREADY_MIGRATED)
+            );
+
             let (is_v1_owner, _token_id) = domains::is_owner_of_name(
                 user_addr,
                 subdomain_name,
@@ -368,7 +376,7 @@ module router::router {
             // Domain must migrate before subdomain, throw error if this is a subdomain but domain has not been migrated
             if (option::is_some(&subdomain_name)) {
                 assert!(
-                    exists_in_v2(domain_name, option::none()) && is_name_owner(user_addr, domain_name, option::none()),
+                    exists_in_v2(domain_name, option::none()),
                     error::invalid_state(ECANNOT_MIGRATE_SUBDOMAIN_BEFORE_MIGRATE_DOMAIN)
                 )
             };

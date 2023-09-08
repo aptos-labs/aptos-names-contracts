@@ -298,7 +298,7 @@ module router::migration_tests {
         foundation = @0xf01d
     )]
     #[expected_failure(abort_code = 196618, location = router)]
-    fun test_migrate_subdomain_before_domain(
+    fun test_cannot_migrate_subdomain_before_domain(
         router: &signer,
         aptos_names: &signer,
         aptos_names_v2: &signer,
@@ -332,5 +332,40 @@ module router::migration_tests {
 
         // Migrate subdomain before migrate domain, should throw error ECANNOT_MIGRATE_SUBDOMAIN_BEFORE_MIGRATE_DOMAIN
         router::migrate_name(user, domain_name, subdomain_name_opt);
+    }
+
+    #[test(
+        router = @router,
+        aptos_names = @aptos_names,
+        aptos_names_v2 = @aptos_names_v2,
+        user1 = @0x077,
+        user2 = @0x266f,
+        aptos = @0x1,
+        foundation = @0xf01d
+    )]
+    #[expected_failure(abort_code = 196619, location = router)]
+    fun test_cannot_migrate_twice(
+        router: &signer,
+        aptos_names: &signer,
+        aptos_names_v2: &signer,
+        user1: signer,
+        user2: signer,
+        aptos: signer,
+        foundation: signer
+    ) {
+        router::init_module_for_test(router);
+        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user1, &aptos, user2, &foundation);
+        let user = vector::borrow(&users, 0);
+        let domain_name = utf8(b"test");
+
+        // Register with v1
+        router::register_domain(user, domain_name, SECONDS_PER_YEAR, option::none(), option::none());
+
+        // Bump mode
+        router::set_mode(router, 1);
+
+        router::migrate_name(user, domain_name, option::none());
+        // Migrate twice should throw ENAME_ALREADY_MIGRATED
+        router::migrate_name(user, domain_name, option::none());
     }
 }
