@@ -6,7 +6,6 @@ version = '1.0.0'
 aptos_names = "_"
 aptos_names_admin = "_"
 aptos_names_funds = "_"
-router_signer = "_"
 
 [dependencies.AptosFramework]
 git = 'https://github.com/aptos-labs/aptos-core.git'

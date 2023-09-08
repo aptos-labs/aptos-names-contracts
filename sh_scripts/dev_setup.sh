@@ -11,11 +11,10 @@ if ! command -v aptos &>/dev/null; then
     echo "aptos could not be found"
     echo "installing it..."
     TARGET=Ubuntu-x86_64
-    VERSION=2.0.2
-    wget https://github.com/aptos-labs/aptos-core/releases/download/aptos-cli-v$VERSION/aptos-cli-$VERSION-$TARGET.zip
-    sha=$(shasum -a 256 aptos-cli-$VERSION-$TARGET.zip | awk '{ print $1 }')
-    [ "$sha" != "1f0ed0d0e042ff8b48b428eaaff9f52e6ff2b246a2054740d017f514c753c6cb" ] && echo "shasum mismatch" && exit 1
-    unzip aptos-cli-$VERSION-$TARGET.zip
+    wget https://github.com/aptos-labs/aptos-core/releases/download/aptos-cli-v1.0.4/aptos-cli-1.0.4-$TARGET.zip
+    sha=$(shasum -a 256 aptos-cli-1.0.4-Ubuntu-x86_64.zip | awk '{ print $1 }')
+    [ "$sha" != "a78beaeef72cc532fc50d3be666a90cb50d09cc61edbfb8711e4173014a4baed" ] && echo "shasum mismatch" && exit 1
+    unzip aptos-cli-1.0.4-Ubuntu-x86_64.zip
     chmod +x aptos
 else
     echo "aptos already installed"
