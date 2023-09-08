@@ -58,7 +58,15 @@ module aptos_names::test_helper {
     }
 
     /// Register the domain, and verify the registration was done correctly
-    public fun register_name(user: &signer, subdomain_name: Option<String>, domain_name: String, registration_duration_secs: u64, expected_fq_domain_name: String, expected_property_version: u64, signature: vector<u8>) {
+    public fun register_name(
+        user: &signer,
+        subdomain_name: Option<String>,
+        domain_name: String,
+        registration_duration_secs: u64,
+        expected_fq_domain_name: String,
+        expected_property_version: u64,
+        signature: vector<u8>
+    ) {
         let user_addr = signer::address_of(user);
 
         let is_subdomain = option::is_some(&subdomain_name);
