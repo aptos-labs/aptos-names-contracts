@@ -1112,6 +1112,17 @@ module aptos_names_v2::v2_domains {
         domain: String,
     ): (u64, Option<address>) acquires CollectionCapability, NameRecord {
         let record = get_record(domain, subdomain);
+        if (option::is_some(&subdomain) && option::is_some(&record.subdomain_ext)) {
+            // check the expiration policy if it's subdomain
+            let subdomain_ext = option::borrow(&record.subdomain_ext);
+            if (subdomain_ext.subdomain_expiration_policy == SUBDOMAIN_POLICY_LOOKUP_DOMAIN_EXPIRATION) {
+                // refer to the expiration date of the domain
+                let domain_record = get_record(domain, option::none());
+
+                return (domain_record.expiration_time_sec, record.target_address)
+            }
+        };
+
         (record.expiration_time_sec, record.target_address)
     }
 

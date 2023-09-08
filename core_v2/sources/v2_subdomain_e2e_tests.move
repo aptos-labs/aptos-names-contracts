@@ -612,6 +612,49 @@ module aptos_names_v2::v2_subdomain_e2e_tests {
         rando = @0x266f,
         foundation = @0xf01d
     )]
+    fun test_get_name_record_props_for_subdomain(
+        router_signer: &signer,
+        aptos_names_v2: &signer,
+        user: signer,
+        aptos: signer,
+        rando: signer,
+        foundation: signer,
+    ) {
+        let users = v2_test_helper::e2e_test_setup(aptos_names_v2, user, &aptos, rando, &foundation);
+        let user = vector::borrow(&users, 0);
+
+        // Register the domain
+        v2_test_helper::register_name(router_signer, user, option::none(), v2_test_helper::domain_name(), v2_test_helper::one_year_secs(), v2_test_helper::fq_domain_name(), 1);
+
+        // Register a subdomain!
+        v2_test_helper::register_name(router_signer, user, option::some(v2_test_helper::subdomain_name()), v2_test_helper::domain_name(), v2_test_helper::one_year_secs(), v2_test_helper::fq_subdomain_name(), 1);
+        assert!(
+            v2_domains::get_subdomain_renewal_policy(v2_test_helper::domain_name(), v2_test_helper::subdomain_name()) == 0, 2);
+        // set the subdomain's renewal policy to manual
+        v2_domains::set_subdomain_expiration_policy(user, v2_test_helper::domain_name(), v2_test_helper::subdomain_name(), 0);
+        // set the subdomain's expiration date to now
+        v2_domains::set_subdomain_expiration(user, v2_test_helper::domain_name(), v2_test_helper::subdomain_name(), timestamp::now_seconds());
+        // check that the subdomain's expiration date is now
+        let (expiration_time_sec, _) = v2_domains::get_name_record_props_for_name(option::some(
+            v2_test_helper::subdomain_name()), v2_test_helper::domain_name());
+        assert!(expiration_time_sec == timestamp::now_seconds(), 3);
+
+        // set the subdomain's renewal policy to auto renewal
+        v2_domains::set_subdomain_expiration_policy(user, v2_test_helper::domain_name(), v2_test_helper::subdomain_name(), 1);
+        let (expiration_time_sec, _) = v2_domains::get_name_record_props_for_name(option::some(
+            v2_test_helper::subdomain_name()), v2_test_helper::domain_name());
+        let (domain_expiration_time_sec, _) = v2_domains::get_name_record_props_for_name(option::none(), v2_test_helper::domain_name());
+        assert!(expiration_time_sec == domain_expiration_time_sec, 4);
+    }
+
+    #[test(
+        router_signer = @router_signer,
+        aptos_names_v2 = @aptos_names_v2,
+        user = @0x077,
+        aptos = @0x1,
+        rando = @0x266f,
+        foundation = @0xf01d
+    )]
     #[expected_failure(abort_code = 327689, location = aptos_names_v2::v2_domains)]
     fun test_dont_allow_rando_to_set_subdomain_address_e2e(
         router_signer: &signer,
