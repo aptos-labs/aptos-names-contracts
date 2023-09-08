@@ -39,7 +39,7 @@ module router::router {
     const ENOT_NAME_OWNER: u64 = 8;
     /// Subdomain has not been migrated
     const ESUBDOMAIN_NOT_MIGRATED: u64 = 9;
-    /// Trying to migrate subdomain before migrate domain
+    /// Cannot migrate subdomain before migrate domain
     const ECANNOT_MIGRATE_SUBDOMAIN_BEFORE_MIGRATE_DOMAIN: u64 = 10;
 
     // == OTHER CONSTANTS ==
