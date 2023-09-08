@@ -39,6 +39,8 @@ module router::router {
     const ENOT_NAME_OWNER: u64 = 8;
     /// Subdomain has not been migrated
     const ESUBDOMAIN_NOT_MIGRATED: u64 = 9;
+    /// Trying to migrate subdomain before migrate domain
+    const ECANNOT_MIGRATE_SUBDOMAIN_BEFORE_MIGRATE_DOMAIN: u64 = 10;
 
     // == OTHER CONSTANTS ==
 
@@ -362,6 +364,14 @@ module router::router {
                 domain_name,
             );
             let token_id = aptos_names::token_helper::latest_token_id(&tokendata_id);
+
+            // Domain must migrate before subdomain, throw error if this is a subdomain but domain has not been migrated
+            if (option::is_some(&subdomain_name)) {
+                assert!(
+                    exists_in_v2(domain_name, option::none()) && is_name_owner(user_addr, domain_name, option::none()),
+                    error::invalid_state(ECANNOT_MIGRATE_SUBDOMAIN_BEFORE_MIGRATE_DOMAIN)
+                )
+            };
 
             // Burn by sending to `router_signer`
             let router_signer = get_router_signer();
