@@ -69,27 +69,6 @@ module aptos_names_v2::query_helper {
     }
 
     #[view]
-    /// Check if the address is the owner of the given domain
-    /// If the name does not exist or owner owns an expired name, returns false
-    public fun is_owner_of_domain_name(
-        owner_addr: address,
-        domain_name: String
-    ): bool {
-        v2_domains::is_owner_of_name(owner_addr, option::none(), domain_name)
-    }
-
-    #[view]
-    /// Check if the address is the owner of the given subdomain
-    /// If the name does not exist or owner owns an expired name, returns false
-    public fun is_owner_of_subdomain_name(
-        owner_addr: address,
-        subdomain_name: String,
-        domain_name: String
-    ): bool {
-        v2_domains::is_owner_of_name(owner_addr, option::some(subdomain_name), domain_name)
-    }
-
-    #[view]
     /// gets the address pointed to by a given domain name
     /// Is `Option<address>` because the name may not be registered, or it may not have an address associated with it
     public fun domain_name_resolved_address(

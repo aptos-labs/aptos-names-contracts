@@ -757,7 +757,10 @@ module router::router {
             if (!exists_in_v2(domain_name, subdomain_name)) {
                 is_v1_name_owner(owner_addr, domain_name, subdomain_name)
             } else {
-                v2_domains::is_owner_of_name(owner_addr, subdomain_name, domain_name)
+                v2_domains::is_token_owner(owner_addr, domain_name, subdomain_name) && !v2_domains::is_name_expired(
+                    domain_name,
+                    subdomain_name
+                )
             }
         } else {
             abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)

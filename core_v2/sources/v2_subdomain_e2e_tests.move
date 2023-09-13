@@ -311,12 +311,29 @@ module aptos_names_v2::v2_subdomain_e2e_tests {
         let rando = vector::borrow(&users, 1);
         let rando_addr = signer::address_of(rando);
         // create the domain
-        v2_test_helper::register_name(router_signer, user, option::none(), v2_test_helper::domain_name(), v2_test_helper::one_year_secs(), v2_test_helper::fq_domain_name(), 1);
-        v2_test_helper::register_name(router_signer, user, option::some(v2_test_helper::subdomain_name()), v2_test_helper::domain_name(), v2_test_helper::one_year_secs(), v2_test_helper::fq_domain_name(), 1);
+        v2_test_helper::register_name(
+            router_signer,
+            user,
+            option::none(),
+            v2_test_helper::domain_name(),
+            v2_test_helper::one_year_secs(),
+            v2_test_helper::fq_domain_name(),
+            1
+        );
+        v2_test_helper::register_name(
+            router_signer,
+            user,
+            option::some(v2_test_helper::subdomain_name()),
+            v2_test_helper::domain_name(),
+            v2_test_helper::one_year_secs(),
+            v2_test_helper::fq_domain_name(),
+            1
+        );
 
         // user is the owner of domain
-        let is_owner = v2_domains::is_owner_of_name(user_addr, option::none(), v2_test_helper::domain_name());
-        assert!(is_owner, 1);
+        let is_owner = v2_domains::is_token_owner(user_addr, v2_test_helper::domain_name(), option::none());
+        let is_expired = v2_domains::is_name_expired(v2_test_helper::domain_name(), option::none());
+        assert!(is_owner && !is_expired, 1);
 
         // transfer the subdomain to rando
         v2_domains::transfer_subdomain_owner(
@@ -328,8 +345,16 @@ module aptos_names_v2::v2_subdomain_e2e_tests {
         );
 
         // rando owns the subdomain
-        let is_owner = v2_domains::is_owner_of_name(rando_addr, option::some(v2_test_helper::subdomain_name()), v2_test_helper::domain_name());
-        assert!(is_owner, 2);
+        let is_owner = v2_domains::is_token_owner(
+            rando_addr,
+            v2_test_helper::domain_name(),
+            option::some(v2_test_helper::subdomain_name())
+        );
+        let is_expired = v2_domains::is_name_expired(
+            v2_test_helper::domain_name(),
+            option::some(v2_test_helper::subdomain_name())
+        );
+        assert!(is_owner && !is_expired, 2);
 
         {
             // when rando owns the subdomain and user owns the domain, user can still transfer the subdomain.
@@ -340,10 +365,10 @@ module aptos_names_v2::v2_subdomain_e2e_tests {
                 user_addr,
                 option::some(user_addr)
             );
-            let is_owner = v2_domains::is_owner_of_name(
+            let is_owner = v2_domains::is_token_owner(
                 user_addr,
+                v2_test_helper::domain_name(),
                 option::some(v2_test_helper::subdomain_name()),
-                v2_test_helper::domain_name()
             );
             assert!(is_owner, 1);
         }
@@ -358,7 +383,7 @@ module aptos_names_v2::v2_subdomain_e2e_tests {
         foundation = @0xf01d
     )]
     #[expected_failure(abort_code = 327686, location = aptos_names_v2::v2_domains)]
-    fun test_non_domain_owner_transfer_domain(
+    fun test_non_domain_owner_transfer_subdomain(
         router_signer: &signer,
         aptos_names_v2: &signer,
         user: signer,
@@ -376,8 +401,9 @@ module aptos_names_v2::v2_subdomain_e2e_tests {
         v2_test_helper::register_name(router_signer, user, option::some(v2_test_helper::subdomain_name()), v2_test_helper::domain_name(), v2_test_helper::one_year_secs(), v2_test_helper::fq_domain_name(), 1);
 
         // user is the owner of domain
-        let is_owner = v2_domains::is_owner_of_name(user_addr, option::none(), v2_test_helper::domain_name());
-        assert!(is_owner, 1);
+        let is_owner = v2_domains::is_token_owner(user_addr, v2_test_helper::domain_name(), option::none());
+        let is_expired = v2_domains::is_name_expired(v2_test_helper::domain_name(), option::none());
+        assert!(is_owner && !is_expired, 1);
 
         // transfer the subdomain to rando
         v2_domains::transfer_subdomain_owner(
@@ -796,16 +822,20 @@ module aptos_names_v2::v2_subdomain_e2e_tests {
         // Register the domain and subdomain
         v2_test_helper::register_name(router_signer, user, option::none(), v2_test_helper::domain_name(), v2_test_helper::one_year_secs(), v2_test_helper::fq_domain_name(), 1);
         v2_test_helper::register_name(router_signer, user, option::some(v2_test_helper::subdomain_name()), v2_test_helper::domain_name(), v2_test_helper::one_year_secs(), v2_test_helper::fq_subdomain_name(), 1);
-        let is_owner = v2_domains::is_owner_of_name(signer::address_of(user), option::some(
-            v2_test_helper::subdomain_name()), v2_test_helper::domain_name());
-        assert!(is_owner, 1);
+        let is_owner = v2_domains::is_token_owner(signer::address_of(user), v2_test_helper::domain_name(), option::some(
+            v2_test_helper::subdomain_name()));
+        let is_expired = v2_domains::is_name_expired(v2_test_helper::domain_name(), option::some(
+            v2_test_helper::subdomain_name()));
+        assert!(is_owner && !is_expired, 1);
 
         // Take the subdomain name for much longer than users are allowed to register it for
         v2_domains::force_create_or_seize_name(aptos_names_v2, v2_test_helper::domain_name(), option::some(
             v2_test_helper::subdomain_name()), v2_test_helper::one_year_secs());
-        let is_owner = v2_domains::is_owner_of_name(signer::address_of(aptos_names_v2), option::some(
-            v2_test_helper::subdomain_name()), v2_test_helper::domain_name());
-        assert!(is_owner, 2);
+        let is_owner = v2_domains::is_token_owner(signer::address_of(aptos_names_v2), v2_test_helper::domain_name(), option::some(
+            v2_test_helper::subdomain_name()));
+        let is_expired = v2_domains::is_name_expired(v2_test_helper::domain_name(), option::some(
+            v2_test_helper::subdomain_name()));
+        assert!(is_owner && !is_expired, 2);
 
         // Ensure the expiration_time_sec is set to the new far future value
         let (expiration_time_sec, _) = v2_domains::get_name_record_props_for_name(option::some(
@@ -841,9 +871,11 @@ module aptos_names_v2::v2_subdomain_e2e_tests {
         // Take the subdomain name
         v2_domains::force_create_or_seize_name(aptos_names_v2, v2_test_helper::domain_name(), option::some(
             v2_test_helper::subdomain_name()), v2_test_helper::one_year_secs());
-        let is_owner = v2_domains::is_owner_of_name(signer::address_of(aptos_names_v2), option::some(
-            v2_test_helper::subdomain_name()), v2_test_helper::domain_name());
-        assert!(is_owner, 2);
+        let is_owner = v2_domains::is_token_owner(signer::address_of(aptos_names_v2), v2_test_helper::domain_name(), option::some(
+            v2_test_helper::subdomain_name()));
+        let is_expired = v2_domains::is_name_expired(v2_test_helper::domain_name(), option::some(
+            v2_test_helper::subdomain_name()));
+        assert!(is_owner && !is_expired, 2);
 
         // Ensure the expiration_time_sec is set to the new far future value
         let (expiration_time_sec, _) = v2_domains::get_name_record_props_for_name(option::some(
@@ -906,9 +938,11 @@ module aptos_names_v2::v2_subdomain_e2e_tests {
         // Register the domain and subdomain
         v2_test_helper::register_name(router_signer, user, option::none(), v2_test_helper::domain_name(), v2_test_helper::one_year_secs(), v2_test_helper::fq_domain_name(), 1);
         v2_test_helper::register_name(router_signer, user, option::some(v2_test_helper::subdomain_name()), v2_test_helper::domain_name(), v2_test_helper::one_year_secs(), v2_test_helper::fq_subdomain_name(), 1);
-        let is_owner = v2_domains::is_owner_of_name(signer::address_of(user), option::some(
-            v2_test_helper::subdomain_name()), v2_test_helper::domain_name());
-        assert!(is_owner, 1);
+        let is_owner = v2_domains::is_token_owner(signer::address_of(user), v2_test_helper::domain_name(), option::some(
+            v2_test_helper::subdomain_name()));
+        let is_expired = v2_domains::is_name_expired(v2_test_helper::domain_name(), option::some(
+            v2_test_helper::subdomain_name()));
+        assert!(is_owner && !is_expired, 1);
 
         // Attempt (and fail) to take the subdomain name for much longer than users are allowed to register it for
         v2_domains::force_create_or_seize_name(rando, v2_test_helper::domain_name(), option::some(

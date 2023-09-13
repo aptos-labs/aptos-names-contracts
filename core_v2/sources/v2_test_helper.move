@@ -112,18 +112,12 @@ module aptos_names_v2::v2_test_helper {
             assert!(query_helper::domain_name_is_registered(domain_name), 113);
         };
 
-        let is_owner = v2_domains::is_owner_of_name(user_addr, subdomain_name, domain_name);
+        let is_owner = v2_domains::is_token_owner(user_addr, domain_name, subdomain_name);
+        let is_expired = v2_domains::is_name_expired(domain_name, subdomain_name);
         // TODO: Re-enable / Re-write
         // let (tdi_creator, tdi_collection, tdi_name, tdi_property_version) = token::get_token_id_fields(&token_id);
 
-        assert!(is_owner, 3);
-        if (is_subdomain) {
-            let subdomain_name_copy = subdomain_name;
-            let subdomain_name_extracted = option::borrow(&subdomain_name_copy);
-            assert!(query_helper::is_owner_of_subdomain_name(user_addr, *subdomain_name_extracted, domain_name), 103);
-        } else {
-            assert!(query_helper::is_owner_of_domain_name(user_addr, domain_name), 103);
-        };
+        assert!(is_owner && !is_expired, 3);
 
         let expected_user_balance_after;
         let user_balance_after = coin::balance<AptosCoin>(user_addr);

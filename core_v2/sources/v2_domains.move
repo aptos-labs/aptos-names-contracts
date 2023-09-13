@@ -514,7 +514,7 @@ module aptos_names_v2::v2_domains {
             error::permission_denied(ENOT_OWNER_OF_DOMAIN)
         );
         assert!(
-            is_name_expired(domain_name, option::none()),
+            !is_name_expired(domain_name, option::none()),
             error::permission_denied(ECANNOT_TRANSFER_SUBDOMAIN_WHILE_DOMAIN_HAS_EXPIRED)
         );
 
@@ -1062,6 +1062,36 @@ module aptos_names_v2::v2_domains {
     /// Returns true if
     /// 1. The name is not registered OR
     /// 2. The name is a subdomain AND subdomain was registered before the domain OR
+    /// 3. The name is registered AND is expired and past grace period
+    public fun is_name_expired_past_grace(
+        domain_name: String,
+        subdomain_name: Option<String>,
+    ): bool acquires CollectionCapability, NameRecord {
+        if (!is_name_registered(domain_name, subdomain_name)) {
+            true
+        } else if (option::is_some(&subdomain_name) && is_subdomain_registered_before_domain(
+            domain_name,
+            *option::borrow(&subdomain_name)
+        )) {
+            true
+        } else {
+            let record = get_record(domain_name, subdomain_name);
+            // check the auto-renew flag
+            if (option::is_some(&record.subdomain_ext)) {
+                let subdomain_ext = option::borrow(&record.subdomain_ext);
+                if (subdomain_ext.subdomain_expiration_policy == SUBDOMAIN_POLICY_LOOKUP_DOMAIN_EXPIRATION) {
+                    // refer to the expiration date of the domain
+                    let domain_record = get_record(domain_name, option::none());
+                    return is_time_expired(domain_record.expiration_time_sec + v2_config::reregistration_grace_sec())
+                }
+            };
+            is_time_expired(record.expiration_time_sec + v2_config::reregistration_grace_sec())
+        }
+    }
+
+    /// Returns true if
+    /// 1. The name is not registered OR
+    /// 2. The name is a subdomain AND subdomain was registered before the domain OR
     /// 3. The name is registered AND is expired
     public fun is_name_expired(
         domain_name: String,
@@ -1104,7 +1134,7 @@ module aptos_names_v2::v2_domains {
         owner_addr: address,
         domain_name: String,
         subdomain_name: Option<String>,
-    ): bool acquires CollectionCapability, NameRecord {
+    ): bool acquires CollectionCapability {
         if (!is_name_registered(domain_name, subdomain_name))
             return false;
         let record_obj = object::address_to_object<NameRecord>(get_token_addr_inline(domain_name, subdomain_name));

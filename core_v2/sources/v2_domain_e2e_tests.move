@@ -404,8 +404,9 @@ module aptos_names_v2::v2_domain_e2e_tests {
 
         // Register the domain
         v2_test_helper::register_name(router_signer, user, option::none(), v2_test_helper::domain_name(), v2_test_helper::one_year_secs(), v2_test_helper::fq_domain_name(), 1);
-        let is_owner = v2_domains::is_owner_of_name(signer::address_of(user), option::none(), v2_test_helper::domain_name());
-        assert!(is_owner, 1);
+        let is_owner = v2_domains::is_token_owner(signer::address_of(user), v2_test_helper::domain_name(), option::none());
+        let is_expired = v2_domains::is_name_expired(v2_test_helper::domain_name(), option::none());
+        assert!(is_owner && !is_expired, 1);
 
         let (expiration_time_sec, _) = v2_domains::get_name_record_props_for_name(option::none(), v2_test_helper::domain_name());
         assert!(
@@ -442,13 +443,15 @@ module aptos_names_v2::v2_domain_e2e_tests {
 
         // Register the domain
         v2_test_helper::register_name(router_signer, user, option::none(), v2_test_helper::domain_name(), v2_test_helper::one_year_secs(), v2_test_helper::fq_domain_name(), 1);
-        let is_owner = v2_domains::is_owner_of_name(signer::address_of(user), option::none(), v2_test_helper::domain_name());
-        assert!(is_owner, 1);
+        let is_owner = v2_domains::is_token_owner(signer::address_of(user), v2_test_helper::domain_name(), option::none());
+        let is_expired = v2_domains::is_name_expired(v2_test_helper::domain_name(), option::none());
+        assert!(is_owner && !is_expired, 1);
 
         // Take the domain name for much longer than users are allowed to register it for
         v2_domains::force_create_or_seize_name(aptos_names_v2, v2_test_helper::domain_name(), option::none(), v2_test_helper::two_hundred_year_secs());
-        let is_owner = v2_domains::is_owner_of_name(signer::address_of(aptos_names_v2), option::none(), v2_test_helper::domain_name());
-        assert!(is_owner, 2);
+        let is_owner = v2_domains::is_token_owner(signer::address_of(aptos_names_v2), v2_test_helper::domain_name(), option::none());
+        let is_expired = v2_domains::is_name_expired(v2_test_helper::domain_name(), option::none());
+        assert!(is_owner && !is_expired, 2);
 
         // Ensure the expiration_time_sec is set to the new far future value
         let (expiration_time_sec, _) = v2_domains::get_name_record_props_for_name(option::none(), v2_test_helper::domain_name());
@@ -480,8 +483,9 @@ module aptos_names_v2::v2_domain_e2e_tests {
 
         // Take the domain name for much longer than users are allowed to register it for
         v2_domains::force_create_or_seize_name(aptos_names_v2, v2_test_helper::domain_name(), option::none(), v2_test_helper::two_hundred_year_secs());
-        let is_owner = v2_domains::is_owner_of_name(signer::address_of(aptos_names_v2), option::none(), v2_test_helper::domain_name());
-        assert!(is_owner, 2);
+        let is_owner = v2_domains::is_token_owner(signer::address_of(aptos_names_v2), v2_test_helper::domain_name(), option::none());
+        let is_expired = v2_domains::is_name_expired(v2_test_helper::domain_name(), option::none());
+        assert!(is_owner && !is_expired, 2);
 
         // Ensure the expiration_time_sec is set to the new far future value
         let (expiration_time_sec, _) = v2_domains::get_name_record_props_for_name(option::none(), v2_test_helper::domain_name());
@@ -517,8 +521,9 @@ module aptos_names_v2::v2_domain_e2e_tests {
 
         // Register the domain
         v2_test_helper::register_name(router_signer, user, option::none(), v2_test_helper::domain_name(), v2_test_helper::one_year_secs(), v2_test_helper::fq_domain_name(), 1);
-        let is_owner = v2_domains::is_owner_of_name(signer::address_of(user), option::none(), v2_test_helper::domain_name());
-        assert!(is_owner, 1);
+        let is_owner = v2_domains::is_token_owner(signer::address_of(user), v2_test_helper::domain_name(), option::none());
+        let is_expired = v2_domains::is_name_expired(v2_test_helper::domain_name(), option::none());
+        assert!(is_owner && !is_expired, 1);
 
         // Take the domain name for much longer than users are allowed to register it for
         v2_domains::force_create_or_seize_name(rando, v2_test_helper::domain_name(), option::none(), v2_test_helper::two_hundred_year_secs());
@@ -600,15 +605,17 @@ module aptos_names_v2::v2_domain_e2e_tests {
 
         // Register the domain
         v2_test_helper::register_name(router_signer, user, option::none(), v2_test_helper::domain_name(), v2_test_helper::one_year_secs(), v2_test_helper::fq_domain_name(), 1);
-        let is_owner = v2_domains::is_owner_of_name(user_addr, option::none(), v2_test_helper::domain_name());
-        assert!(is_owner, 1);
+        let is_owner = v2_domains::is_token_owner(user_addr, v2_test_helper::domain_name(), option::none());
+        let is_expired = v2_domains::is_name_expired(v2_test_helper::domain_name(), option::none());
+        assert!(is_owner && !is_expired, 1);
 
         // Set the time past the domain's expiration time
         let (expiration_time_sec, _) = v2_domains::get_name_record_props_for_name(option::none(), v2_test_helper::domain_name());
         timestamp::update_global_time_for_test_secs(expiration_time_sec + 5);
 
-        let is_owner = v2_domains::is_owner_of_name(user_addr, option::none(), v2_test_helper::domain_name());
-        assert!(!is_owner, 1);
+        let is_owner = v2_domains::is_token_owner(signer::address_of(user), v2_test_helper::domain_name(), option::none());
+        let is_expired = v2_domains::is_name_expired(v2_test_helper::domain_name(), option::none());
+        assert!(is_owner && is_expired, 1);
     }
 
     #[test(
@@ -645,8 +652,9 @@ module aptos_names_v2::v2_domain_e2e_tests {
 
         // user is owner
         {
-            let is_owner = v2_domains::is_owner_of_name(user_addr, option::none(), v2_test_helper::domain_name());
-            assert!(is_owner, 1);
+            let is_owner = v2_domains::is_token_owner(user_addr, v2_test_helper::domain_name(), option::none());
+            let is_expired = v2_domains::is_name_expired(v2_test_helper::domain_name(), option::none());
+            assert!(is_owner && !is_expired, 1);
         };
 
         let token_addr = v2_domains::get_token_addr(v2_test_helper::domain_name(), option::none());
@@ -654,8 +662,9 @@ module aptos_names_v2::v2_domain_e2e_tests {
 
         // rando is owner
         {
-            let is_owner = v2_domains::is_owner_of_name(rando_addr, option::none(), v2_test_helper::domain_name());
-            assert!(is_owner, 1);
+            let is_owner = v2_domains::is_token_owner(rando_addr, v2_test_helper::domain_name(), option::none());
+            let is_expired = v2_domains::is_name_expired(v2_test_helper::domain_name(), option::none());
+            assert!(is_owner && !is_expired, 1);
         };
     }
 
@@ -761,16 +770,18 @@ module aptos_names_v2::v2_domain_e2e_tests {
             1
         );
 
-        let is_owner = v2_domains::is_owner_of_name(user_addr, option::none(), v2_test_helper::domain_name());
-        assert!(is_owner, 1);
+        let is_owner = v2_domains::is_token_owner(user_addr, v2_test_helper::domain_name(), option::none());
+        let is_expired = v2_domains::is_name_expired(v2_test_helper::domain_name(), option::none());
+        assert!(is_owner && !is_expired, 1);
 
         // Set the time right before the domain's expiration time + grace period
         let (expiration_time_sec, _) = v2_domains::get_name_record_props_for_name(option::none(), v2_test_helper::domain_name());
         timestamp::update_global_time_for_test_secs(expiration_time_sec + v2_config::reregistration_grace_sec());
 
-        // Not owner anymore, name has expired
-        let (is_owner) = v2_domains::is_owner_of_name(user_addr, option::none(), v2_test_helper::domain_name());
-        assert!(!is_owner, 2);
+        // Is still owner but name has expired
+        let is_owner = v2_domains::is_token_owner(user_addr, v2_test_helper::domain_name(), option::none());
+        let is_expired = v2_domains::is_name_expired(v2_test_helper::domain_name(), option::none());
+        assert!(is_owner && is_expired, 1);
 
         // Register the domain again. Should fail because it's still in the grace period
         v2_test_helper::register_name(
@@ -818,16 +829,18 @@ module aptos_names_v2::v2_domain_e2e_tests {
             1
         );
 
-        let is_owner = v2_domains::is_owner_of_name(user_addr, option::none(), v2_test_helper::domain_name());
-        assert!(is_owner, 1);
+        let is_owner = v2_domains::is_token_owner(user_addr, v2_test_helper::domain_name(), option::none());
+        let is_expired = v2_domains::is_name_expired(v2_test_helper::domain_name(), option::none());
+        assert!(is_owner && !is_expired, 1);
 
         // Set the time right before the domain's expiration time + grace period
         let (expiration_time_sec, _) = v2_domains::get_name_record_props_for_name(option::none(), v2_test_helper::domain_name());
         timestamp::update_global_time_for_test_secs(expiration_time_sec + v2_config::reregistration_grace_sec() + 1);
 
-        // Not owner anymore, name has expired
-        let (is_owner) = v2_domains::is_owner_of_name(user_addr, option::none(), v2_test_helper::domain_name());
-        assert!(!is_owner, 2);
+        // Is still owner but name has expired
+        let is_owner = v2_domains::is_token_owner(user_addr, v2_test_helper::domain_name(), option::none());
+        let is_expired = v2_domains::is_name_expired(v2_test_helper::domain_name(), option::none());
+        assert!(is_owner && is_expired, 1);
 
         // Register the domain again. Should succeeds because it's out of the grace period
         v2_test_helper::register_name(
