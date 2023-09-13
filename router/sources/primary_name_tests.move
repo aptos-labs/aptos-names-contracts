@@ -381,6 +381,7 @@ module router::primary_name_tests {
         {
             // subdomain should still remain in v1
             let (is_owner_of_v1_name, _) = aptos_names::domains::is_token_owner(user_addr, subdomain_name_opt, domain_name);
+            assert!(!aptos_names::domains::name_is_expired(subdomain_name_opt, domain_name), 1);
             assert!(is_owner_of_v1_name, 1);
             assert!(!aptos_names_v2::v2_domains::is_owner_of_name(user_addr, subdomain_name_opt, domain_name), 2);
             // v1 primary name should be cleared
