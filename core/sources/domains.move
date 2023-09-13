@@ -252,10 +252,10 @@ module aptos_names::domains {
 
         // Ensure signer owns the domain we're registering a subdomain for
         let signer_addr = signer::address_of(sign);
-        let (is_owner, _) = is_token_owner(signer_addr, option::some(subdomain_name), domain_name);
+        let (is_owner, _) = is_token_owner(signer_addr, option::none(), domain_name);
         assert!(is_owner, error::permission_denied(ENOT_OWNER_OF_NAME));
         assert!(
-            !name_is_expired(option::some(subdomain_name), domain_name),
+            !name_is_expired(option::none(), domain_name),
             error::invalid_state(ECANNOT_REGISTER_SUBDOMAIN_WHILE_DOMAIN_IS_EXPIRED)
         );
 
