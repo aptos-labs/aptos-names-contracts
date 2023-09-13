@@ -153,12 +153,12 @@ module router::router {
             subdomain_name,
             domain_name
         ) && !domains::name_is_expired(subdomain_name, domain_name)) {
-            let (is_owner, _token_id) = domains::is_token_owner(
+            let (is_burned, _token_id) = domains::is_token_owner(
                 router_signer_addr(),
                 subdomain_name,
                 domain_name
             );
-            is_owner && !domains::name_is_expired(subdomain_name, domain_name)
+            is_burned
         } else {
             v2_domains::is_name_registerable(domain_name, subdomain_name)
         }

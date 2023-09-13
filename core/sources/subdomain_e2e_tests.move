@@ -196,12 +196,16 @@ module aptos_names::subdomain_e2e_tests {
         // Register the domain and subdomain
         test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>());
         test_helper::register_name(user, option::some(test_helper::subdomain_name()), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_subdomain_name(), 1, vector::empty<u8>());
+        let (is_owner, _token_id) = domains::is_owner_of_name(signer::address_of(user), option::some(test_helper::subdomain_name()), test_helper::domain_name());
+        assert!(is_owner, 1);
         let (is_owner, _token_id) = domains::is_token_owner(signer::address_of(user), option::some(test_helper::subdomain_name()), test_helper::domain_name());
         assert!(is_owner, 1);
         assert!(!domains::name_is_expired(option::some(test_helper::subdomain_name()), test_helper::domain_name()), 1);
 
         // Take the subdomain name for much longer than users are allowed to register it for
         domains::force_create_or_seize_name(myself, option::some(test_helper::subdomain_name()), test_helper::domain_name(), test_helper::one_year_secs());
+        let (is_owner, _token_id) = domains::is_owner_of_name(signer::address_of(myself), option::some(test_helper::subdomain_name()), test_helper::domain_name());
+        assert!(is_owner, 2);
         let (is_owner, _token_id) = domains::is_token_owner(signer::address_of(myself), option::some(test_helper::subdomain_name()), test_helper::domain_name());
         assert!(is_owner, 2);
         assert!(!domains::name_is_expired(option::some(test_helper::subdomain_name()), test_helper::domain_name()), 2);
@@ -222,6 +226,8 @@ module aptos_names::subdomain_e2e_tests {
 
         // Take the subdomain name
         domains::force_create_or_seize_name(myself, option::some(test_helper::subdomain_name()), test_helper::domain_name(), test_helper::one_year_secs());
+        let (is_owner, _token_id) = domains::is_owner_of_name(signer::address_of(myself), option::some(test_helper::subdomain_name()), test_helper::domain_name());
+        assert!(is_owner, 2);
         let (is_owner, _token_id) = domains::is_token_owner(signer::address_of(myself), option::some(test_helper::subdomain_name()), test_helper::domain_name());
         assert!(is_owner, 2);
         assert!(!domains::name_is_expired(option::some(test_helper::subdomain_name()), test_helper::domain_name()), 2);
@@ -302,6 +308,8 @@ module aptos_names::subdomain_e2e_tests {
         // Register the domain and subdomain
         test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>());
         test_helper::register_name(user, option::some(test_helper::subdomain_name()), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_subdomain_name(), 1, vector::empty<u8>());
+        let (is_owner, _token_id) = domains::is_owner_of_name(signer::address_of(user), option::some(test_helper::subdomain_name()), test_helper::domain_name());
+        assert!(is_owner, 1);
         let (is_owner, _token_id) = domains::is_token_owner(signer::address_of(user), option::some(test_helper::subdomain_name()), test_helper::domain_name());
         assert!(is_owner, 1);
         assert!(!domains::name_is_expired(option::some(test_helper::subdomain_name()), test_helper::domain_name()), 1);

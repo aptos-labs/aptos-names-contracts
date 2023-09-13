@@ -706,7 +706,10 @@ module aptos_names::domains {
             signer_addr
         );
 
-        assert!(is_owner || is_name_resolved_address, error::permission_denied(ENOT_AUTHORIZED));
+        assert!(
+            (is_owner && !name_is_expired(subdomain_name, domain_name)) || is_name_resolved_address,
+            error::permission_denied(ENOT_AUTHORIZED)
+        );
 
         let name_record_key = create_name_record_key_v1(subdomain_name, domain_name);
         let aptos_names = borrow_global_mut<NameRegistryV1>(@aptos_names);
