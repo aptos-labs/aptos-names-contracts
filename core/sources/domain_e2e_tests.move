@@ -457,7 +457,7 @@ module aptos_names::domain_e2e_tests {
 
         // Register the domain
         test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>());
-        let (is_owner, token_id) = domains::is_owner_of_name(user_addr, option::none(), test_helper::domain_name());
+        let (is_owner, _) = domains::is_owner_of_name(user_addr, option::none(), test_helper::domain_name());
         assert!(is_owner, 1);
         let (is_owner, token_id) = domains::is_token_owner(user_addr, option::none(), test_helper::domain_name());
         assert!(is_owner, 1);
