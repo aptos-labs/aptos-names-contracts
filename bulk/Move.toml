@@ -1,0 +1,9 @@
+[package]
+name = 'bulk'
+version = '1.0.0'
+
+[addresses]
+bulk = "_"
+
+[dependencies.router]
+local = "../router"
