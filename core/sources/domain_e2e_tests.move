@@ -12,7 +12,6 @@ module aptos_names::domain_e2e_tests {
     use std::signer;
     use std::string;
     use std::vector;
-    use aptos_names::test_helper::domain_name;
 
     #[test(myself = @aptos_names, user = @0x077, aptos = @0x1, rando = @0x266f, foundation = @0xf01d)]
     fun happy_path_e2e_test(myself: &signer, user: signer, aptos: signer, rando: signer, foundation: signer) {
@@ -273,7 +272,7 @@ module aptos_names::domain_e2e_tests {
             test_helper::register_name(user, option::none(), test_helper::domain_name(), test_helper::one_year_secs(), test_helper::fq_domain_name(), 1, vector::empty<u8>());
             let (is_owner, _token_id) = domains::is_owner_of_name(signer::address_of(user), option::none(), test_helper::domain_name());
             assert!(is_owner, 1);
-            let (is_owner, _token_id) = domains::is_token_owner(signer::address_of(user), option::none(), domain_name());
+            let (is_owner, _token_id) = domains::is_token_owner(signer::address_of(user), option::none(), test_helper::domain_name());
             assert!(is_owner, 1);
             assert!(!domains::name_is_expired(option::none(), test_helper::domain_name()), 1);
         };

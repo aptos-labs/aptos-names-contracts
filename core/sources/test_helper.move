@@ -100,7 +100,7 @@ module aptos_names::test_helper {
         assert!(!domains::name_is_registerable(subdomain_name, domain_name), 13);
         assert!(domains::name_is_registered(subdomain_name, domain_name), 14);
 
-        let (is_owner, _token_id) = domains::is_owner_of_name(signer::address_of(user), subdomain_name, domain_name);
+        let (is_owner, token_id) = domains::is_owner_of_name(user_addr, subdomain_name, domain_name);
         assert!(is_owner, 3);
         let (is_owner, token_id) = domains::is_token_owner(user_addr, subdomain_name, domain_name);
         let (tdi_creator, tdi_collection, tdi_name, tdi_property_version) = token::get_token_id_fields(&token_id);

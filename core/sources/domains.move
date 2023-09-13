@@ -616,6 +616,8 @@ module aptos_names::domains {
         clear_reverse_lookup_for_name(subdomain_name, domain_name);
 
         let signer_addr = signer::address_of(sign);
+        let (is_owner, _) = is_owner_of_name(signer_addr, subdomain_name, domain_name);
+        assert!(is_owner, error::permission_denied(ENOT_OWNER_OF_NAME));
         let (is_owner, token_id) = is_token_owner(signer_addr, subdomain_name, domain_name);
         assert!(is_owner, error::permission_denied(ENOT_OWNER_OF_NAME));
         assert!(!name_is_expired(subdomain_name, domain_name), error::invalid_state(ENAME_EXPIRED));
