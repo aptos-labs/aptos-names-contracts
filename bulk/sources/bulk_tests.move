@@ -1,5 +1,6 @@
 #[test_only]
-module bulk_migrate::bulk_tests {
+module bulk::bulk_tests {
+    use bulk::bulk::bulk_migrate_name;
     use router::router;
     use router::router_test_helper;
     use std::option;
@@ -52,7 +53,7 @@ module bulk_migrate::bulk_tests {
         // Bump mode
         router::set_mode(router, 1);
 
-        bulk_migrate::bulk::bulk_migrate_name(
+        bulk_migrate_name(
             user1,
             vector [
                 domain_name,
