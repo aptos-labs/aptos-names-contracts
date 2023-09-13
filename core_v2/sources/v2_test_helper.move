@@ -93,7 +93,7 @@ module aptos_names_v2::v2_test_helper {
                 user,
                 domain_name,
                 *option::borrow(&subdomain_name),
-                registration_duration_secs
+                timestamp::now_seconds() + registration_duration_secs
             );
         };
 

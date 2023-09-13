@@ -90,6 +90,7 @@ module aptos_names_v2::v2_domains {
         expiration_time_sec: u64,
         target_address: Option<address>,
         transfer_ref: object::TransferRef,
+        registration_time_sec: u64,
         // Currently unused, but may be used in the future to extend with more metadata
         extend_ref: object::ExtendRef,
         // Only present for subdomain
@@ -262,6 +263,7 @@ module aptos_names_v2::v2_domains {
             expiration_time_sec,
             target_address: option::none(),
             transfer_ref: object::generate_transfer_ref(&constructor_ref),
+            registration_time_sec: timestamp::now_seconds(),
             extend_ref: object::generate_extend_ref(&constructor_ref),
             subdomain_ext,
         };
@@ -295,7 +297,6 @@ module aptos_names_v2::v2_domains {
         coin::transfer<AptosCoin>(sign, v2_config::fund_destination_address(), price);
 
         register_name_internal(sign, subdomain_name, domain_name, registration_duration_secs, price);
-
     }
 
     /// A wrapper around `register_name` as an entry function.
@@ -392,6 +393,7 @@ module aptos_names_v2::v2_domains {
             let record = borrow_global_mut<NameRecord>(token_addr);
             record.expiration_time_sec = name_expiration_time_secs;
             record.target_address = option::none();
+            record.registration_time_sec = timestamp::now_seconds();
             object::transfer_with_ref(object::generate_linear_transfer_ref(&record.transfer_ref), account_addr);
         } else {
             create_token(
@@ -1013,18 +1015,20 @@ module aptos_names_v2::v2_domains {
         if (!is_name_registered(domain_name, subdomain_name)) {
             return true
         };
-        let expired = is_name_expired(domain_name, subdomain_name);
         // Name is not expired, so not registerable
-        if (!expired) {
+        if (!is_name_expired(domain_name, subdomain_name)) {
             return false
         };
 
+        // Name is expired and it is a subdomain. Skip the grace period check
+        if (is_subdomain(subdomain_name)) {
+            return true
+        };
+
         let (expiration_time_sec, _) = get_name_record_props_for_name(subdomain_name, domain_name);
-        let now = timestamp::now_seconds();
-        let expired_for = now - expiration_time_sec;
 
         // Name is expired and passed grace period, so name is registerable
-        if (expired_for > v2_config::reregistration_grace_sec()) {
+        if (timestamp::now_seconds() > v2_config::reregistration_grace_sec() + expiration_time_sec) {
             return true
         } else {
             // Name is expired but haven't passed grace period, so name is not registerable
@@ -1032,12 +1036,20 @@ module aptos_names_v2::v2_domains {
         }
     }
 
-    /// Returns true if the is not registered OR (name is registered AND is expired)
+    /// Returns true if
+    /// 1. The name is not registered OR
+    /// 2. The name is a subdomain AND subdomain was registered before the domain OR
+    /// 3. The name is registered AND is expired
     public fun is_name_expired(
         domain_name: String,
         subdomain_name: Option<String>,
     ): bool acquires CollectionCapability, NameRecord {
         if (!is_name_registered(domain_name, subdomain_name)) {
+            true
+        } else if (option::is_some(&subdomain_name) && is_subdomain_registered_before_domain(
+            domain_name,
+            *option::borrow(&subdomain_name)
+        )) {
             true
         } else {
             let record = get_record(domain_name, subdomain_name);
@@ -1136,6 +1148,19 @@ module aptos_names_v2::v2_domains {
     /// Given a time, returns true if that time is in the past, false otherwise
     public fun is_time_expired(expiration_time_sec: u64): bool {
         timestamp::now_seconds() >= expiration_time_sec
+    }
+
+    fun is_subdomain_registered_before_domain(
+        domain_name: String,
+        subdomain_name: String,
+    ): bool acquires CollectionCapability, NameRecord {
+        if(!is_name_registered(domain_name, option::some(subdomain_name))) {
+            false
+        } else {
+            let domain_record = get_record(domain_name, option::none());
+            let subdomain_record = get_record(domain_name, option::some(subdomain_name));
+            subdomain_record.registration_time_sec < domain_record.registration_time_sec
+        }
     }
 
 
