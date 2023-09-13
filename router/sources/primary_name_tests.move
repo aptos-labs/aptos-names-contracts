@@ -37,7 +37,7 @@ module router::primary_name_tests {
         if (option::is_none(&token_addr)) {
             (option::none(), option::none())
         } else {
-            let (subdomain_name, domain_name) = aptos_names_v2::v2_domains::get_record_props_from_token_addr(
+            let (subdomain_name, domain_name) = aptos_names_v2::v2_domains::get_name_props_from_token_addr(
                 *option::borrow(&token_addr)
             );
             (subdomain_name, option::some(domain_name))

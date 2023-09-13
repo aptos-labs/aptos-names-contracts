@@ -453,7 +453,12 @@ module aptos_names_v2::v2_domains {
 
         // Idea here is that if this is a primary name, then the target_addr's reverse lookup should point back to this domain
         let is_primary_name = if (option::is_some(&record.target_address)) {
-            let maybe_reverse_record = get_reverse_lookup(*option::borrow(&record.target_address));
+            let maybe_reverse_record = if (exists<ReverseRecord>(*option::borrow(&record.target_address))) {
+                let reverse_record = borrow_global<ReverseRecord>(*option::borrow(&record.target_address));
+                reverse_record.token_addr
+            } else {
+                option::none()
+            };
             if (option::is_some(&maybe_reverse_record)) {
                 let reverse_record_addr = *option::borrow(&maybe_reverse_record);
                 get_token_addr_inline(domain_name, option::none()) == reverse_record_addr
@@ -464,6 +469,7 @@ module aptos_names_v2::v2_domains {
             false
         };
 
+
         // log the event
         event::emit_event<RenewNameEvent>(
             &mut borrow_global_mut<RenewNameEvents>(@aptos_names_v2).renew_name_events,
@@ -472,7 +478,6 @@ module aptos_names_v2::v2_domains {
                 subdomain_name: option::none(),
                 renewal_fee_octas: price,
                 expiration_time_secs: record.expiration_time_sec,
-
                 target_address: record.target_address,
                 is_primary_name,
             },
@@ -709,13 +714,22 @@ module aptos_names_v2::v2_domains {
     /// Returns the reverse lookup (the token addr) for an address if any.
     public fun get_reverse_lookup(
         account_addr: address
-    ): Option<address> acquires ReverseRecord {
-        if (exists<ReverseRecord>(account_addr)) {
-            let reverse_record = borrow_global<ReverseRecord>(account_addr);
-            reverse_record.token_addr
-        } else {
-            option::none()
-        }
+    ): Option<address> acquires ReverseRecord, NameRecord {
+        if (!exists<ReverseRecord>(account_addr)) {
+            return option::none()
+        };
+        let reverse_record = borrow_global<ReverseRecord>(account_addr);
+        if (option::is_none(&reverse_record.token_addr)) {
+            return option::none()
+        };
+        let token_addr = *option::borrow(&reverse_record.token_addr);
+        let record = borrow_global<NameRecord>(token_addr);
+
+        // check if record is expired
+        if (is_time_expired(record.expiration_time_sec)) {
+            return option::none()
+        };
+        return reverse_record.token_addr
     }
 
     /// Returns whether a ReverseRecord exists at `account_addr`
@@ -1048,7 +1062,7 @@ module aptos_names_v2::v2_domains {
             return true
         };
 
-        let (expiration_time_sec, _) = get_name_record_props_for_name(subdomain_name, domain_name);
+        let (expiration_time_sec, _) = get_name_record_props(subdomain_name, domain_name);
 
         // Name is expired and passed grace period, so name is registerable
         if (timestamp::now_seconds() > v2_config::reregistration_grace_sec() + expiration_time_sec) {
@@ -1170,7 +1184,7 @@ module aptos_names_v2::v2_domains {
         }
     }
 
-    public fun get_name_record_props_for_name(
+    public fun get_name_record_props(
         subdomain: Option<String>,
         domain: String,
     ): (u64, Option<address>) acquires CollectionCapability, NameRecord {
@@ -1181,15 +1195,27 @@ module aptos_names_v2::v2_domains {
             if (subdomain_ext.subdomain_expiration_policy == SUBDOMAIN_POLICY_LOOKUP_DOMAIN_EXPIRATION) {
                 // refer to the expiration date of the domain
                 let domain_record = get_record(domain, option::none());
+                let expiration_sec = domain_record.expiration_time_sec;
 
-                return (domain_record.expiration_time_sec, record.target_address)
+                // check if the domain is expired
+                if (is_time_expired(expiration_sec)) {
+                    return (expiration_sec, option::none())
+                } else {
+                    return (expiration_sec, record.target_address)
+                }
             }
+        };
+
+        // check if the name is expired
+        let expiration_sec = record.expiration_time_sec;
+        if (is_time_expired(expiration_sec)) {
+            return (expiration_sec, option::none())
         };
 
         (record.expiration_time_sec, record.target_address)
     }
 
-    public fun get_record_props_from_token_addr(
+    public fun get_name_props_from_token_addr(
         token_addr: address
     ): (Option<String>, String) acquires NameRecord {
         let record = borrow_global<NameRecord>(token_addr);
