@@ -1,12 +1,13 @@
 #[test_only]
 module bulk::bulk_tests {
-    use bulk::bulk::bulk_migrate_name;
+    use bulk::bulk::{bulk_migrate_name, bulk_renew_domain};
     use router::router;
     use router::router_test_helper;
     use std::option;
     use std::signer;
     use std::string::utf8;
     use std::vector;
+    use aptos_framework::timestamp;
 
     const MAX_MODE: u8 = 1;
     const SECONDS_PER_YEAR: u64 = 60 * 60 * 24 * 365;
@@ -76,5 +77,44 @@ module bulk::bulk_tests {
             assert!(aptos_names_v2::v2_domains::is_owner_of_name(user1_addr, option::none(), domain_name), 3);
             assert!(aptos_names_v2::v2_domains::is_owner_of_name(user1_addr, subdomain_name_opt, domain_name), 4);
         }
+    }
+
+    #[test(
+        router = @router,
+        aptos_names = @aptos_names,
+        aptos_names_v2 = @aptos_names_v2,
+        user1 = @0x077,
+        user2 = @0x266f,
+        aptos = @0x1,
+        foundation = @0xf01d
+    )]
+    fun test_bulk_renew_happy_path(
+        router: &signer,
+        aptos_names: &signer,
+        aptos_names_v2: &signer,
+        user1: signer,
+        user2: signer,
+        aptos: signer,
+        foundation: signer
+    ) {
+        router::init_module_for_test(router);
+        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user1, &aptos, user2, &foundation);
+        let user1 = vector::borrow(&users, 0);
+        let domain_name = utf8(b"test");
+
+        // Bump mode
+        router::set_mode(router, 1);
+
+        // Register with v2
+        router::register_domain(user1, domain_name, SECONDS_PER_YEAR, option::none(), option::none());
+
+        // Update time to 7 months later
+        timestamp::update_global_time_for_test_secs(60 * 60 * 24 * 30 * 7);
+
+        bulk_renew_domain(user1, vector [ domain_name ], vector [ SECONDS_PER_YEAR ]);
+
+        // Verify names new expiration
+        let expiration = router::get_expiration(domain_name, option::none());
+        assert!(expiration == SECONDS_PER_YEAR * 2, 1);
     }
 }
