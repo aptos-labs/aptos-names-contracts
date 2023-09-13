@@ -316,7 +316,7 @@ module router::primary_name_tests {
         router::clear_primary_name(user);
         {
             // domain should be successfully migrated to v2
-            let (is_owner_of_v1_name, _) = aptos_names::domains::is_owner_of_name(user_addr, option::none(), domain_name);
+            let (is_owner_of_v1_name, _) = aptos_names::domains::is_token_owner(user_addr, option::none(), domain_name);
             assert!(!is_owner_of_v1_name, 1);
             assert!(aptos_names_v2::v2_domains::is_owner_of_name(user_addr, option::none(), domain_name), 2);
             // v1 primary name should be cleared
@@ -380,7 +380,7 @@ module router::primary_name_tests {
         router::clear_primary_name(user);
         {
             // subdomain should still remain in v1
-            let (is_owner_of_v1_name, _) = aptos_names::domains::is_owner_of_name(user_addr, subdomain_name_opt, domain_name);
+            let (is_owner_of_v1_name, _) = aptos_names::domains::is_token_owner(user_addr, subdomain_name_opt, domain_name);
             assert!(is_owner_of_v1_name, 1);
             assert!(!aptos_names_v2::v2_domains::is_owner_of_name(user_addr, subdomain_name_opt, domain_name), 2);
             // v1 primary name should be cleared

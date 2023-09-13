@@ -43,6 +43,8 @@ module router::router {
     const ECANNOT_MIGRATE_SUBDOMAIN_BEFORE_MIGRATE_DOMAIN: u64 = 10;
     /// Name is already migrated
     const ENAME_ALREADY_MIGRATED: u64 = 11;
+    /// Cannot migrate a name that has expired
+    const ECANNOT_MIGRATE_EXPIRED_NAME: u64 = 12;
 
     // == OTHER CONSTANTS ==
 
@@ -151,12 +153,12 @@ module router::router {
             subdomain_name,
             domain_name
         ) && !domains::name_is_expired(subdomain_name, domain_name)) {
-            let (is_burned, _token_id) = domains::is_owner_of_name(
+            let (is_owner, _token_id) = domains::is_token_owner(
                 router_signer_addr(),
                 subdomain_name,
                 domain_name
             );
-            is_burned
+            is_owner && !domains::name_is_expired(subdomain_name, domain_name)
         } else {
             v2_domains::is_name_registerable(domain_name, subdomain_name)
         }
@@ -339,12 +341,13 @@ module router::router {
                 error::invalid_state(ENAME_ALREADY_MIGRATED)
             );
 
-            let (is_v1_owner, _token_id) = domains::is_owner_of_name(
+            let (is_v1_owner, _token_id) = domains::is_token_owner(
                 user_addr,
                 subdomain_name,
                 domain_name,
             );
             assert!(is_v1_owner, error::permission_denied(ENOT_NAME_OWNER));
+            assert!(!domains::name_is_expired(subdomain_name, domain_name), error::invalid_state(ECANNOT_MIGRATE_EXPIRED_NAME));
 
             // Check primary name status
             let maybe_primary_name = domains::get_reverse_lookup(user_addr);
@@ -737,8 +740,8 @@ module router::router {
         domain_name: String,
         subdomain_name: Option<String>,
     ): bool {
-        let (is_owner, _token_id) = domains::is_owner_of_name(owner_addr, subdomain_name, domain_name);
-        is_owner
+        let (is_owner, _token_id) = domains::is_token_owner(owner_addr, subdomain_name, domain_name);
+        is_owner && !domains::name_is_expired(subdomain_name, domain_name)
     }
 
     #[view]

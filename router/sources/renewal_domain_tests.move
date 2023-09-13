@@ -134,7 +134,7 @@ module router::renewal_domain_tests {
         // Domain should be auto migrated to v2 and renewed with 1 year
         {
             // v1 name should be burnt now, i.e. not owned by the user now
-            let (is_v1_owner, _) = aptos_names::domains::is_owner_of_name(user_addr, option::none(), domain_name);
+            let (is_v1_owner, _) = aptos_names::domains::is_token_owner(user_addr, option::none(), domain_name);
             assert!(!is_v1_owner, 1);
             // v2 name should be owned by user
             assert!(aptos_names_v2::v2_domains::is_owner_of_name(user_addr, option::none(), domain_name), 2);
