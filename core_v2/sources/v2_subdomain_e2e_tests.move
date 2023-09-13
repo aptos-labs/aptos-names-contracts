@@ -2,12 +2,12 @@
 module aptos_names_v2::v2_subdomain_e2e_tests {
     use aptos_framework::timestamp;
     use aptos_names_v2::v2_domains;
-    use aptos_names_v2::v2_test_utils;
     use aptos_names_v2::v2_test_helper;
+    use aptos_names_v2::v2_test_utils;
+    use aptos_names_v2::v2_time_helper;
     use std::option;
     use std::signer;
     use std::vector;
-    use aptos_names_v2::v2_time_helper;
 
     const MAX_REMAINING_TIME_FOR_RENEWAL_SEC: u64 = 15552000;
 
@@ -539,7 +539,7 @@ module aptos_names_v2::v2_subdomain_e2e_tests {
                 v2_test_helper::domain_name(), option::some(v2_test_helper::subdomain_name())), 95);
 
         // and likewise for the subdomain
-        v2_test_helper::register_name(router_signer, rando, option::some(v2_test_helper::subdomain_name()), v2_test_helper::domain_name(), timestamp::now_seconds() + v2_test_helper::one_year_secs(), v2_test_helper::fq_subdomain_name(), 2);
+        v2_test_helper::register_name(router_signer, rando, option::some(v2_test_helper::subdomain_name()), v2_test_helper::domain_name(), v2_test_helper::one_year_secs(), v2_test_helper::fq_subdomain_name(), 2);
 
         // And again!
         let (expiration_time_sec, _) = v2_domains::get_name_record_props_for_name(option::some(
@@ -574,7 +574,7 @@ module aptos_names_v2::v2_subdomain_e2e_tests {
                 v2_test_helper::domain_name(), option::some(v2_test_helper::subdomain_name())), 95);
 
         // and likewise for the subdomain
-        v2_test_helper::register_name(router_signer, rando, option::some(v2_test_helper::subdomain_name()), v2_test_helper::domain_name(), timestamp::now_seconds() + v2_test_helper::one_year_secs(), v2_test_helper::fq_subdomain_name(), 3);
+        v2_test_helper::register_name(router_signer, rando, option::some(v2_test_helper::subdomain_name()), v2_test_helper::domain_name(), v2_test_helper::one_year_secs(), v2_test_helper::fq_subdomain_name(), 3);
     }
 
     #[test(
@@ -944,5 +944,110 @@ module aptos_names_v2::v2_subdomain_e2e_tests {
         // Attempt (and fail) to take the subdomain name for much longer than users are allowed to register it for
         v2_domains::force_create_or_seize_name(rando, v2_test_helper::domain_name(), option::some(
             v2_test_helper::subdomain_name()), v2_test_helper::two_hundred_year_secs());
+    }
+
+    #[test(
+        router_signer = @router_signer,
+        aptos_names_v2 = @aptos_names_v2,
+        user = @0x077,
+        aptos = @0x1,
+        rando = @0x266f,
+        foundation = @0xf01d
+    )]
+    fun test_subdomain_reset(
+        router_signer: &signer,
+        aptos_names_v2: &signer,
+        user: signer,
+        aptos: signer,
+        rando: signer,
+        foundation: signer,
+    ) {
+        let users = v2_test_helper::e2e_test_setup(aptos_names_v2, user, &aptos, rando, &foundation);
+        let user = vector::borrow(&users, 0);
+        let user_addr = signer::address_of(user);
+
+        // Register the domain
+        v2_test_helper::register_name(
+            router_signer,
+            user,
+            option::none(),
+            v2_test_helper::domain_name(),
+            v2_test_helper::one_year_secs(),
+            v2_test_helper::fq_domain_name(),
+            1
+        );
+
+        // Register a subdomain!
+        v2_test_helper::register_name(
+            router_signer,
+            user,
+            option::some(v2_test_helper::subdomain_name()),
+            v2_test_helper::domain_name(),
+            v2_test_helper::one_year_secs(),
+            v2_test_helper::fq_subdomain_name(),
+            1
+        );
+        assert!(!v2_domains::is_name_expired(
+            v2_test_helper::domain_name(), option::some(v2_test_helper::subdomain_name())), 1);
+
+        // Let the domain expire and re-register it
+        timestamp::update_global_time_for_test_secs(v2_time_helper::years_to_seconds(2));
+        v2_test_helper::register_name(
+            router_signer,
+            user,
+            option::none(),
+            v2_test_helper::domain_name(),
+            v2_test_helper::one_year_secs(),
+            v2_test_helper::fq_domain_name(),
+            2
+        );
+
+        // The subdomain should be clear (expired, no target addr, no owner)
+        {
+            assert!(v2_domains::is_name_expired(
+                v2_test_helper::domain_name(), option::some(v2_test_helper::subdomain_name())), 3);
+            let owner_addr = v2_domains::get_name_owner_addr(
+                option::some(v2_test_helper::subdomain_name()), v2_test_helper::domain_name());
+            assert!(owner_addr == option::none(), 4);
+            let (_expiration_time_sec, target_addr) = v2_domains::get_name_record_props_for_name(option::some(
+                v2_test_helper::subdomain_name()), v2_test_helper::domain_name());
+            assert!(target_addr == option::none(), 5);
+        };
+
+        // Even if the admin force changes the expiration time, the subdomain should still be clear
+        v2_domains::force_set_name_expiration(
+            aptos_names_v2,
+            v2_test_helper::domain_name(),
+            option::some(v2_test_helper::subdomain_name()),
+            timestamp::now_seconds() + v2_test_helper::one_year_secs()
+        );
+        {
+            assert!(v2_domains::is_name_expired(
+                v2_test_helper::domain_name(), option::some(v2_test_helper::subdomain_name())), 3);
+            let owner_addr = v2_domains::get_name_owner_addr(
+                option::some(v2_test_helper::subdomain_name()), v2_test_helper::domain_name());
+            assert!(owner_addr == option::none(), 4);
+            let (_expiration_time_sec, target_addr) = v2_domains::get_name_record_props_for_name(option::some(
+                v2_test_helper::subdomain_name()), v2_test_helper::domain_name());
+            assert!(target_addr == option::none(), 5);
+        };
+
+        // The subdomain can be re-registered
+        v2_test_helper::register_name(
+            router_signer,
+            user,
+            option::some(v2_test_helper::subdomain_name()),
+            v2_test_helper::domain_name(),
+            v2_test_helper::one_year_secs(),
+            v2_test_helper::fq_subdomain_name(),
+            3
+        );
+        {
+            assert!(!v2_domains::is_name_expired(
+                v2_test_helper::domain_name(), option::some(v2_test_helper::subdomain_name())), 3);
+            let owner_addr = v2_domains::get_name_owner_addr(
+                option::some(v2_test_helper::subdomain_name()), v2_test_helper::domain_name());
+            assert!(*option::borrow(&owner_addr) == user_addr, 4);
+        };
     }
 }
