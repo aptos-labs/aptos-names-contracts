@@ -290,7 +290,7 @@ module aptos_names::domain_e2e_tests {
 
         // Take the domain name for much longer than users are allowed to register it for
         domains::force_create_or_seize_name(myself, option::none(), domain_name, test_helper::two_hundred_year_secs());
-        let (is_owner, _token_id) = domains::is_owner_of_name(signer::address_of(user), option::none(), domain_name);
+        let (is_owner, _token_id) = domains::is_owner_of_name(signer::address_of(myself), option::none(), domain_name);
         assert!(is_owner, 1);
         let (is_owner, _token_id) = domains::is_token_owner(signer::address_of(myself), option::none(), domain_name);
         assert!(is_owner, 2);
@@ -530,7 +530,6 @@ module aptos_names::domain_e2e_tests {
         let (_, expiration_time_sec, _) = domains::get_name_record_v1_props_for_name(option::none(), test_helper::domain_name());
         timestamp::update_global_time_for_test_secs(expiration_time_sec + 5);
 
-        // Is owner, but name has expired
         let (is_owner, _token_id) = domains::is_owner_of_name(user_addr, option::none(), test_helper::domain_name());
         assert!(!is_owner, 1);
         let (is_owner, _token_id) = domains::is_token_owner(user_addr, option::none(), test_helper::domain_name());
