@@ -104,6 +104,8 @@ module aptos_names::test_helper {
         let (tdi_creator, tdi_collection, tdi_name, tdi_property_version) = token::get_token_id_fields(&token_id);
 
         assert!(is_owner, 3);
+        assert!(!domains::name_is_expired(subdomain_name, domain_name), 3);
+
         assert!(tdi_creator == token_helper::get_token_signer_address(), 4);
         assert!(tdi_collection == config::collection_name_v1(), 5);
         test_utils::print_actual_expected(b"tdi_name: ", tdi_name, expected_fq_domain_name, false);
