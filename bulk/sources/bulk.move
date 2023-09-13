@@ -84,4 +84,17 @@ module bulk::bulk {
             idx = idx + 1
         }
     }
+
+    // ==== Renewal and Migration ====
+
+    /// Domains only
+    public entry fun bulk_migrate_and_renew_domain(
+        user: &signer,
+        migrate_domain_names: vector<String>,
+        renew_domain_names: vector<String>,
+        renewal_duration_secs: vector<u64>,
+    ) {
+        bulk_migrate_domain(user, migrate_domain_names);
+        bulk_renew_domain(user, renew_domain_names, renewal_duration_secs);
+    }
 }
