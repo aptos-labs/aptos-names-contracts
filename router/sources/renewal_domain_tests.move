@@ -128,6 +128,9 @@ module router::renewal_domain_tests {
         // Bump mode to v2
         router::set_mode(router, 1);
 
+        // Make v1 read only except for admin
+        aptos_names::config::set_is_enabled(aptos_names, false);
+
         // Renewals only allowed within 6 months of expiration. Move time to 100 seconds before expiry.
         timestamp::update_global_time_for_test_secs(AUTO_RENEWAL_EXPIRATION_CUTOFF_SEC + SECONDS_PER_YEAR - 100);
         router::renew_domain(user, domain_name, SECONDS_PER_YEAR);

@@ -60,6 +60,9 @@ module router::migration_tests {
             assert!(option::is_none(&primary_subdomain_name), 11);
         };
 
+        // Make v1 read only except for admin
+        aptos_names::config::set_is_enabled(aptos_names, false);
+
         // Migrate to v2
         router::migrate_name(user, domain_name, option::none());
         assert!(router::is_name_owner(user_addr, domain_name, option::none()), 12);
@@ -148,6 +151,9 @@ module router::migration_tests {
         // Bump mode
         router::set_mode(router, 1);
 
+        // Make v1 read only except for admin
+        aptos_names::config::set_is_enabled(aptos_names, false);
+
         // Migration fails because user2 does not own `domain_name`
         router::migrate_name(user, domain_name, option::none());
 
@@ -206,6 +212,9 @@ module router::migration_tests {
 
         // Bump mode
         router::set_mode(router, 1);
+
+        // Make v1 read only except for admin
+        aptos_names::config::set_is_enabled(aptos_names, false);
 
         // Attribtes should be the same
         assert!(router::is_name_owner(user_addr, domain_name, subdomain_name_opt), 7);
@@ -397,6 +406,9 @@ module router::migration_tests {
 
         // Bump mode
         router::set_mode(router, 1);
+
+        // Make v1 read only except for admin
+        aptos_names::config::set_is_enabled(aptos_names, false);
 
         // Migration only allowed [expiration - 6 month, expiration + grace period]. Move time to 100 seconds after expiry.
         // We should be able to migrate since it's within the 1 month grace period
