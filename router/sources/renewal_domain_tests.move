@@ -185,4 +185,77 @@ module router::renewal_domain_tests {
         // Expect to fail due to EDOMAIN_NOT_AVAILABLE_TO_RENEW during renew because migration already renew for free 1 year extension
         router::renew_domain(user, domain_name, SECONDS_PER_YEAR);
     }
+
+    #[test(
+        router = @router,
+        aptos_names = @aptos_names,
+        aptos_names_v2 = @aptos_names_v2,
+        user1 = @0x077,
+        user2 = @0x266f,
+        aptos = @0x1,
+        foundation = @0xf01d
+    )]
+    fun test_renew_expired_but_still_in_grace_period_domain_in_v2(
+        router: &signer,
+        aptos_names: &signer,
+        aptos_names_v2: &signer,
+        user1: signer,
+        user2: signer,
+        aptos: signer,
+        foundation: signer
+    ) {
+        router::init_module_for_test(router);
+        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user1, &aptos, user2, &foundation);
+        let user = vector::borrow(&users, 0);
+        let domain_name = utf8(b"test");
+
+        // Bump mode to v2
+        router::set_mode(router, 1);
+
+        router::register_domain(user, domain_name, SECONDS_PER_YEAR, option::none(), option::none());
+        assert!(router::get_expiration(domain_name, option::none()) == SECONDS_PER_YEAR, 1);
+
+        // Renewals only allowed [expiration - 6 month, expiration + grace period]. Move time to 100 seconds after expiry.
+        // We should be able to renew since it's within the 1 month grace period
+        timestamp::update_global_time_for_test_secs(SECONDS_PER_YEAR + 100);
+        router::renew_domain(user, domain_name, SECONDS_PER_YEAR);
+        // New expiration date is 1 year after original expiration date
+        assert!(router::get_expiration(domain_name, option::none()) == SECONDS_PER_YEAR * 2, 2);
+    }
+
+    #[test(
+        router = @router,
+        aptos_names = @aptos_names,
+        aptos_names_v2 = @aptos_names_v2,
+        user1 = @0x077,
+        user2 = @0x266f,
+        aptos = @0x1,
+        foundation = @0xf01d
+    )]
+    #[expected_failure(abort_code = 196639, location = aptos_names_v2::v2_domains)]
+    fun test_cannot_renew_expired_past_grace_period_domain_in_v2(
+        router: &signer,
+        aptos_names: &signer,
+        aptos_names_v2: &signer,
+        user1: signer,
+        user2: signer,
+        aptos: signer,
+        foundation: signer
+    ) {
+        router::init_module_for_test(router);
+        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user1, &aptos, user2, &foundation);
+        let user = vector::borrow(&users, 0);
+        let domain_name = utf8(b"test");
+
+        // Bump mode to v2
+        router::set_mode(router, 1);
+
+        router::register_domain(user, domain_name, SECONDS_PER_YEAR, option::none(), option::none());
+        assert!(router::get_expiration(domain_name, option::none()) == SECONDS_PER_YEAR, 1);
+
+        // Renewals only allowed [expiration - 6 month, expiration + grace period]. Move time to 1 year after expiry.
+        // We should not be able to renew since it's past the 1 month grace period
+        timestamp::update_global_time_for_test_secs(SECONDS_PER_YEAR * 2);
+        router::renew_domain(user, domain_name, SECONDS_PER_YEAR);
+    }
 }

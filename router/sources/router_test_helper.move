@@ -10,6 +10,7 @@ module router::router_test_helper {
     // Ammount to mint to test accounts during the e2e tests
     const MINT_AMOUNT_APT: u64 = 500;
     const OCTAS: u64 = 100000000;
+    const ONE_MONTH_IN_SECONDS: u64 = 2_592_000;
 
     // 500 APT
     public fun mint_amount(): u64 {
@@ -34,7 +35,9 @@ module router::router_test_helper {
         aptos_names::domains::init_module_for_test(aptos_names);
         aptos_names_v2::v2_domains::init_module_for_test(aptos_names_v2);
         aptos_names::config::set_fund_destination_address_test_only(signer::address_of(foundation));
+        aptos_names_v2::config::set_reregistration_grace_sec(aptos_names, ONE_MONTH_IN_SECONDS);
         aptos_names_v2::v2_config::set_fund_destination_address_test_only(signer::address_of(foundation));
+        aptos_names_v2::v2_config::set_reregistration_grace_sec(aptos_names_v2, ONE_MONTH_IN_SECONDS);
         new_accounts
     }
 

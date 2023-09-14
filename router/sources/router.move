@@ -33,7 +33,7 @@ module router::router {
     const ENOT_MULTIPLE_OF_SECONDS_PER_YEAR: u64 = 5;
     /// Name is not available for registration
     const ENAME_NOT_AVAILABLE: u64 = 6;
-    /// Name already expired and is not eligible for migration
+    /// Name already expired and past grace period so is not eligible for migration
     const EMIGRATION_ALREADY_EXPIRED: u64 = 7;
     /// User is not owner of the name
     const ENOT_NAME_OWNER: u64 = 8;
@@ -43,8 +43,6 @@ module router::router {
     const ECANNOT_MIGRATE_SUBDOMAIN_BEFORE_MIGRATE_DOMAIN: u64 = 10;
     /// Name is already migrated
     const ENAME_ALREADY_MIGRATED: u64 = 11;
-    /// Cannot migrate a name that has expired
-    const ECANNOT_MIGRATE_EXPIRED_NAME: u64 = 12;
 
     // == OTHER CONSTANTS ==
 
@@ -347,7 +345,10 @@ module router::router {
                 domain_name,
             );
             assert!(is_v1_owner, error::permission_denied(ENOT_NAME_OWNER));
-            assert!(!domains::name_is_expired(subdomain_name, domain_name), error::invalid_state(ECANNOT_MIGRATE_EXPIRED_NAME));
+            assert!(
+                !domains::name_is_expired_past_grace(subdomain_name, domain_name),
+                error::invalid_state(EMIGRATION_ALREADY_EXPIRED)
+            );
 
             // Check primary name status
             let maybe_primary_name = domains::get_reverse_lookup(user_addr);
@@ -398,7 +399,6 @@ module router::router {
             let new_expiration_time_sec = if (option::is_some(&subdomain_name)) {
                 expiration_time_sec
             } else {
-                assert!(expiration_time_sec >= now, error::invalid_state(EMIGRATION_ALREADY_EXPIRED));
                 if (expiration_time_sec <= AUTO_RENEWAL_EXPIRATION_CUTOFF_SEC) {
                     expiration_time_sec + SECONDS_PER_YEAR
                 } else {
