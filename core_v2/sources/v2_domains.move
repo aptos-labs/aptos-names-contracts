@@ -79,6 +79,8 @@ module aptos_names_v2::v2_domains {
     const ECANNOT_TRANSFER_SUBDOMAIN_WHILE_DOMAIN_HAS_EXPIRED: u64 = 29;
     /// The domain is expired
     const EDOMAIN_EXPIRED: u64 = 30;
+    /// Name is expired and out of grace period
+    const ECANNOT_RENEW_NAME_THAT_IS_EXPIRED_AND_PAST_GRACE_PERIOD: u64 = 31;
 
     /// Tokens require a signer to create, so this is the signer for the collection
     struct CollectionCapability has key, drop {
@@ -895,8 +897,11 @@ module aptos_names_v2::v2_domains {
     ): bool acquires CollectionCapability, NameRecord {
         // check if the domain is registered
         assert!(is_name_registered(domain_name, option::none()), error::not_found(ENAME_NOT_EXIST));
-        // check if the domain is expired already
-        assert!(!is_name_expired(domain_name, option::none()), error::invalid_state(ENAME_EXPIRED));
+        // check if the domain is expired and past gract period already
+        assert!(
+            !is_name_expired_past_grace(domain_name, option::none()),
+            error::invalid_state(ECANNOT_RENEW_NAME_THAT_IS_EXPIRED_AND_PAST_GRACE_PERIOD)
+        );
         let record = get_record_mut(domain_name, option::none());
 
         record.expiration_time_sec <= timestamp::now_seconds() + MAX_REMAINING_TIME_FOR_RENEWAL_SEC
