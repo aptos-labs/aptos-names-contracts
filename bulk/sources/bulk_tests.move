@@ -74,8 +74,22 @@ module bulk::bulk_tests {
 
         // Verify names exist in v2 now
         {
-            assert!(aptos_names_v2::v2_domains::is_owner_of_name(user1_addr, option::none(), domain_name), 3);
-            assert!(aptos_names_v2::v2_domains::is_owner_of_name(user1_addr, subdomain_name_opt, domain_name), 4);
+            assert!(
+                aptos_names_v2::v2_domains::is_token_owner(
+                    user1_addr,
+                    domain_name,
+                    option::none()
+                ) && !aptos_names_v2::v2_domains::is_name_expired(domain_name, option::none()),
+                3
+            );
+            assert!(
+                aptos_names_v2::v2_domains::is_token_owner(
+                    user1_addr,
+                    domain_name,
+                    subdomain_name_opt,
+                ) && !aptos_names_v2::v2_domains::is_name_expired(domain_name, subdomain_name_opt),
+                4
+            );
         }
     }
 

@@ -38,7 +38,7 @@ module router::target_address_tests {
         if (!exists_in_v2(domain_name, subdomain_name)) {
             option::none()
         }else {
-            let (_expiration_time_sec, target_addr) = aptos_names_v2::v2_domains::get_name_record_props_for_name(
+            let (_expiration_time_sec, target_addr) = aptos_names_v2::v2_domains::get_name_record_props(
                 subdomain_name,
                 domain_name
             );
@@ -216,7 +216,8 @@ module router::target_address_tests {
         // Set domain target address to user2_addr, this should trigger auto migration
         router::set_target_addr(user, domain_name, option::none(), user2_addr);
         {
-            assert!(aptos_names_v2::v2_domains::is_owner_of_name(user_addr, option::none(), domain_name), 1);
+            assert!(aptos_names_v2::v2_domains::is_token_owner(user_addr, domain_name, option::none()), 1);
+            assert!(!aptos_names_v2::v2_domains::is_name_expired(domain_name, option::none()), 1);
             let v1_target_address = get_v1_target_addr(domain_name, option::none());
             assert!(option::is_none(&v1_target_address), 2);
             let v2_target_address = get_v2_target_addr(domain_name, option::none());
@@ -274,7 +275,8 @@ module router::target_address_tests {
         // Clear domain target address, this should trigger auto migration
         router::clear_target_addr(user, domain_name, option::none());
         {
-            assert!(aptos_names_v2::v2_domains::is_owner_of_name(user_addr, option::none(), domain_name), 1);
+            assert!(aptos_names_v2::v2_domains::is_token_owner(user_addr, domain_name, option::none()), 1);
+            assert!(!aptos_names_v2::v2_domains::is_name_expired(domain_name, option::none()), 1);
             let v1_target_address = get_v1_target_addr(domain_name, option::none());
             assert!(option::is_none(&v1_target_address), 1);
             let v2_target_address = get_v2_target_addr(domain_name, option::none());

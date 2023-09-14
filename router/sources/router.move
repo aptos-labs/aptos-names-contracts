@@ -33,7 +33,7 @@ module router::router {
     const ENOT_MULTIPLE_OF_SECONDS_PER_YEAR: u64 = 5;
     /// Name is not available for registration
     const ENAME_NOT_AVAILABLE: u64 = 6;
-    /// Name already expired and is not eligible for migration
+    /// Name already expired and past grace period so is not eligible for migration
     const EMIGRATION_ALREADY_EXPIRED: u64 = 7;
     /// User is not owner of the name
     const ENOT_NAME_OWNER: u64 = 8;
@@ -151,7 +151,7 @@ module router::router {
             subdomain_name,
             domain_name
         ) && !domains::name_is_expired(subdomain_name, domain_name)) {
-            let (is_burned, _token_id) = domains::is_owner_of_name(
+            let (is_burned, _token_id) = domains::is_token_owner(
                 router_signer_addr(),
                 subdomain_name,
                 domain_name
@@ -339,12 +339,16 @@ module router::router {
                 error::invalid_state(ENAME_ALREADY_MIGRATED)
             );
 
-            let (is_v1_owner, _token_id) = domains::is_owner_of_name(
+            let (is_v1_owner, _token_id) = domains::is_token_owner(
                 user_addr,
                 subdomain_name,
                 domain_name,
             );
             assert!(is_v1_owner, error::permission_denied(ENOT_NAME_OWNER));
+            assert!(
+                !domains::name_is_expired_past_grace(subdomain_name, domain_name),
+                error::invalid_state(EMIGRATION_ALREADY_EXPIRED)
+            );
 
             // Check primary name status
             let maybe_primary_name = domains::get_reverse_lookup(user_addr);
@@ -395,7 +399,6 @@ module router::router {
             let new_expiration_time_sec = if (option::is_some(&subdomain_name)) {
                 expiration_time_sec
             } else {
-                assert!(expiration_time_sec >= now, error::invalid_state(EMIGRATION_ALREADY_EXPIRED));
                 if (expiration_time_sec <= AUTO_RENEWAL_EXPIRATION_CUTOFF_SEC) {
                     expiration_time_sec + SECONDS_PER_YEAR
                 } else {
@@ -721,7 +724,7 @@ module router::router {
             if (!exists_in_v2(domain_name, subdomain_name)) {
                 get_v1_target_addr(domain_name, subdomain_name)
             } else {
-                let (_expiration_time_sec, target_addr) = v2_domains::get_name_record_props_for_name(
+                let (_expiration_time_sec, target_addr) = v2_domains::get_name_record_props(
                     subdomain_name,
                     domain_name
                 );
@@ -737,8 +740,8 @@ module router::router {
         domain_name: String,
         subdomain_name: Option<String>,
     ): bool {
-        let (is_owner, _token_id) = domains::is_owner_of_name(owner_addr, subdomain_name, domain_name);
-        is_owner
+        let (is_owner, _token_id) = domains::is_token_owner(owner_addr, subdomain_name, domain_name);
+        is_owner && !domains::name_is_expired(subdomain_name, domain_name)
     }
 
     #[view]
@@ -754,7 +757,10 @@ module router::router {
             if (!exists_in_v2(domain_name, subdomain_name)) {
                 is_v1_name_owner(owner_addr, domain_name, subdomain_name)
             } else {
-                v2_domains::is_owner_of_name(owner_addr, subdomain_name, domain_name)
+                v2_domains::is_token_owner(owner_addr, domain_name, subdomain_name) && !v2_domains::is_name_expired(
+                    domain_name,
+                    subdomain_name
+                )
             }
         } else {
             abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
@@ -802,7 +808,7 @@ module router::router {
             if (!exists_in_v2(domain_name, subdomain_name)) {
                 get_v1_expiration(domain_name, subdomain_name)
             } else {
-                let (expiration_time_sec, _target_addr) = v2_domains::get_name_record_props_for_name(
+                let (expiration_time_sec, _target_addr) = v2_domains::get_name_record_props(
                     subdomain_name,
                     domain_name,
                 );
@@ -858,7 +864,7 @@ module router::router {
                 if (option::is_none(&token_addr)) {
                     (option::none(), option::none())
                 } else {
-                    let (subdomain_name, domain_name) = v2_domains::get_record_props_from_token_addr(
+                    let (subdomain_name, domain_name) = v2_domains::get_name_props_from_token_addr(
                         *option::borrow(&token_addr)
                     );
                     (subdomain_name, option::some(domain_name))

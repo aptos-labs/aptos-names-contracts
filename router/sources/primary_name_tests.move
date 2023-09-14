@@ -37,7 +37,7 @@ module router::primary_name_tests {
         if (option::is_none(&token_addr)) {
             (option::none(), option::none())
         } else {
-            let (subdomain_name, domain_name) = aptos_names_v2::v2_domains::get_record_props_from_token_addr(
+            let (subdomain_name, domain_name) = aptos_names_v2::v2_domains::get_name_props_from_token_addr(
                 *option::borrow(&token_addr)
             );
             (subdomain_name, option::some(domain_name))
@@ -253,7 +253,8 @@ module router::primary_name_tests {
         router::set_primary_name(user, domain_name2, option::none());
         {
             // domain2 should be successfully migrated to v2
-            assert!(aptos_names_v2::v2_domains::is_owner_of_name(user_addr, option::none(), domain_name2), 1);
+            assert!(aptos_names_v2::v2_domains::is_token_owner(user_addr, domain_name2, option::none()), 2);
+            assert!(!aptos_names_v2::v2_domains::is_name_expired(domain_name2, option::none()), 3);
             // v1 primary name should be cleared
             let (_, v1_primary_domain_name) = get_v1_primary_name(user_addr);
             assert!(option::is_none(&v1_primary_domain_name), 2);
@@ -316,9 +317,10 @@ module router::primary_name_tests {
         router::clear_primary_name(user);
         {
             // domain should be successfully migrated to v2
-            let (is_owner_of_v1_name, _) = aptos_names::domains::is_owner_of_name(user_addr, option::none(), domain_name);
+            let (is_owner_of_v1_name, _) = aptos_names::domains::is_token_owner(user_addr, option::none(), domain_name);
             assert!(!is_owner_of_v1_name, 1);
-            assert!(aptos_names_v2::v2_domains::is_owner_of_name(user_addr, option::none(), domain_name), 2);
+            assert!(aptos_names_v2::v2_domains::is_token_owner(user_addr, domain_name, option::none()), 2);
+            assert!(!aptos_names_v2::v2_domains::is_name_expired(domain_name, option::none()), 2);
             // v1 primary name should be cleared
             let (v1_primary_subdomain_name, v1_primary_domain_name) = get_v1_primary_name(user_addr);
             assert!(option::is_none(&v1_primary_domain_name), 3);
@@ -380,9 +382,11 @@ module router::primary_name_tests {
         router::clear_primary_name(user);
         {
             // subdomain should still remain in v1
-            let (is_owner_of_v1_name, _) = aptos_names::domains::is_owner_of_name(user_addr, subdomain_name_opt, domain_name);
+            let (is_owner_of_v1_name, _) = aptos_names::domains::is_token_owner(user_addr, subdomain_name_opt, domain_name);
+            assert!(!aptos_names::domains::name_is_expired(subdomain_name_opt, domain_name), 1);
             assert!(is_owner_of_v1_name, 1);
-            assert!(!aptos_names_v2::v2_domains::is_owner_of_name(user_addr, subdomain_name_opt, domain_name), 2);
+            assert!(!aptos_names_v2::v2_domains::is_token_owner(user_addr, domain_name, subdomain_name_opt), 2);
+            assert!(aptos_names_v2::v2_domains::is_name_expired(domain_name, subdomain_name_opt), 2);
             // v1 primary name should be cleared
             let (v1_primary_subdomain_name, v1_primary_domain_name) = get_v1_primary_name(user_addr);
             assert!(option::is_none(&v1_primary_domain_name), 2);
