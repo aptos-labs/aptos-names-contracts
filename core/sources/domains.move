@@ -182,7 +182,6 @@ module aptos_names::domains {
         domain_name: String,
         num_years: u8
     ) acquires NameRegistryV1, RegisterNameEventsV1, ReverseLookupRegistryV1, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
-        assert!(config::is_enabled(), error::unavailable(ENOT_ENABLED));
         assert!(
             num_years > 0 && num_years <= config::max_number_of_years_registered(),
             error::out_of_range(EINVALID_NUMBER_YEARS)
@@ -213,6 +212,7 @@ module aptos_names::domains {
         domain_name: String,
         num_years: u8
     ) acquires NameRegistryV1, RegisterNameEventsV1, ReverseLookupRegistryV1, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
+        assert!(config::is_enabled_for_nonadmin(sign), error::unavailable(ENOT_ENABLED));
         assert!(config::unrestricted_mint_enabled(), error::permission_denied(EVALID_SIGNATURE_REQUIRED));
         register_domain_generic(sign, domain_name, num_years);
     }
@@ -223,6 +223,7 @@ module aptos_names::domains {
         num_years: u8,
         signature: vector<u8>
     ) acquires NameRegistryV1, RegisterNameEventsV1, ReverseLookupRegistryV1, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
+        assert!(config::is_enabled_for_nonadmin(sign), error::unavailable(ENOT_ENABLED));
         let account_address = signer::address_of(sign);
         verify::assert_register_domain_signature_verifies(signature, account_address, domain_name);
         register_domain_generic(sign, domain_name, num_years);
@@ -237,7 +238,7 @@ module aptos_names::domains {
         domain_name: String,
         expiration_time_sec: u64
     ) acquires NameRegistryV1, RegisterNameEventsV1, ReverseLookupRegistryV1, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
-        assert!(config::is_enabled(), error::unavailable(ENOT_ENABLED));
+        assert!(config::is_enabled_for_nonadmin(sign), error::unavailable(ENOT_ENABLED));
 
         assert!(
             name_is_registerable(option::some(subdomain_name), domain_name),
@@ -594,6 +595,7 @@ module aptos_names::domains {
         domain_name: String,
         new_address: address
     ) acquires NameRegistryV1, ReverseLookupRegistryV1, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
+        assert!(config::is_enabled_for_nonadmin(sign), error::unavailable(ENOT_ENABLED));
         set_name_address(sign, option::none(), domain_name, new_address);
     }
 
@@ -603,6 +605,7 @@ module aptos_names::domains {
         domain_name: String,
         new_address: address
     ) acquires NameRegistryV1, ReverseLookupRegistryV1, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
+        assert!(config::is_enabled_for_nonadmin(sign), error::unavailable(ENOT_ENABLED));
         set_name_address(sign, option::some(subdomain_name), domain_name, new_address);
     }
 
@@ -612,6 +615,7 @@ module aptos_names::domains {
         domain_name: String,
         new_address: address
     ) acquires NameRegistryV1, ReverseLookupRegistryV1, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
+        assert!(config::is_enabled_for_nonadmin(sign), error::unavailable(ENOT_ENABLED));
         // If the domain name is a primary name, clear it.
         clear_reverse_lookup_for_name(subdomain_name, domain_name);
 
@@ -671,6 +675,7 @@ module aptos_names::domains {
         sign: &signer,
         domain_name: String
     ) acquires NameRegistryV1, ReverseLookupRegistryV1, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
+        assert!(config::is_enabled_for_nonadmin(sign), error::unavailable(ENOT_ENABLED));
         clear_name_address(sign, option::none(), domain_name);
     }
 
@@ -679,6 +684,7 @@ module aptos_names::domains {
         subdomain_name: String,
         domain_name: String
     ) acquires NameRegistryV1, ReverseLookupRegistryV1, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
+        assert!(config::is_enabled_for_nonadmin(sign), error::unavailable(ENOT_ENABLED));
         clear_name_address(sign, option::some(subdomain_name), domain_name);
     }
 
@@ -689,6 +695,7 @@ module aptos_names::domains {
         subdomain_name: Option<String>,
         domain_name: String
     ) acquires NameRegistryV1, ReverseLookupRegistryV1, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
+        assert!(config::is_enabled_for_nonadmin(sign), error::unavailable(ENOT_ENABLED));
         assert!(name_is_registered(subdomain_name, domain_name), error::not_found(ENAME_NOT_EXIST));
 
         let signer_addr = signer::address_of(sign);
@@ -742,6 +749,7 @@ module aptos_names::domains {
         subdomain_name: String,
         domain_name: String
     ) acquires NameRegistryV1, ReverseLookupRegistryV1, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
+        assert!(config::is_enabled_for_nonadmin(account), error::unavailable(ENOT_ENABLED));
         let key = NameRecordKeyV1 {
             subdomain_name: if (string::length(&subdomain_name) > 0) {
                 option::some(subdomain_name)
@@ -759,6 +767,7 @@ module aptos_names::domains {
         account: &signer,
         key: &NameRecordKeyV1
     ) acquires NameRegistryV1, ReverseLookupRegistryV1, SetNameAddressEventsV1, SetReverseLookupEventsV1 {
+        assert!(config::is_enabled_for_nonadmin(account), error::unavailable(ENOT_ENABLED));
         let account_addr = signer::address_of(account);
         let (maybe_subdomain_name, domain_name) = get_name_record_key_v1_props(key);
         set_name_address(account, maybe_subdomain_name, domain_name, account_addr);
@@ -769,11 +778,13 @@ module aptos_names::domains {
     public entry fun clear_reverse_lookup_entry(
         account: &signer
     ) acquires ReverseLookupRegistryV1, SetReverseLookupEventsV1 {
+        assert!(config::is_enabled_for_nonadmin(account), error::unavailable(ENOT_ENABLED));
         clear_reverse_lookup(account);
     }
 
     /// Clears the user's reverse lookup.
     public fun clear_reverse_lookup(account: &signer) acquires ReverseLookupRegistryV1, SetReverseLookupEventsV1 {
+        assert!(config::is_enabled_for_nonadmin(account), error::unavailable(ENOT_ENABLED));
         let account_addr = signer::address_of(account);
         clear_reverse_lookup_internal(account_addr);
     }
