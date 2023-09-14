@@ -73,6 +73,12 @@ module aptos_names_v2::v2_domains {
     const ESUBDOMAIN_EXPIRATION_POLICY_INVALID: u64 = 26;
     /// Caller must be the router
     const ENOT_ROUTER: u64 = 27;
+    /// Cannot register subdomain while its domain has expired
+    const ECANNOT_REGISTER_SUBDOMAIN_WHILE_DOMAIN_HAS_EXPIRED: u64 = 28;
+    /// Cannot transfer subdomain while its domain has expired
+    const ECANNOT_TRANSFER_SUBDOMAIN_WHILE_DOMAIN_HAS_EXPIRED: u64 = 29;
+    /// The domain is expired
+    const EDOMAIN_EXPIRED: u64 = 30;
 
     /// Tokens require a signer to create, so this is the signer for the collection
     struct CollectionCapability has key, drop {
@@ -323,8 +329,12 @@ module aptos_names_v2::v2_domains {
         // Ensure signer owns the domain we're registering a subdomain for
         let signer_addr = signer::address_of(sign);
         assert!(
-            is_owner_of_name(signer_addr, option::none(), domain_name),
+            is_token_owner(signer_addr, domain_name, option::none()),
             error::permission_denied(ENOT_OWNER_OF_DOMAIN)
+        );
+        assert!(
+            !is_name_expired(domain_name, option::none()),
+            error::permission_denied(ECANNOT_REGISTER_SUBDOMAIN_WHILE_DOMAIN_HAS_EXPIRED)
         );
 
         let registration_duration_secs = expiration_time_sec - timestamp::now_seconds();
@@ -500,8 +510,12 @@ module aptos_names_v2::v2_domains {
         // validate user own the domain
         let signer_addr = signer::address_of(sign);
         assert!(
-            is_owner_of_name(signer_addr, option::none(), domain_name),
+            is_token_owner(signer_addr, domain_name, option::none()),
             error::permission_denied(ENOT_OWNER_OF_DOMAIN)
+        );
+        assert!(
+            !is_name_expired(domain_name, option::none()),
+            error::permission_denied(ECANNOT_TRANSFER_SUBDOMAIN_WHILE_DOMAIN_HAS_EXPIRED)
         );
 
         let token_addr = get_token_addr_inline(domain_name, option::some(subdomain_name));
@@ -583,8 +597,12 @@ module aptos_names_v2::v2_domains {
 
         let signer_addr = signer::address_of(sign);
         assert!(
-            is_owner_of_name(signer_addr, subdomain_name, domain_name),
+            is_token_owner(signer_addr, domain_name, subdomain_name),
             error::permission_denied(ENOT_OWNER_OF_NAME)
+        );
+        assert!(
+            !is_name_expired(domain_name, subdomain_name),
+            error::permission_denied(ENAME_EXPIRED)
         );
 
         set_target_address_internal(subdomain_name, domain_name, new_address);
@@ -646,12 +664,13 @@ module aptos_names_v2::v2_domains {
         };
 
         // Only the owner or the registered address can clear the address
-        let is_owner = is_owner_of_name(signer_addr, subdomain_name, domain_name);
+        let is_owner = is_token_owner(signer_addr, domain_name, subdomain_name);
+        let is_expired = is_name_expired(domain_name, subdomain_name);
         let is_name_resolved_address = get_name_resolved_address(subdomain_name, domain_name) == option::some<address>(
             signer_addr
         );
 
-        assert!(is_owner || is_name_resolved_address, error::permission_denied(ENOT_AUTHORIZED));
+        assert!((is_owner && !is_expired) || is_name_resolved_address, error::permission_denied(ENOT_AUTHORIZED));
 
         let record = get_record_mut(domain_name, subdomain_name);
         record.target_address = option::none();
@@ -990,10 +1009,14 @@ module aptos_names_v2::v2_domains {
     ) acquires CollectionCapability, NameRecord {
         assert!(is_name_registered(domain_name, option::some(subdomain_name)), error::not_found(ESUBDOMAIN_NOT_EXIST));
         // Ensure signer owns the domain we're registering a subdomain for
-        let signer_addr = signer::address_of(sign);
         assert!(
-            is_owner_of_name(signer_addr, option::none(), domain_name),
+            is_token_owner(signer::address_of(sign), domain_name, option::none()),
             error::permission_denied(ENOT_OWNER_OF_DOMAIN)
+        );
+        // Ensure name is not expired
+        assert!(
+            !is_name_expired(domain_name, option::none()),
+            error::permission_denied(EDOMAIN_EXPIRED)
         );
     }
 
@@ -1039,6 +1062,36 @@ module aptos_names_v2::v2_domains {
     /// Returns true if
     /// 1. The name is not registered OR
     /// 2. The name is a subdomain AND subdomain was registered before the domain OR
+    /// 3. The name is registered AND is expired and past grace period
+    public fun is_name_expired_past_grace(
+        domain_name: String,
+        subdomain_name: Option<String>,
+    ): bool acquires CollectionCapability, NameRecord {
+        if (!is_name_registered(domain_name, subdomain_name)) {
+            true
+        } else if (option::is_some(&subdomain_name) && is_subdomain_registered_before_domain(
+            domain_name,
+            *option::borrow(&subdomain_name)
+        )) {
+            true
+        } else {
+            let record = get_record(domain_name, subdomain_name);
+            // check the auto-renew flag
+            if (option::is_some(&record.subdomain_ext)) {
+                let subdomain_ext = option::borrow(&record.subdomain_ext);
+                if (subdomain_ext.subdomain_expiration_policy == SUBDOMAIN_POLICY_LOOKUP_DOMAIN_EXPIRATION) {
+                    // refer to the expiration date of the domain
+                    let domain_record = get_record(domain_name, option::none());
+                    return is_time_expired(domain_record.expiration_time_sec + v2_config::reregistration_grace_sec())
+                }
+            };
+            is_time_expired(record.expiration_time_sec + v2_config::reregistration_grace_sec())
+        }
+    }
+
+    /// Returns true if
+    /// 1. The name is not registered OR
+    /// 2. The name is a subdomain AND subdomain was registered before the domain OR
     /// 3. The name is registered AND is expired
     public fun is_name_expired(
         domain_name: String,
@@ -1076,16 +1129,14 @@ module aptos_names_v2::v2_domains {
     }
 
     /// Check if the address is the owner of the given aptos_name
-    /// If the name does not exist or owner owns an expired name, returns false
-    public fun is_owner_of_name(
+    /// If the name does not exist returns false
+    public fun is_token_owner(
         owner_addr: address,
+        domain_name: String,
         subdomain_name: Option<String>,
-        domain_name: String
-    ): bool acquires CollectionCapability, NameRecord {
-        if (!is_name_registered(domain_name, subdomain_name) || is_name_expired(
-            domain_name,
-            subdomain_name,
-        )) return false;
+    ): bool acquires CollectionCapability {
+        if (!is_name_registered(domain_name, subdomain_name))
+            return false;
         let record_obj = object::address_to_object<NameRecord>(get_token_addr_inline(domain_name, subdomain_name));
         object::owns(record_obj, owner_addr)
     }

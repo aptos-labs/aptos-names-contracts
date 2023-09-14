@@ -7,7 +7,6 @@ module aptos_names_v2::v2_test_helper {
     use aptos_names_v2::v2_config;
     use aptos_names_v2::v2_domains;
     use aptos_names_v2::v2_price_model;
-    use aptos_names_v2::query_helper;
     use aptos_names_v2::v2_test_utils;
     use aptos_names_v2::v2_time_helper;
     use std::option::{Self, Option};
@@ -102,28 +101,12 @@ module aptos_names_v2::v2_test_helper {
         assert!(!v2_domains::is_name_registerable(domain_name, subdomain_name), 13);
         assert!(v2_domains::is_name_registered(domain_name, subdomain_name), 14);
 
-        if (is_subdomain) {
-            let subdomain_name_copy = subdomain_name;
-            let subdomain_name_extracted = option::borrow(&subdomain_name_copy);
-            assert!(!query_helper::subdomain_name_is_expired(*subdomain_name_extracted, domain_name), 112);
-            assert!(query_helper::subdomain_name_is_registered(*subdomain_name_extracted, domain_name), 113);
-        } else {
-            assert!(!query_helper::domain_name_is_expired(domain_name), 112);
-            assert!(query_helper::domain_name_is_registered(domain_name), 113);
-        };
-
-        let is_owner = v2_domains::is_owner_of_name(user_addr, subdomain_name, domain_name);
+        let is_owner = v2_domains::is_token_owner(user_addr, domain_name, subdomain_name);
+        let is_expired = v2_domains::is_name_expired(domain_name, subdomain_name);
         // TODO: Re-enable / Re-write
         // let (tdi_creator, tdi_collection, tdi_name, tdi_property_version) = token::get_token_id_fields(&token_id);
 
-        assert!(is_owner, 3);
-        if (is_subdomain) {
-            let subdomain_name_copy = subdomain_name;
-            let subdomain_name_extracted = option::borrow(&subdomain_name_copy);
-            assert!(query_helper::is_owner_of_subdomain_name(user_addr, *subdomain_name_extracted, domain_name), 103);
-        } else {
-            assert!(query_helper::is_owner_of_domain_name(user_addr, domain_name), 103);
-        };
+        assert!(is_owner && !is_expired, 3);
 
         let expected_user_balance_after;
         let user_balance_after = coin::balance<AptosCoin>(user_addr);
@@ -156,11 +139,7 @@ module aptos_names_v2::v2_test_helper {
         );
         assert!(v2_time_helper::seconds_to_days(expiration_time_sec - timestamp::now_seconds()) == 365, 10);
 
-        let (expiration_time_sec_lookup_result, _) = if (is_subdomain) {
-            query_helper::get_subdomain_props(*option::borrow(&subdomain_name), domain_name)
-        } else {
-            query_helper::get_domain_props(domain_name)
-        };
+        let (expiration_time_sec_lookup_result, _) = v2_domains::get_name_record_props_for_name(subdomain_name, domain_name);
         assert!(
             v2_time_helper::seconds_to_days(expiration_time_sec_lookup_result - timestamp::now_seconds()) == 365, 100);
 
