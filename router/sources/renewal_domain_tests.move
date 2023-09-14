@@ -28,7 +28,7 @@ module router::renewal_domain_tests {
         domain_name: String,
         subdomain_name: Option<String>
     ): u64 {
-        let (expiration_time_sec, _target_addr) = aptos_names_v2::v2_domains::get_name_record_props_for_name(
+        let (expiration_time_sec, _target_addr) = aptos_names_v2::v2_domains::get_name_record_props(
             subdomain_name,
             domain_name,
         );

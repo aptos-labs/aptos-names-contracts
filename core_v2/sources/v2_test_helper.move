@@ -133,13 +133,13 @@ module aptos_names_v2::v2_test_helper {
         assert!(user_balance_after == expected_user_balance_after, expected_user_balance_after);
 
         // Ensure the name was registered correctly, with an expiration timestamp one year in the future
-        let (expiration_time_sec, _) = v2_domains::get_name_record_props_for_name(
+        let (expiration_time_sec, _) = v2_domains::get_name_record_props(
             subdomain_name,
             domain_name
         );
         assert!(v2_time_helper::seconds_to_days(expiration_time_sec - timestamp::now_seconds()) == 365, 10);
 
-        let (expiration_time_sec_lookup_result, _) = v2_domains::get_name_record_props_for_name(subdomain_name, domain_name);
+        let (expiration_time_sec_lookup_result, _) = v2_domains::get_name_record_props(subdomain_name, domain_name);
         assert!(
             v2_time_helper::seconds_to_days(expiration_time_sec_lookup_result - timestamp::now_seconds()) == 365, 100);
 
@@ -188,7 +188,7 @@ module aptos_names_v2::v2_test_helper {
         let maybe_reverse_lookup_before = v2_domains::get_reverse_lookup(user_addr);
 
         v2_domains::set_target_address(user, domain_name, subdomain_name, expected_target_address);
-        let (_expiration_time_sec, target_address) = v2_domains::get_name_record_props_for_name(
+        let (_expiration_time_sec, target_address) = v2_domains::get_name_record_props(
             subdomain_name,
             domain_name
         );
@@ -232,7 +232,7 @@ module aptos_names_v2::v2_test_helper {
 
         // If the signer had a reverse lookup before, and set his reverse lookup name to a different address, it should be cleared
         if (option::is_some(&maybe_reverse_lookup_before)) {
-            let (maybe_reverse_subdomain, reverse_domain) = v2_domains::get_record_props_from_token_addr(
+            let (maybe_reverse_subdomain, reverse_domain) = v2_domains::get_name_props_from_token_addr(
                 *option::borrow(&maybe_reverse_lookup_before)
             );
             if (maybe_reverse_subdomain == subdomain_name && reverse_domain == domain_name && signer::address_of(
@@ -252,7 +252,7 @@ module aptos_names_v2::v2_test_helper {
         let maybe_reverse_lookup_before = v2_domains::get_reverse_lookup(user_addr);
 
         v2_domains::clear_target_address(user, subdomain_name, domain_name);
-        let (_expiration_time_sec, target_address) = v2_domains::get_name_record_props_for_name(
+        let (_expiration_time_sec, target_address) = v2_domains::get_name_record_props(
             subdomain_name,
             domain_name
         );
