@@ -1,13 +1,13 @@
 #[test_only]
 module bulk::bulk_tests {
-    use bulk::bulk::{bulk_migrate_name, bulk_renew_domain};
+    use aptos_framework::timestamp;
+    use bulk::bulk::{bulk_renew_domain, bulk_migrate_domain, bulk_migrate_subdomain};
     use router::router;
     use router::router_test_helper;
     use std::option;
     use std::signer;
     use std::string::utf8;
     use std::vector;
-    use aptos_framework::timestamp;
 
     const MAX_MODE: u8 = 1;
     const SECONDS_PER_YEAR: u64 = 60 * 60 * 24 * 365;
@@ -54,15 +54,21 @@ module bulk::bulk_tests {
         // Bump mode
         router::set_mode(router, 1);
 
-        bulk_migrate_name(
+        bulk_migrate_domain(
             user1,
             vector [
                 domain_name,
                 domain_name,
+            ]
+        );
+        bulk_migrate_subdomain(
+            user1,
+            vector [
+                domain_name,
             ], vector [
-                option::none(),
                 subdomain_name_opt,
-            ]);
+            ]
+        );
 
         // Verify names no longer exist in v1
         {
