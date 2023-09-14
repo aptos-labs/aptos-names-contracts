@@ -34,15 +34,27 @@ module bulk::bulk_tests {
         let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user1, &aptos, user2, &foundation);
         let user1 = vector::borrow(&users, 0);
         let user1_addr = signer::address_of(user1);
-        let domain_name = utf8(b"test");
+        let domain_name1 = utf8(b"test1");
+        let domain_name2 = utf8(b"test2");
         let subdomain_name = utf8(b"sub");
         let subdomain_name_opt = option::some(subdomain_name);
 
         // Register with v1
-        router::register_domain(user1, domain_name, SECONDS_PER_YEAR, option::none(), option::none());
+        router::register_domain(user1, domain_name1, SECONDS_PER_YEAR, option::none(), option::none());
+        router::register_domain(user1, domain_name2, SECONDS_PER_YEAR, option::none(), option::none());
         router::register_subdomain(
             user1,
-            domain_name,
+            domain_name1,
+            subdomain_name,
+            SECONDS_PER_YEAR,
+            0,
+            false,
+            option::none(),
+            option::none(),
+        );
+        router::register_subdomain(
+            user1,
+            domain_name2,
             subdomain_name,
             SECONDS_PER_YEAR,
             0,
@@ -57,24 +69,30 @@ module bulk::bulk_tests {
         bulk_migrate_domain(
             user1,
             vector [
-                domain_name,
-                domain_name,
+                domain_name1,
+                domain_name2,
             ]
         );
         bulk_migrate_subdomain(
             user1,
             vector [
-                domain_name,
+                domain_name1,
+                domain_name2,
             ], vector [
+                subdomain_name_opt,
                 subdomain_name_opt,
             ]
         );
 
         // Verify names no longer exist in v1
         {
-            let (is_owner, _) = aptos_names::domains::is_owner_of_name(user1_addr, option::none(), domain_name);
+            let (is_owner, _) = aptos_names::domains::is_owner_of_name(user1_addr, option::none(), domain_name1);
             assert!(!is_owner, 1);
-            let (is_owner, _) = aptos_names::domains::is_owner_of_name(user1_addr, subdomain_name_opt, domain_name);
+            let (is_owner, _) = aptos_names::domains::is_owner_of_name(user1_addr, subdomain_name_opt, domain_name1);
+            assert!(!is_owner, 2);
+            let (is_owner, _) = aptos_names::domains::is_owner_of_name(user1_addr, option::none(), domain_name2);
+            assert!(!is_owner, 2);
+            let (is_owner, _) = aptos_names::domains::is_owner_of_name(user1_addr, subdomain_name_opt, domain_name2);
             assert!(!is_owner, 2);
         };
 
@@ -83,17 +101,33 @@ module bulk::bulk_tests {
             assert!(
                 aptos_names_v2::v2_domains::is_token_owner(
                     user1_addr,
-                    domain_name,
+                    domain_name1,
                     option::none()
-                ) && !aptos_names_v2::v2_domains::is_name_expired(domain_name, option::none()),
+                ) && !aptos_names_v2::v2_domains::is_name_expired(domain_name1, option::none()),
                 3
             );
             assert!(
                 aptos_names_v2::v2_domains::is_token_owner(
                     user1_addr,
-                    domain_name,
+                    domain_name1,
                     subdomain_name_opt,
-                ) && !aptos_names_v2::v2_domains::is_name_expired(domain_name, subdomain_name_opt),
+                ) && !aptos_names_v2::v2_domains::is_name_expired(domain_name1, subdomain_name_opt),
+                4
+            );
+            assert!(
+                aptos_names_v2::v2_domains::is_token_owner(
+                    user1_addr,
+                    domain_name2,
+                    option::none()
+                ) && !aptos_names_v2::v2_domains::is_name_expired(domain_name2, option::none()),
+                3
+            );
+            assert!(
+                aptos_names_v2::v2_domains::is_token_owner(
+                    user1_addr,
+                    domain_name2,
+                    subdomain_name_opt,
+                ) && !aptos_names_v2::v2_domains::is_name_expired(domain_name2, subdomain_name_opt),
                 4
             );
         }
