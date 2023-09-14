@@ -6,7 +6,7 @@ echo "##### Publishing packages #####"
 # Set these to the account address you want to deploy to.
 APTOS_NAMES="_"
 APTOS_NAMES_V2="_"
-BULK_MIGRATE="_"
+BULK="_"
 ADMIN="_"
 FUNDS="_"
 ROUTER="_"
@@ -31,6 +31,6 @@ aptos move publish \
   --package-dir router \
   --named-addresses aptos_names=$APTOS_NAMES,aptos_names_v2=$APTOS_NAMES_V2,aptos_names_admin=$ADMIN,aptos_names_funds=$FUNDS,router=$ROUTER,router_signer=$ROUTER_SIGNER
 aptos move publish \
-  --profile bulk_migrate_profile \
-  --package-dir bulk_migrate \
-  --named-addresses aptos_names=$APTOS_NAMES,aptos_names_v2=$APTOS_NAMES_V2,aptos_names_admin=$ADMIN,aptos_names_funds=$FUNDS,router=$ROUTER,router_signer=$ROUTER_SIGNER,bulk_migrate=$BULK_MIGRATE
+  --profile bulk_profile \
+  --package-dir bulk \
+  --named-addresses aptos_names=$APTOS_NAMES,aptos_names_v2=$APTOS_NAMES_V2,aptos_names_admin=$ADMIN,aptos_names_funds=$FUNDS,router=$ROUTER,router_signer=$ROUTER_SIGNER,bulk=$BULK
