@@ -1,6 +1,5 @@
 #[test_only]
 module aptos_names_v2::v2_domain_e2e_tests {
-    use aptos_framework::chain_id;
     use aptos_framework::timestamp;
     use aptos_framework::object;
     use aptos_names_v2::v2_config;
