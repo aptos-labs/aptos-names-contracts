@@ -11,7 +11,7 @@ module aptos_names_v2::v2_config {
     use aptos_framework::account;
     use aptos_framework::aptos_account;
     use aptos_std::ed25519::{Self, UnvalidatedPublicKey};
-    use aptos_names_v2::v2_utf8_utils;
+    use aptos_names_v2::v2_string_validator;
     use aptos_token::property_map::{Self, PropertyMap};
     use std::error;
     use std::signer;
@@ -311,7 +311,7 @@ module aptos_names_v2::v2_config {
 
     public fun config_key_domain_price(domain_length: u64): String {
         let key = string::utf8(CONFIG_KEY_DOMAIN_PRICE_PREFIX);
-        string::append(&mut key, v2_utf8_utils::u128_to_string((domain_length as u128)));
+        string::append(&mut key, v2_string_validator::u128_to_string((domain_length as u128)));
         key
     }
 
