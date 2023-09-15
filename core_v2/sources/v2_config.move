@@ -253,8 +253,8 @@ module aptos_names_v2::v2_config {
         string::utf8(CONFIG_KEY_FUND_DESTINATION_ADDRESS)
     }
 
-    public fun config_key_max_number_of_years_registered(): String {
-        string::utf8(CONFIG_KEY_MAX_NUMBER_OF_YEARS_REGISTERED)
+    public fun config_key_max_number_of_seconds_registered(): String {
+        string::utf8(CONFIG_KEY_MAX_NUMBER_OF_SECONDS_REGISTERED)
     }
 
     public fun config_key_max_domain_length(): String {
