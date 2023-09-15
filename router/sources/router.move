@@ -724,9 +724,9 @@ module router::router {
             if (!exists_in_v2(domain_name, subdomain_name)) {
                 get_v1_target_addr(domain_name, subdomain_name)
             } else {
-                let (_expiration_time_sec, target_addr) = v2_domains::get_name_record_props(
+                let target_addr = v2_domains::get_target_address(
+                    domain_name,
                     subdomain_name,
-                    domain_name
                 );
                 target_addr
             }
@@ -808,9 +808,9 @@ module router::router {
             if (!exists_in_v2(domain_name, subdomain_name)) {
                 get_v1_expiration(domain_name, subdomain_name)
             } else {
-                let (expiration_time_sec, _target_addr) = v2_domains::get_name_record_props(
-                    subdomain_name,
+                let expiration_time_sec = v2_domains::get_expiration(
                     domain_name,
+                    subdomain_name,
                 );
                 expiration_time_sec
             }

@@ -8,7 +8,6 @@ module aptos_names_v2::v2_test_helper {
     use aptos_names_v2::v2_domains;
     use aptos_names_v2::v2_price_model;
     use aptos_names_v2::v2_test_utils;
-    use aptos_names_v2::v2_time_helper;
     use std::option::{Self, Option};
     use std::signer;
     use std::string::{Self, String};
@@ -16,6 +15,8 @@ module aptos_names_v2::v2_test_helper {
 
     // Ammount to mint to test accounts during the e2e tests
     const MINT_AMOUNT_APT: u64 = 500;
+    const SECONDS_PER_DAY: u64 = 60 * 60 * 24;
+    const SECONDS_PER_YEAR: u64 = 60 * 60 * 24 * 365;
 
     // 500 APT
     public fun mint_amount(): u64 {
@@ -31,11 +32,11 @@ module aptos_names_v2::v2_test_helper {
     }
 
     public fun one_year_secs(): u64 {
-        v2_time_helper::years_to_seconds(1)
+        SECONDS_PER_YEAR
     }
 
     public fun two_hundred_year_secs(): u64 {
-        v2_time_helper::years_to_seconds(200)
+        SECONDS_PER_YEAR * 200
     }
 
     public fun fq_domain_name(): String {
@@ -133,15 +134,8 @@ module aptos_names_v2::v2_test_helper {
         assert!(user_balance_after == expected_user_balance_after, expected_user_balance_after);
 
         // Ensure the name was registered correctly, with an expiration timestamp one year in the future
-        let (expiration_time_sec, _) = v2_domains::get_name_record_props(
-            subdomain_name,
-            domain_name
-        );
-        assert!(v2_time_helper::seconds_to_days(expiration_time_sec - timestamp::now_seconds()) == 365, 10);
-
-        let (expiration_time_sec_lookup_result, _) = v2_domains::get_name_record_props(subdomain_name, domain_name);
-        assert!(
-            v2_time_helper::seconds_to_days(expiration_time_sec_lookup_result - timestamp::now_seconds()) == 365, 100);
+        let expiration_time_sec = v2_domains::get_expiration(domain_name, subdomain_name);
+        assert!(seconds_to_days(expiration_time_sec - timestamp::now_seconds()) == 365, 10);
 
         // TODO: Re-enable / Re-write
         // Ensure the properties were set correctly
@@ -188,10 +182,7 @@ module aptos_names_v2::v2_test_helper {
         let maybe_reverse_lookup_before = v2_domains::get_reverse_lookup(user_addr);
 
         v2_domains::set_target_address(user, domain_name, subdomain_name, expected_target_address);
-        let (_expiration_time_sec, target_address) = v2_domains::get_name_record_props(
-            subdomain_name,
-            domain_name
-        );
+        let target_address = v2_domains::get_target_address(domain_name, subdomain_name);
         v2_test_utils::print_actual_expected(
             b"set_domain_address: ",
             target_address,
@@ -252,10 +243,7 @@ module aptos_names_v2::v2_test_helper {
         let maybe_reverse_lookup_before = v2_domains::get_reverse_lookup(user_addr);
 
         v2_domains::clear_target_address(user, subdomain_name, domain_name);
-        let (_expiration_time_sec, target_address) = v2_domains::get_name_record_props(
-            subdomain_name,
-            domain_name
-        );
+        let target_address = v2_domains::get_target_address(domain_name, subdomain_name);
         v2_test_utils::print_actual_expected(b"clear_domain_address: ", target_address, option::none(), false);
         assert!(target_address == option::none(), 32);
 
@@ -315,5 +303,9 @@ module aptos_names_v2::v2_test_helper {
         coin::destroy_burn_cap(burn_cap);
         coin::destroy_mint_cap(mint_cap);
         users
+    }
+
+    fun seconds_to_days(seconds: u64): u64 {
+        seconds / SECONDS_PER_DAY
     }
 }

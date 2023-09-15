@@ -8,29 +8,13 @@ module aptos_names_v2::v2_price_model {
     const EDOMAIN_TOO_SHORT: u64 = 1;
     const SECONDS_PER_YEAR: u64 = 60 * 60 * 24 * 365;
 
-    /// The longer the name is registered for, the more expensive it is per year.
-    /// The curve is exponential, with every year costing more than the previous
-    fun scale_price_for_years(price: u64, years: u8): u64 {
-        // TODO: THIS WHOLE FUNCTION IS A PLACEHOLDER
-        let final_price = 0;
-        let multiplier = 100;
-        let years = (years as u64);
-        let i = 1;
-        while (i <= years) {
-            final_price = final_price + (price * multiplier) / 100;
-            multiplier = multiplier + 5 + i * 5;
-            i = i + 1;
-        };
-        final_price
-    }
-
     #[view]
     /// There is a fixed cost per each tier of domain names, from 2 to >=6, and it also scales exponentially with number of years to register
     public fun price_for_domain(domain_length: u64, registration_secs: u64): u64 {
         assert!(domain_length >= 2, error::out_of_range(EDOMAIN_TOO_SHORT));
         let length_to_charge_for = math64::min(domain_length, 6);
         let registration_years = (registration_secs / SECONDS_PER_YEAR as u8);
-        scale_price_for_years(v2_config::domain_price_for_length(length_to_charge_for), registration_years)
+        v2_config::domain_price_for_length(length_to_charge_for) * (registration_years as u64)
     }
 
     #[view]
@@ -68,13 +52,13 @@ module aptos_names_v2::v2_price_model {
         assert!(price == 30, price);
 
         let price = price_for_domain(2, 3 * SECONDS_PER_YEAR) / v2_config::octas();
-        assert!(price == 335, price);
+        assert!(price == 300, price);
 
         let price = price_for_domain(5, SECONDS_PER_YEAR) / v2_config::octas();
         assert!(price == 15, price);
 
         let price = price_for_domain(5, 8 * SECONDS_PER_YEAR) / v2_config::octas();
-        assert!(price == 204, price);
+        assert!(price == 120, price);
 
         let price = price_for_domain(10, SECONDS_PER_YEAR) / v2_config::octas();
         assert!(price == 5, price);
@@ -83,41 +67,12 @@ module aptos_names_v2::v2_price_model {
         assert!(price == 5, price);
 
         let price = price_for_domain(15, 10 * SECONDS_PER_YEAR) / v2_config::octas();
-        assert!(price == 102, price);
+        assert!(price == 50, price);
     }
 
     #[test_only]
     struct YearPricePair has copy, drop {
         years: u8,
         expected_price: u64,
-    }
-
-    #[test(myself = @aptos_names_v2, framework = @0x1)]
-    fun test_scale_price_for_years(myself: &signer, framework: &signer) {
-        use aptos_framework::account;
-        use std::signer;
-        use std::vector;
-        // If the price is 100 APT, for 1 year, the price should be 100 APT, etc
-        let prices_and_years = vector[
-            YearPricePair { years: 1, expected_price: 100 },
-            YearPricePair { years: 2, expected_price: 210 },
-            YearPricePair { years: 3, expected_price: 335 },
-            YearPricePair { years: 4, expected_price: 480 },
-            YearPricePair { years: 5, expected_price: 650 },
-            YearPricePair { years: 6, expected_price: 850 },
-            YearPricePair { years: 7, expected_price: 1085 },
-            YearPricePair { years: 8, expected_price: 1360 },
-            YearPricePair { years: 9, expected_price: 1680 },
-            YearPricePair { years: 10, expected_price: 2050 },
-        ];
-
-        account::create_account_for_test(signer::address_of(myself));
-        account::create_account_for_test(signer::address_of(framework));
-
-        while (vector::length(&prices_and_years) > 0) {
-            let pair = vector::pop_back(&mut prices_and_years);
-            let price = scale_price_for_years(100 * v2_config::octas(), pair.years) / v2_config::octas();
-            assert!(price == pair.expected_price, price);
-        };
     }
 }
