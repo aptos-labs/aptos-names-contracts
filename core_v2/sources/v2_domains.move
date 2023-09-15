@@ -665,11 +665,11 @@ module aptos_names_v2::v2_domains {
         // Only the owner or the registered address can clear the address
         let is_owner = is_token_owner(signer_addr, domain_name, subdomain_name);
         let is_expired = is_name_expired(domain_name, subdomain_name);
-        let is_name_resolved_address = get_name_resolved_address(subdomain_name, domain_name) == option::some<address>(
+        let is_target_address = get_target_address(domain_name, subdomain_name) == option::some<address>(
             signer_addr
         );
 
-        assert!((is_owner && !is_expired) || is_name_resolved_address, error::permission_denied(ENOT_AUTHORIZED));
+        assert!((is_owner && !is_expired) || is_target_address, error::permission_denied(ENOT_AUTHORIZED));
 
         let record = get_record_mut(domain_name, subdomain_name);
         record.target_address = option::none();
@@ -1060,7 +1060,7 @@ module aptos_names_v2::v2_domains {
             return true
         };
 
-        let (expiration_time_sec, _) = get_name_record_props(subdomain_name, domain_name);
+        let expiration_time_sec = get_expiration(domain_name, subdomain_name);
 
         // Name is expired and passed grace period, so name is registerable
         if (timestamp::now_seconds() > v2_config::reregistration_grace_sec() + expiration_time_sec) {
@@ -1169,25 +1169,10 @@ module aptos_names_v2::v2_domains {
         option::some(object::owner(record_obj))
     }
 
-    /// gets the address pointed to by a given name
-    /// Is `Option<address>` because the name may not be registered, or it may not have an address associated with it
-    public fun get_name_resolved_address(
-        subdomain_name: Option<String>,
-        domain_name: String
-    ): Option<address> acquires CollectionCapability, NameRecord {
-        // TODO: Why does this not check expiration?
-        if (!is_name_registered(domain_name, subdomain_name)) {
-            option::none()
-        } else {
-            let record = get_record(domain_name, subdomain_name);
-            return record.target_address
-        }
-    }
-
-    public fun get_name_record_props(
-        subdomain_name: Option<String>,
+    public fun get_expiration(
         domain_name: String,
-    ): (u64, Option<address>) acquires CollectionCapability, NameRecord, SubdomainExt {
+        subdomain_name: Option<String>,
+    ): u64 acquires CollectionCapability, NameRecord, SubdomainExt {
         let token_addr = get_token_addr_inline(domain_name, subdomain_name);
         let record = borrow_global<NameRecord>(token_addr);
         if (exists<SubdomainExt>(token_addr)) {
@@ -1196,24 +1181,25 @@ module aptos_names_v2::v2_domains {
             if (subdomain_ext.subdomain_expiration_policy == SUBDOMAIN_POLICY_LOOKUP_DOMAIN_EXPIRATION) {
                 // refer to the expiration date of the domain
                 let domain_record = get_record(domain_name, option::none());
-                let expiration_sec = domain_record.expiration_time_sec;
 
-                // check if the domain is expired
-                if (is_time_expired(expiration_sec)) {
-                    return (expiration_sec, option::none())
-                } else {
-                    return (expiration_sec, record.target_address)
-                }
-            }
+                return domain_record.expiration_time_sec
+            };
         };
+        return record.expiration_time_sec
+    }
 
-        // check if the name is expired
-        let expiration_sec = record.expiration_time_sec;
+    public fun get_target_address(
+        domain_name: String,
+        subdomain_name: Option<String>,
+    ): Option<address> acquires CollectionCapability, NameRecord, SubdomainExt {
+        //  check the expiration sec if the name is a domain
+        let expiration_sec = get_expiration(domain_name, subdomain_name);
         if (is_time_expired(expiration_sec)) {
-            return (expiration_sec, option::none())
-        };
-
-        (record.expiration_time_sec, record.target_address)
+            return option::none()
+        } else {
+            let record = get_record(domain_name, subdomain_name);
+            return record.target_address
+        }
     }
 
     public fun get_name_props_from_token_addr(
@@ -1240,7 +1226,6 @@ module aptos_names_v2::v2_domains {
             subdomain_record.registration_time_sec < domain_record.registration_time_sec
         }
     }
-
 
     // === EVENTS ===
 
