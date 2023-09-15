@@ -25,7 +25,6 @@ module aptos_names_v2::v2_domains {
     const COLLECTION_URI: vector<u8> = b"https://aptosnames.com";
     /// current MAX_REMAINING_TIME_FOR_RENEWAL_SEC is 6 months
     const MAX_REMAINING_TIME_FOR_RENEWAL_SEC: u64 = 15552000;
-    /// 2024/03/07 23:59:59
     const SECONDS_PER_YEAR: u64 = 60 * 60 * 24 * 365;
 
     /// enums for subdomain expiration policy. update validate_subdomain_expiration_policy() when adding more
