@@ -992,9 +992,8 @@ module aptos_names_v2::v2_domains {
             error::invalid_argument(EDURATION_MUST_BE_WHOLE_YEARS)
         );
 
-        let num_years = (seconds_to_years(registration_duration_secs) as u8);
         assert!(
-            num_years > 0 && num_years <= v2_config::max_number_of_years_registered(),
+            registration_duration_secs <= v2_config::max_number_of_seconds_registered(),
             error::out_of_range(EINVALID_NUMBER_YEARS)
         );
     }
