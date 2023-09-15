@@ -16,7 +16,7 @@ module aptos_names_v2::v2_token_helper {
     /// The subdomain name is not a valid name
     const ESUBDOMAIN_NAME_INVALID: u64 = 3;
 
-    public fun get_fully_qualified_domain_name(subdomain_name: Option<String>, domain_name: String): String {
+    public(friend) fun get_fully_qualified_domain_name(subdomain_name: Option<String>, domain_name: String): String {
         let (domain_is_allowed, _length) = v2_utf8_utils::string_is_allowed(&domain_name);
         assert!(domain_is_allowed, error::invalid_argument(EDOMAIN_NAME_INVALID));
         let subdomain_is_allowed = if (option::is_some(&subdomain_name)) {
@@ -34,7 +34,7 @@ module aptos_names_v2::v2_token_helper {
     /// Combines a subdomain and domain into a new string, separated by a `.`
     /// Used for building fully qualified domain names (Ex: `{subdomain_name}.{domain_name}.apt`)
     /// If there is no subdomain, just returns the domain name
-    public fun combine_sub_and_domain_str(subdomain_name: Option<String>, domain_name: String): String {
+    public(friend) fun combine_sub_and_domain_str(subdomain_name: Option<String>, domain_name: String): String {
         if (option::is_none(&subdomain_name)) {
             return domain_name
         };
