@@ -34,10 +34,10 @@ module aptos_names_v2::v2_token_helper {
             return domain_name
         };
 
-        let combined = option::extract(&mut copy subdomain_name);
-        string::append_utf8(&mut combined, DOMAIN_DELIMITER);
-        string::append(&mut combined, domain_name);
-        combined
+        let combined = option::borrow_mut(&mut subdomain_name);
+        string::append_utf8(combined, DOMAIN_DELIMITER);
+        string::append(combined, domain_name);
+        *combined
     }
 
     #[test]
