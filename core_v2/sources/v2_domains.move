@@ -1,5 +1,5 @@
 module aptos_names_v2::v2_domains {
-    use aptos_framework::account::{Self, SignerCapability};
+    use aptos_framework::account;
     use aptos_framework::aptos_account;
     use aptos_framework::aptos_coin::AptosCoin;
     use aptos_framework::coin;
@@ -14,11 +14,11 @@ module aptos_names_v2::v2_domains {
     use aptos_token_objects::token;
     use std::error;
     use std::option::{Self, Option};
-    use std::signer;
     use std::signer::address_of;
+    use std::signer;
     use std::string::{Self, String, utf8};
 
-    const APP_SIGNER_CAPABILITY_SEED: vector<u8> = b"APP_SIGNER_CAPABILITY";
+    const APP_OBJECT_SEED: vector<u8> = b"ANS v2";
     const COLLECTION_DESCRIPTION: vector<u8> = b".apt names from Aptos Labs";
     const SUBDOMAIN_COLLECTION_DESCRIPTION: vector<u8> = b"subdomain of .apt names from Aptos Labs";
     const COLLECTION_URI: vector<u8> = b"https://aptosnames.com";
@@ -81,8 +81,8 @@ module aptos_names_v2::v2_domains {
     const ECANNOT_RENEW_NAME_THAT_IS_EXPIRED_AND_PAST_GRACE_PERIOD: u64 = 31;
 
     /// Tokens require a signer to create, so this is the signer for the collection
-    struct CollectionCapability has key, drop {
-        capability: SignerCapability,
+    struct App has key {
+        extend_ref: object::ExtendRef,
     }
 
     #[resource_group_member(group = aptos_framework::object::ObjectGroup)]
@@ -107,23 +107,27 @@ module aptos_names_v2::v2_domains {
         token_addr: Option<address>,
     }
 
+    #[resource_group_member(group = aptos_framework::object::ObjectGroup)]
     /// Holder for `SetReverseLookupEvent` events
-    struct SetReverseLookupEvents has key, store {
+    struct SetReverseLookupEvents has key {
         set_reverse_lookup_events: event::EventHandle<SetReverseLookupEvent>,
     }
 
+    #[resource_group_member(group = aptos_framework::object::ObjectGroup)]
     /// Holder for `SetTargetAddressEvent` events
-    struct SetTargetAddressEvents has key, store {
+    struct SetTargetAddressEvents has key {
         set_name_events: event::EventHandle<SetTargetAddressEvent>,
     }
 
+    #[resource_group_member(group = aptos_framework::object::ObjectGroup)]
     /// Holder for `RegisterNameEvent` events
-    struct RegisterNameEvents has key, store {
+    struct RegisterNameEvents has key {
         register_name_events: event::EventHandle<RegisterNameEvent>,
     }
 
+    #[resource_group_member(group = aptos_framework::object::ObjectGroup)]
     /// Holder for `RenewNameEvent` events
-    struct RenewNameEvents has key, store {
+    struct RenewNameEvents has key {
         renew_name_events: event::EventHandle<RenewNameEvent>,
     }
 
@@ -190,44 +194,44 @@ module aptos_names_v2::v2_domains {
 
         v2_config::initialize_config(account, admin_address, funds_address);
 
-        move_to(account, SetTargetAddressEvents {
-            set_name_events: account::new_event_handle<SetTargetAddressEvent>(account),
-        });
-
-        move_to(account, RegisterNameEvents {
-            register_name_events: account::new_event_handle<RegisterNameEvent>(account),
-        });
-
-        move_to(account, RenewNameEvents {
-            renew_name_events: account::new_event_handle<RenewNameEvent>(account),
-        });
-
-        move_to(account, SetReverseLookupEvents {
-            set_reverse_lookup_events: account::new_event_handle<SetReverseLookupEvent>(account),
-        });
-
         // Create collection + token_resource
-        let (token_resource, token_signer_cap) = account::create_resource_account(
+        let constructor_ref = object::create_named_object(
             account,
-            APP_SIGNER_CAPABILITY_SEED,
+            APP_OBJECT_SEED,
         );
-        move_to(account, CollectionCapability {
-            capability: token_signer_cap,
-        });
+        let extend_ref = object::generate_extend_ref(&constructor_ref);
+        let app_signer = object::generate_signer(&constructor_ref);
         collection::create_unlimited_collection(
-            &token_resource,
+            &app_signer,
             utf8(COLLECTION_DESCRIPTION),
             v2_config::domain_collection_name(),
             option::none(),
             utf8(COLLECTION_URI),
         );
         collection::create_unlimited_collection(
-            &token_resource,
+            &app_signer,
             utf8(SUBDOMAIN_COLLECTION_DESCRIPTION),
             v2_config::subdomain_collection_name(),
             option::none(),
             utf8(COLLECTION_URI),
         );
+        aptos_account::create_account(signer::address_of(&app_signer));
+        move_to(&app_signer, SetTargetAddressEvents {
+            set_name_events: account::new_event_handle<SetTargetAddressEvent>(&app_signer),
+        });
+        move_to(&app_signer, RegisterNameEvents {
+            register_name_events: account::new_event_handle<RegisterNameEvent>(&app_signer),
+        });
+        move_to(&app_signer, RenewNameEvents {
+            renew_name_events: account::new_event_handle<RenewNameEvent>(&app_signer),
+        });
+        move_to(&app_signer, SetReverseLookupEvents {
+            set_reverse_lookup_events: account::new_event_handle<SetReverseLookupEvent>(&app_signer),
+        });
+
+        move_to(account, App {
+            extend_ref,
+        });
     }
 
     /// Creates a token for the name.
@@ -237,14 +241,14 @@ module aptos_names_v2::v2_domains {
         domain_name: String,
         subdomain_name: Option<String>,
         expiration_time_sec: u64,
-    ) acquires CollectionCapability {
+    ) acquires App {
         let name = v2_token_helper::get_fully_qualified_domain_name(subdomain_name, domain_name);
         let description = v2_config::tokendata_description();
         let uri = v2_config::tokendata_url_prefix();
         string::append(&mut uri, name);
 
         let constructor_ref = token::create_named_token(
-            &get_token_signer(),
+            &get_app_signer(),
             get_collection_name(is_subdomain(subdomain_name)),
             description,
             name,
@@ -270,7 +274,7 @@ module aptos_names_v2::v2_domains {
             move_to(&token_signer, subdomain_ext);
         };
         let record_obj = object::object_from_constructor_ref<NameRecord>(&constructor_ref);
-        object::transfer(&get_token_signer(), record_obj, to_addr);
+        object::transfer(&get_app_signer(), record_obj, to_addr);
     }
 
     // === REGISTER NAME ===
@@ -282,7 +286,7 @@ module aptos_names_v2::v2_domains {
         sign: &signer,
         domain_name: String,
         registration_duration_secs: u64,
-    ) acquires CollectionCapability, NameRecord, SubdomainExt, RegisterNameEvents, ReverseRecord, SetReverseLookupEvents {
+    ) acquires App, NameRecord, SubdomainExt, RegisterNameEvents, ReverseRecord, SetReverseLookupEvents {
         assert!(address_of(router_signer) == @router_signer, error::permission_denied(ENOT_ROUTER));
 
         validate_registration_duration(registration_duration_secs);
@@ -308,7 +312,7 @@ module aptos_names_v2::v2_domains {
         domain_name: String,
         subdomain_name: String,
         expiration_time_sec: u64
-    ) acquires CollectionCapability, NameRecord, SubdomainExt, RegisterNameEvents, ReverseRecord, SetReverseLookupEvents {
+    ) acquires App, NameRecord, SubdomainExt, RegisterNameEvents, ReverseRecord, SetReverseLookupEvents {
         assert!(address_of(router_signer) == @router_signer, error::permission_denied(ENOT_ROUTER));
         assert!(v2_config::is_enabled(), error::unavailable(ENOT_ENABLED));
 
@@ -347,7 +351,7 @@ module aptos_names_v2::v2_domains {
         domain_name: String,
         subdomain_name: Option<String>,
         registration_duration_secs: u64,
-    ) acquires CollectionCapability, NameRecord, SubdomainExt, RegisterNameEvents, ReverseRecord, SetReverseLookupEvents {
+    ) acquires App, NameRecord, SubdomainExt, RegisterNameEvents, ReverseRecord, SetReverseLookupEvents {
         assert!(address_of(router_signer) == @router_signer, error::permission_denied(ENOT_ROUTER));
         // For subdomains, this will check that the domain exists first
         assert!(is_name_registerable(domain_name, subdomain_name), error::invalid_state(ENAME_NOT_AVAILABLE));
@@ -372,7 +376,7 @@ module aptos_names_v2::v2_domains {
         domain_name: String,
         registration_duration_secs: u64,
         price: u64
-    ) acquires CollectionCapability, NameRecord, SubdomainExt, RegisterNameEvents, ReverseRecord, SetReverseLookupEvents {
+    ) acquires App, NameRecord, SubdomainExt, RegisterNameEvents, ReverseRecord, SetReverseLookupEvents {
         // If we're registering a name that exists but is expired, and the expired name is a primary name,
         // it should get removed from being a primary name.
         clear_reverse_lookup_for_name(subdomain_name, domain_name);
@@ -409,7 +413,7 @@ module aptos_names_v2::v2_domains {
         };
 
         event::emit_event<RegisterNameEvent>(
-            &mut borrow_global_mut<RegisterNameEvents>(@aptos_names_v2).register_name_events,
+            &mut borrow_global_mut<RegisterNameEvents>(get_app_signer_addr()).register_name_events,
             RegisterNameEvent {
                 domain_name,
                 subdomain_name,
@@ -425,7 +429,7 @@ module aptos_names_v2::v2_domains {
         sign: &signer,
         domain_name: String,
         renewal_duration_secs: u64,
-    ) acquires CollectionCapability, NameRecord, SubdomainExt, RenewNameEvents, ReverseRecord {
+    ) acquires NameRecord, SubdomainExt, RenewNameEvents, ReverseRecord {
         // check the domain eligibility
         let length = validate_name_string(domain_name);
 
@@ -457,7 +461,7 @@ module aptos_names_v2::v2_domains {
 
         // log the event
         event::emit_event<RenewNameEvent>(
-            &mut borrow_global_mut<RenewNameEvents>(@aptos_names_v2).renew_name_events,
+            &mut borrow_global_mut<RenewNameEvents>(get_app_signer_addr()).renew_name_events,
             RenewNameEvent {
                 domain_name,
                 subdomain_name: option::none(),
@@ -478,7 +482,7 @@ module aptos_names_v2::v2_domains {
         domain_name: String,
         subdomain_name: String,
         transferrable: bool
-    ) acquires CollectionCapability, NameRecord, SubdomainExt {
+    ) acquires NameRecord, SubdomainExt {
         assert!(address_of(router_signer) == @router_signer, error::permission_denied(ENOT_ROUTER));
         validate_subdomain_registered_and_domain_owned_by_signer(sign, domain_name, subdomain_name);
         let name_record_address = get_token_addr(domain_name, option::some(subdomain_name));
@@ -496,7 +500,7 @@ module aptos_names_v2::v2_domains {
         subdomain_name: String,
         new_owner_address: address,
         new_target_address: Option<address>,
-    ) acquires CollectionCapability, NameRecord, SubdomainExt, ReverseRecord, SetReverseLookupEvents {
+    ) acquires NameRecord, SubdomainExt, ReverseRecord, SetReverseLookupEvents {
         // validate user own the domain
         let signer_addr = signer::address_of(sign);
         assert!(
@@ -522,7 +526,7 @@ module aptos_names_v2::v2_domains {
         domain_name: String,
         subdomain_name: String,
         expiration_time_sec: u64,
-    ) acquires CollectionCapability, NameRecord, SubdomainExt {
+    ) acquires NameRecord, SubdomainExt {
         validate_subdomain_registered_and_domain_owned_by_signer(domain_admin, domain_name, subdomain_name);
         // check if the expiration time is valid
         let domain_record = get_record(domain_name, option::none());
@@ -551,7 +555,7 @@ module aptos_names_v2::v2_domains {
         domain_name: String,
         subdomain_name: String,
         subdomain_expiration_policy: u8,
-    ) acquires CollectionCapability, NameRecord, SubdomainExt {
+    ) acquires NameRecord, SubdomainExt {
         validate_subdomain_registered_and_domain_owned_by_signer(domain_admin, domain_name, subdomain_name);
         validate_subdomain_expiration_policy(subdomain_expiration_policy);
         // if manually set the expiration date
@@ -564,7 +568,7 @@ module aptos_names_v2::v2_domains {
     public fun get_subdomain_renewal_policy(
         domain_name: String,
         subdomain_name: String,
-    ): u8 acquires CollectionCapability, SubdomainExt {
+    ): u8 acquires SubdomainExt {
         let token_addr = get_token_addr_inline(domain_name, option::some(subdomain_name));
         assert!(exists<SubdomainExt>(token_addr), error::invalid_state(ESUBDOMAIN_NOT_EXIST));
         let subdomain_ext = borrow_global_mut<SubdomainExt>(token_addr);
@@ -578,7 +582,7 @@ module aptos_names_v2::v2_domains {
         domain_name: String,
         subdomain_name: Option<String>,
         new_address: address
-    ) acquires CollectionCapability, NameRecord, SubdomainExt, ReverseRecord, SetTargetAddressEvents, SetReverseLookupEvents {
+    ) acquires NameRecord, SubdomainExt, ReverseRecord, SetTargetAddressEvents, SetReverseLookupEvents {
         // If the domain name is a primary name, clear it.
         clear_reverse_lookup_for_name(subdomain_name, domain_name);
 
@@ -619,7 +623,7 @@ module aptos_names_v2::v2_domains {
         subdomain_name: Option<String>,
         domain_name: String,
         new_address: address
-    ) acquires CollectionCapability, NameRecord, SetTargetAddressEvents {
+    ) acquires NameRecord, SetTargetAddressEvents {
         assert!(is_name_registered(domain_name, subdomain_name), error::not_found(ENAME_NOT_EXIST));
         let record = get_record_mut(domain_name, subdomain_name);
         record.target_address = option::some(new_address);
@@ -637,7 +641,7 @@ module aptos_names_v2::v2_domains {
         sign: &signer,
         subdomain_name: Option<String>,
         domain_name: String
-    ) acquires CollectionCapability, NameRecord, SubdomainExt, ReverseRecord, SetTargetAddressEvents, SetReverseLookupEvents {
+    ) acquires NameRecord, SubdomainExt, ReverseRecord, SetTargetAddressEvents, SetReverseLookupEvents {
         assert!(is_name_registered(domain_name, subdomain_name), error::not_found(ENAME_NOT_EXIST));
 
         let signer_addr = signer::address_of(sign);
@@ -678,7 +682,7 @@ module aptos_names_v2::v2_domains {
         account: &signer,
         subdomain_name: Option<String>,
         domain_name: String
-    ) acquires CollectionCapability, NameRecord, SubdomainExt, ReverseRecord, SetTargetAddressEvents, SetReverseLookupEvents {
+    ) acquires NameRecord, SubdomainExt, ReverseRecord, SetTargetAddressEvents, SetReverseLookupEvents {
         // Name must be registered before assigning reverse lookup
         assert!(is_name_registered(domain_name, subdomain_name), error::not_found(ENAME_NOT_EXIST));
         let token_addr = get_token_addr_inline(domain_name, subdomain_name);
@@ -795,7 +799,7 @@ module aptos_names_v2::v2_domains {
     fun clear_reverse_lookup_for_name(
         subdomain_name: Option<String>,
         domain_name: String
-    ) acquires CollectionCapability, NameRecord, SubdomainExt, ReverseRecord, SetReverseLookupEvents {
+    ) acquires NameRecord, SubdomainExt, ReverseRecord, SetReverseLookupEvents {
         if (!is_name_registered(domain_name, subdomain_name)) return;
 
         // If the name is a primary name, clear it
@@ -822,7 +826,7 @@ module aptos_names_v2::v2_domains {
         domain_name: String,
         subdomain_name: Option<String>,
         new_owner: address
-    ) acquires CollectionCapability, NameRecord, SubdomainExt, ReverseRecord, SetTargetAddressEvents, SetReverseLookupEvents {
+    ) acquires NameRecord, SubdomainExt, ReverseRecord, SetTargetAddressEvents, SetReverseLookupEvents {
         v2_config::assert_signer_is_admin(sign);
         // If the domain name is a primary name, clear it.
         clear_reverse_lookup_for_name(subdomain_name, domain_name);
@@ -839,7 +843,7 @@ module aptos_names_v2::v2_domains {
         domain_name: String,
         subdomain_name: Option<String>,
         registration_duration_secs: u64
-    ) acquires CollectionCapability, NameRecord, SubdomainExt, RegisterNameEvents, ReverseRecord, SetReverseLookupEvents {
+    ) acquires App, NameRecord, SubdomainExt, RegisterNameEvents, ReverseRecord, SetReverseLookupEvents {
         v2_config::assert_signer_is_admin(sign);
         // Register the name
         register_name_internal(sign, subdomain_name, domain_name, registration_duration_secs, 0);
@@ -851,12 +855,12 @@ module aptos_names_v2::v2_domains {
         sign: &signer,
         domain_name: String,
         subdomain_name: Option<String>,
-    ) acquires CollectionCapability, NameRecord {
+    ) acquires NameRecord {
         v2_config::assert_signer_is_admin(sign);
         let record = get_record_mut(domain_name, subdomain_name);
         object::transfer_with_ref(
             object::generate_linear_transfer_ref(&record.transfer_ref),
-            get_token_signer_address(),
+            get_app_signer_addr(),
         );
         record.target_address = option::none();
     }
@@ -866,7 +870,7 @@ module aptos_names_v2::v2_domains {
         domain_name: String,
         subdomain_name: Option<String>,
         new_expiration_secs: u64
-    ) acquires CollectionCapability, NameRecord {
+    ) acquires NameRecord {
         // check the signer eligibility
         v2_config::assert_signer_is_admin(sign);
 
@@ -890,7 +894,7 @@ module aptos_names_v2::v2_domains {
 
     public fun is_domain_in_renewal_window(
         domain_name: String,
-    ): bool acquires CollectionCapability, NameRecord, SubdomainExt {
+    ): bool acquires NameRecord, SubdomainExt {
         // check if the domain is registered
         assert!(is_name_registered(domain_name, option::none()), error::not_found(ENAME_NOT_EXIST));
         // check if the domain is expired and past gract period already
@@ -907,20 +911,20 @@ module aptos_names_v2::v2_domains {
         option::is_some(&subdomain_name)
     }
 
-    public fun get_token_signer_address(): address acquires CollectionCapability {
-        account::get_signer_capability_address(&borrow_global<CollectionCapability>(@aptos_names_v2).capability)
+    public fun get_app_signer_addr(): address {
+        object::create_object_address(&@aptos_names_v2, APP_OBJECT_SEED)
     }
 
-    fun get_token_signer(): signer acquires CollectionCapability {
-        account::create_signer_with_capability(&borrow_global<CollectionCapability>(@aptos_names_v2).capability)
+    fun get_app_signer(): signer acquires App {
+        object::generate_signer_for_extending(&borrow_global<App>(@aptos_names_v2).extend_ref)
     }
 
     inline fun get_token_addr_inline(
         domain_name: String,
         subdomain_name: Option<String>,
-    ): address acquires CollectionCapability {
+    ): address {
         token::create_token_address(
-            &get_token_signer_address(),
+            &get_app_signer_addr(),
             &get_collection_name(is_subdomain(subdomain_name)),
             &v2_token_helper::get_fully_qualified_domain_name(subdomain_name, domain_name),
         )
@@ -929,9 +933,9 @@ module aptos_names_v2::v2_domains {
     public fun get_token_addr(
         domain_name: String,
         subdomain_name: Option<String>,
-    ): address acquires CollectionCapability {
+    ): address {
         token::create_token_address(
-            &get_token_signer_address(),
+            &get_app_signer_addr(),
             &get_collection_name(is_subdomain(subdomain_name)),
             &v2_token_helper::get_fully_qualified_domain_name(subdomain_name, domain_name),
         )
@@ -940,21 +944,21 @@ module aptos_names_v2::v2_domains {
     fun get_record_obj(
         domain_name: String,
         subdomain_name: Option<String>,
-    ): Object<NameRecord> acquires CollectionCapability {
+    ): Object<NameRecord> {
         object::address_to_object(get_token_addr_inline(domain_name, subdomain_name))
     }
 
     inline fun get_record(
         domain_name: String,
         subdomain_name: Option<String>,
-    ): &NameRecord acquires CollectionCapability, NameRecord {
+    ): &NameRecord acquires NameRecord {
         borrow_global<NameRecord>(get_token_addr_inline(domain_name, subdomain_name))
     }
 
     inline fun get_record_mut(
         domain_name: String,
         subdomain_name: Option<String>,
-    ): &mut NameRecord acquires CollectionCapability, NameRecord {
+    ): &mut NameRecord acquires NameRecord {
         borrow_global_mut<NameRecord>(get_token_addr_inline(domain_name, subdomain_name))
     }
 
@@ -1006,7 +1010,7 @@ module aptos_names_v2::v2_domains {
         sign: &signer,
         domain_name: String,
         subdomain_name: String,
-    ) acquires CollectionCapability, NameRecord, SubdomainExt {
+    ) acquires NameRecord, SubdomainExt {
         assert!(is_name_registered(domain_name, option::some(subdomain_name)), error::not_found(ESUBDOMAIN_NOT_EXIST));
         // Ensure signer owns the domain we're registering a subdomain for
         assert!(
@@ -1027,7 +1031,7 @@ module aptos_names_v2::v2_domains {
     public fun is_name_registerable(
         domain_name: String,
         subdomain_name: Option<String>,
-    ): bool acquires CollectionCapability, NameRecord, SubdomainExt {
+    ): bool acquires App, NameRecord, SubdomainExt {
         // If this is a subdomain, ensure the domain also exists, and is not expired: i.e not registerable
         // So if the domain name is registerable, we return false, as the subdomain is not registerable
         if (is_subdomain(subdomain_name) && is_name_registerable(domain_name, option::none())) {
@@ -1066,7 +1070,7 @@ module aptos_names_v2::v2_domains {
     public fun is_name_expired_past_grace(
         domain_name: String,
         subdomain_name: Option<String>,
-    ): bool acquires CollectionCapability, NameRecord, SubdomainExt {
+    ): bool acquires NameRecord, SubdomainExt {
         if (!is_name_registered(domain_name, subdomain_name)) {
             true
         } else if (option::is_some(&subdomain_name) && is_subdomain_registered_before_domain(
@@ -1097,7 +1101,7 @@ module aptos_names_v2::v2_domains {
     public fun is_name_expired(
         domain_name: String,
         subdomain_name: Option<String>,
-    ): bool acquires CollectionCapability, NameRecord, SubdomainExt {
+    ): bool acquires NameRecord, SubdomainExt {
         if (!is_name_registered(domain_name, subdomain_name)) {
             true
         } else if (option::is_some(&subdomain_name) && is_subdomain_registered_before_domain(
@@ -1125,9 +1129,9 @@ module aptos_names_v2::v2_domains {
     public fun is_name_registered(
         domain_name: String,
         subdomain_name: Option<String>,
-    ): bool acquires CollectionCapability {
+    ): bool {
         object::is_object(get_token_addr_inline(domain_name, subdomain_name)) &&
-            !object::is_owner(get_record_obj(domain_name, subdomain_name), get_token_signer_address())
+            !object::is_owner(get_record_obj(domain_name, subdomain_name), get_app_signer_addr())
     }
 
     /// Check if the address is the owner of the given aptos_name
@@ -1136,7 +1140,7 @@ module aptos_names_v2::v2_domains {
         owner_addr: address,
         domain_name: String,
         subdomain_name: Option<String>,
-    ): bool acquires CollectionCapability {
+    ): bool {
         if (!is_name_registered(domain_name, subdomain_name))
             return false;
         let record_obj = object::address_to_object<NameRecord>(get_token_addr_inline(domain_name, subdomain_name));
@@ -1147,7 +1151,7 @@ module aptos_names_v2::v2_domains {
     public fun get_name_owner_addr(
         subdomain_name: Option<String>,
         domain_name: String,
-    ): Option<address> acquires CollectionCapability, NameRecord, SubdomainExt {
+    ): Option<address> acquires NameRecord, SubdomainExt {
         // check if the name is registered
         if (!is_name_registered(domain_name, subdomain_name) || is_name_expired(
             domain_name,
@@ -1160,7 +1164,7 @@ module aptos_names_v2::v2_domains {
     public fun get_expiration(
         domain_name: String,
         subdomain_name: Option<String>,
-    ): u64 acquires CollectionCapability, NameRecord, SubdomainExt {
+    ): u64 acquires NameRecord, SubdomainExt {
         let token_addr = get_token_addr_inline(domain_name, subdomain_name);
         let record = borrow_global<NameRecord>(token_addr);
         if (exists<SubdomainExt>(token_addr)) {
@@ -1179,7 +1183,7 @@ module aptos_names_v2::v2_domains {
     public fun get_target_address(
         domain_name: String,
         subdomain_name: Option<String>,
-    ): Option<address> acquires CollectionCapability, NameRecord, SubdomainExt {
+    ): Option<address> acquires NameRecord, SubdomainExt {
         //  check the expiration sec if the name is a domain
         let expiration_sec = get_expiration(domain_name, subdomain_name);
         if (is_time_expired(expiration_sec)) {
@@ -1205,7 +1209,7 @@ module aptos_names_v2::v2_domains {
     fun is_subdomain_registered_before_domain(
         domain_name: String,
         subdomain_name: String,
-    ): bool acquires CollectionCapability, NameRecord {
+    ): bool acquires NameRecord {
         if(!is_name_registered(domain_name, option::some(subdomain_name))) {
             false
         } else {
@@ -1231,7 +1235,7 @@ module aptos_names_v2::v2_domains {
         };
 
         event::emit_event<SetTargetAddressEvent>(
-            &mut borrow_global_mut<SetTargetAddressEvents>(@aptos_names_v2).set_name_events,
+            &mut borrow_global_mut<SetTargetAddressEvents>(get_app_signer_addr()).set_name_events,
             event,
         );
     }
@@ -1258,7 +1262,7 @@ module aptos_names_v2::v2_domains {
         };
 
         event::emit_event<SetReverseLookupEvent>(
-            &mut borrow_global_mut<SetReverseLookupEvents>(@aptos_names_v2).set_reverse_lookup_events,
+            &mut borrow_global_mut<SetReverseLookupEvents>(get_app_signer_addr()).set_reverse_lookup_events,
             event,
         );
     }
@@ -1278,17 +1282,17 @@ module aptos_names_v2::v2_domains {
 
     #[test_only]
     public fun get_set_target_address_event_count(): u64 acquires SetTargetAddressEvents {
-        event::counter(&borrow_global<SetTargetAddressEvents>(@aptos_names_v2).set_name_events)
+        event::counter(&borrow_global<SetTargetAddressEvents>(get_app_signer_addr()).set_name_events)
     }
 
     #[test_only]
     public fun get_register_name_event_count(): u64 acquires RegisterNameEvents {
-        event::counter(&borrow_global<RegisterNameEvents>(@aptos_names_v2).register_name_events)
+        event::counter(&borrow_global<RegisterNameEvents>(get_app_signer_addr()).register_name_events)
     }
 
     #[test_only]
     public fun get_set_reverse_lookup_event_count(): u64 acquires SetReverseLookupEvents {
-        event::counter(&borrow_global<SetReverseLookupEvents>(@aptos_names_v2).set_reverse_lookup_events)
+        event::counter(&borrow_global<SetReverseLookupEvents>(get_app_signer_addr()).set_reverse_lookup_events)
     }
 
     #[test(aptos = @0x1)]
