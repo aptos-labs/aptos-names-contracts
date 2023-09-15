@@ -284,7 +284,6 @@ module aptos_names_v2::v2_domains {
         registration_duration_secs: u64,
     ) acquires CollectionCapability, NameRecord, SubdomainExt, RegisterNameEvents, ReverseRecord, SetReverseLookupEvents {
         assert!(address_of(router_signer) == @router_signer, error::permission_denied(ENOT_ROUTER));
-        assert!(v2_config::unrestricted_mint_enabled(), error::permission_denied(EVALID_SIGNATURE_REQUIRED));
 
         validate_registration_duration(registration_duration_secs);
 

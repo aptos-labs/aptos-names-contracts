@@ -21,9 +21,6 @@ module aptos_names_v2::v2_config {
     const CONFIG_KEY_ENABLED: vector<u8> = b"enabled";
     const CONFIG_KEY_ADMIN_ADDRESS: vector<u8> = b"admin_address";
     const CONFIG_KEY_FUND_DESTINATION_ADDRESS: vector<u8> = b"fund_destination_address";
-    const CONFIG_KEY_TYPE: vector<u8> = b"type";
-    const CONFIG_KEY_CREATION_TIME_SEC: vector<u8> = b"creation_time_sec";
-    const CONFIG_KEY_EXPIRATION_TIME_SEC: vector<u8> = b"expiration_time_sec";
     const CONFIG_KEY_MAX_NUMBER_OF_YEARS_REGISTERED: vector<u8> = b"max_number_of_years_registered";
     const CONFIG_KEY_MAX_DOMAIN_LENGTH: vector<u8> = b"max_domain_length";
     const CONFIG_KEY_MIN_DOMAIN_LENGTH: vector<u8> = b"min_domain_length";
@@ -31,8 +28,6 @@ module aptos_names_v2::v2_config {
     const CONFIG_KEY_TOKENDATA_URL_PREFIX: vector<u8> = b"tokendata_url_prefix";
     const CONFIG_KEY_DOMAIN_PRICE_PREFIX: vector<u8> = b"domain_price_";
     const CONFIG_KEY_SUBDOMAIN_PRICE: vector<u8> = b"subdomain_price";
-    const CONFIG_KEY_CAPTCHA_PUBLIC_KEY: vector<u8> = b"captcha_public_key";
-    const CONFIG_KEY_UNRESTRICTED_MINT_ENABLED: vector<u8> = b"unrestricted_mint_enabled";
     /// The number of seconds after a name expires that it can be re-registered
     const CONFIG_KEY_REREGISTRATION_GRACE_SEC: vector<u8> = b"reregistration_grace_sec";
 
@@ -79,11 +74,6 @@ module aptos_names_v2::v2_config {
         set_domain_price_for_length(framework, (40 * octas()), 4);
         set_domain_price_for_length(framework, (20 * octas()), 5);
         set_domain_price_for_length(framework, (5 * octas()), 6);
-
-        // TODO: SET REAL VALUES FOR PUBLIC KEY AND UNRESTRICTED MINT ENABLED
-        let public_key = x"e9a99bdb905a37ffbf4c505b427558380613fec5ca8b5555b15cfa80e9cce8bf";
-        set_captcha_public_key(framework, public_key);
-        set_unrestricted_mint_enabled(framework, true);
 
         // We set it directly here to allow boostrapping the other values
         set(@aptos_names_v2, config_key_fund_destination_address(), &fund_destination_address);
@@ -166,10 +156,6 @@ module aptos_names_v2::v2_config {
         read_u64(@aptos_names_v2, &config_key_subdomain_price())
     }
 
-    public fun unrestricted_mint_enabled(): bool acquires Config {
-        read_bool(@aptos_names_v2, &config_key_unrestricted_mint_enabled())
-    }
-
     #[view]
     public fun reregistration_grace_sec(): u64 acquires Config {
         let key = config_key_reregistration_grace_sec();
@@ -244,18 +230,6 @@ module aptos_names_v2::v2_config {
         set(@aptos_names_v2, config_key_domain_price(length), &price)
     }
 
-    public entry fun set_captcha_public_key(sign: &signer, public_key: vector<u8>) acquires Config {
-        assert_signer_is_admin(sign);
-        set(@aptos_names_v2, config_key_captcha_public_key(), &ed25519::new_unvalidated_public_key_from_bytes(public_key));
-    }
-
-    // set if we want to allow users to bypass signature verification
-    // when unrestricted_mint_enabled == false, signature verification is required for registering a domain
-    public entry fun set_unrestricted_mint_enabled(sign: &signer, unrestricted_mint_enabled: bool) acquires Config {
-        assert_signer_is_admin(sign);
-        set(@aptos_names_v2, config_key_unrestricted_mint_enabled(), &unrestricted_mint_enabled);
-    }
-
     public entry fun set_reregistration_grace_sec(sign: &signer, reregistration_grace_sec: u64) acquires Config {
         assert_signer_is_admin(sign);
         set(@aptos_names, config_key_reregistration_grace_sec(), &reregistration_grace_sec);
@@ -275,18 +249,6 @@ module aptos_names_v2::v2_config {
 
     public fun config_key_fund_destination_address(): String {
         string::utf8(CONFIG_KEY_FUND_DESTINATION_ADDRESS)
-    }
-
-    public fun config_key_type(): String {
-        string::utf8(CONFIG_KEY_TYPE)
-    }
-
-    public fun config_key_creation_time_sec(): String {
-        string::utf8(CONFIG_KEY_CREATION_TIME_SEC)
-    }
-
-    public fun config_key_expiration_time_sec(): String {
-        string::utf8(CONFIG_KEY_EXPIRATION_TIME_SEC)
     }
 
     public fun config_key_max_number_of_years_registered(): String {
@@ -317,14 +279,6 @@ module aptos_names_v2::v2_config {
 
     public fun config_key_subdomain_price(): String {
         string::utf8(CONFIG_KEY_SUBDOMAIN_PRICE)
-    }
-
-    public fun config_key_captcha_public_key(): String {
-        string::utf8(CONFIG_KEY_CAPTCHA_PUBLIC_KEY)
-    }
-
-    public fun config_key_unrestricted_mint_enabled(): String {
-        string::utf8(CONFIG_KEY_UNRESTRICTED_MINT_ENABLED)
     }
 
     public fun config_key_reregistration_grace_sec(): String {
