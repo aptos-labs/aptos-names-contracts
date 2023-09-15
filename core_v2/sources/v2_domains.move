@@ -245,7 +245,6 @@ module aptos_names_v2::v2_domains {
         let uri: string::String = v2_config::tokendata_url_prefix();
         string::append(&mut uri, name);
 
-        let subdomain_ext: Option<SubdomainExt>;
         let constructor_ref = token::create_named_token(
             &get_token_signer(),
             get_collection_name(is_subdomain(subdomain_name)),
@@ -256,15 +255,13 @@ module aptos_names_v2::v2_domains {
         );
         let token_signer = object::generate_signer(&constructor_ref);
         // creating subdomain
-        if (is_subdomain(subdomain_name)) {
-            subdomain_ext = option::some(SubdomainExt {
+        let subdomain_ext = if (is_subdomain(subdomain_name)) {
+            option::some(SubdomainExt {
                 subdomain_name: option::extract(&mut subdomain_name),
                 subdomain_expiration_policy: SUBDOMAIN_POLICY_MANUAL_SET_EXPIRATION,
-            });
-        }
-        // creating domain
-        else {
-            subdomain_ext = option::none<SubdomainExt>();
+            })
+        } else {
+            option::none<SubdomainExt>()
         };
         let record = NameRecord {
             domain_name,
