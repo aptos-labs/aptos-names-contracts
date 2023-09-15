@@ -9,7 +9,7 @@ module aptos_names_v2::v2_domains {
     use aptos_names_v2::v2_config;
     use aptos_names_v2::v2_price_model;
     use aptos_names_v2::v2_token_helper;
-    use aptos_names_v2::v2_utf8_utils;
+    use aptos_names_v2::v2_string_validator;
     use aptos_token_objects::collection;
     use aptos_token_objects::token;
     use std::error;
@@ -890,7 +890,7 @@ module aptos_names_v2::v2_domains {
     fun validate_name_string(
         name: String,
     ): u64 {
-        let (is_valid, length) = v2_utf8_utils::string_is_allowed(&name);
+        let (is_valid, length) = v2_string_validator::string_is_allowed(&name);
         assert!(is_valid, error::invalid_argument(ENAME_HAS_INVALID_CHARACTERS));
         assert!(length <= v2_config::max_domain_length(), error::out_of_range(ENAME_TOO_LONG));
         assert!(length >= v2_config::min_domain_length(), error::out_of_range(ENAME_TOO_SHORT));

@@ -1,5 +1,7 @@
-module aptos_names_v2::v2_utf8_utils {
-
+module aptos_names_v2::v2_string_validator {
+    friend aptos_names_v2::v2_domains;
+    friend aptos_names_v2::v2_token_helper;
+    friend aptos_names_v2::v2_config;
     use std::string::{Self, String};
     use std::vector;
 
@@ -51,7 +53,7 @@ module aptos_names_v2::v2_utf8_utils {
 
     /// A convenience function for `bytes_are_allowed`
     /// Returns whether it is allowed, number of characters in the utf8 string, and number of distinct charsets used
-    public fun string_is_allowed(string: &String): (bool, u64) {
+    public(friend) fun string_is_allowed(string: &String): (bool, u64) {
         bytes_are_allowed(string::bytes(string))
     }
 
@@ -66,7 +68,7 @@ module aptos_names_v2::v2_utf8_utils {
     /// an overlong encoding
     /// a sequence that decodes to an invalid code point
     /// For more information on the estructure of UTF8: https://en.wikipedia.org/wiki/UTF-8#Encoding
-    public fun utf8_to_vec_u64_fast(bytes: &vector<u8>): vector<u64> {
+    public(friend) fun utf8_to_vec_u64_fast(bytes: &vector<u8>): vector<u64> {
         let len = vector::length(bytes);
         let i = 0;
         let result = vector::empty<u64>();
@@ -106,7 +108,7 @@ module aptos_names_v2::v2_utf8_utils {
     }
 
     /// This turns a u128 into its UTF-8 string equivalent.
-    public fun u128_to_string(value: u128): String {
+    public(friend) fun u128_to_string(value: u128): String {
         if (value == 0) {
             return string::utf8(b"0")
         };
