@@ -242,7 +242,7 @@ module aptos_names_v2::v2_domains {
     ) acquires CollectionCapability {
         let name = v2_token_helper::get_fully_qualified_domain_name(subdomain_name, domain_name);
         let description = v2_config::tokendata_description();
-        let uri: string::String = v2_config::tokendata_url_prefix();
+        let uri = v2_config::tokendata_url_prefix();
         string::append(&mut uri, name);
 
         let subdomain_ext: Option<SubdomainExt>;
