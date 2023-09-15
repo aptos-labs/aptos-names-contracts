@@ -5,7 +5,6 @@ module aptos_names_v2::v2_domain_e2e_tests {
     use aptos_framework::object;
     use aptos_names_v2::v2_config;
     use aptos_names_v2::v2_domains;
-    use aptos_names_v2::v2_time_helper;
     use aptos_names_v2::v2_test_helper;
     use aptos_names_v2::v2_test_utils;
     use std::option;
@@ -14,6 +13,8 @@ module aptos_names_v2::v2_domain_e2e_tests {
     use std::vector;
 
     const MAX_REMAINING_TIME_FOR_RENEWAL_SEC: u64 = 15552000;
+    const SECONDS_PER_DAY: u64 = 60 * 60 * 24;
+    const SECONDS_PER_YEAR: u64 = 60 * 60 * 24 * 365;
 
     #[test(
         router_signer = @router_signer,
@@ -85,7 +86,7 @@ module aptos_names_v2::v2_domain_e2e_tests {
         assert!(v2_domains::is_domain_in_renewal_window(v2_test_helper::domain_name()), 2);
 
         // Renew the domain
-        v2_domains::renew_domain(user, v2_test_helper::domain_name(), v2_time_helper::years_to_seconds(1));
+        v2_domains::renew_domain(user, v2_test_helper::domain_name(), SECONDS_PER_YEAR);
 
         // Ensure the domain is still registered after the original expiration time
         timestamp::update_global_time_for_test_secs(expiration_time_sec + 5);
@@ -496,14 +497,14 @@ module aptos_names_v2::v2_domain_e2e_tests {
 
         let expiration_time_sec = v2_domains::get_expiration(v2_test_helper::domain_name(), option::none());
         assert!(
-            v2_time_helper::seconds_to_years(expiration_time_sec) == 1, v2_time_helper::seconds_to_years(expiration_time_sec));
+            expiration_time_sec / SECONDS_PER_YEAR == 1, expiration_time_sec / SECONDS_PER_YEAR);
 
         // renew the domain by admin outside of renewal window
         v2_domains::force_set_name_expiration(aptos_names_v2, v2_test_helper::domain_name(), option::none(), timestamp::now_seconds() + 2 * v2_test_helper::one_year_secs());
 
         let expiration_time_sec = v2_domains::get_expiration(v2_test_helper::domain_name(), option::none());
         assert!(
-            v2_time_helper::seconds_to_years(expiration_time_sec) == 2, v2_time_helper::seconds_to_years(expiration_time_sec));
+            expiration_time_sec / SECONDS_PER_YEAR == 2, expiration_time_sec / SECONDS_PER_YEAR);
     }
 
 
@@ -542,7 +543,7 @@ module aptos_names_v2::v2_domain_e2e_tests {
         // Ensure the expiration_time_sec is set to the new far future value
         let expiration_time_sec = v2_domains::get_expiration(v2_test_helper::domain_name(), option::none());
         assert!(
-            v2_time_helper::seconds_to_years(expiration_time_sec) == 200, v2_time_helper::seconds_to_years(expiration_time_sec));
+            expiration_time_sec / SECONDS_PER_YEAR == 200, expiration_time_sec / SECONDS_PER_YEAR);
 
         // Ensure that the user's primary name is no longer set.
         assert!(option::is_none(&v2_domains::get_reverse_lookup(user_addr)), 1);
@@ -576,7 +577,7 @@ module aptos_names_v2::v2_domain_e2e_tests {
         // Ensure the expiration_time_sec is set to the new far future value
         let expiration_time_sec = v2_domains::get_expiration(v2_test_helper::domain_name(), option::none());
         assert!(
-            v2_time_helper::seconds_to_years(expiration_time_sec) == 200, v2_time_helper::seconds_to_years(expiration_time_sec));
+            expiration_time_sec / SECONDS_PER_YEAR == 200, expiration_time_sec / SECONDS_PER_YEAR);
 
         // Try to nuke the domain
         assert!(v2_domains::is_name_registered(v2_test_helper::domain_name(), option::none()), 3);
@@ -843,7 +844,7 @@ module aptos_names_v2::v2_domain_e2e_tests {
         let user_addr = signer::address_of(user);
 
         // Set the reregistration grace period to 30 days
-        v2_config::set_reregistration_grace_sec(aptos_names_v2, v2_time_helper::days_to_seconds(30));
+        v2_config::set_reregistration_grace_sec(aptos_names_v2, 30 * SECONDS_PER_DAY);
 
         // Register the domain
         v2_test_helper::register_name(
@@ -902,7 +903,7 @@ module aptos_names_v2::v2_domain_e2e_tests {
         let user_addr = signer::address_of(user);
 
         // Set the reregistration grace period to 30 days
-        v2_config::set_reregistration_grace_sec(aptos_names_v2, v2_time_helper::days_to_seconds(30));
+        v2_config::set_reregistration_grace_sec(aptos_names_v2, 30 * SECONDS_PER_DAY);
 
         // Register the domain
         v2_test_helper::register_name(

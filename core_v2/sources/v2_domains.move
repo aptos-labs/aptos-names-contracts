@@ -8,7 +8,6 @@ module aptos_names_v2::v2_domains {
     use aptos_framework::timestamp;
     use aptos_names_v2::v2_config;
     use aptos_names_v2::v2_price_model;
-    use aptos_names_v2::v2_time_helper;
     use aptos_names_v2::v2_token_helper;
     use aptos_names_v2::v2_utf8_utils;
     use aptos_token_objects::collection;
@@ -994,7 +993,7 @@ module aptos_names_v2::v2_domains {
             error::invalid_argument(EDURATION_MUST_BE_WHOLE_YEARS)
         );
 
-        let num_years = (v2_time_helper::seconds_to_years(registration_duration_secs) as u8);
+        let num_years = (seconds_to_years(registration_duration_secs) as u8);
         assert!(
             num_years > 0 && num_years <= v2_config::max_number_of_years_registered(),
             error::out_of_range(EINVALID_NUMBER_YEARS)
@@ -1274,6 +1273,14 @@ module aptos_names_v2::v2_domains {
             event,
         );
     }
+
+    // ==== TIME HELPERS ====
+
+    fun seconds_to_years(seconds: u64): u64 {
+        seconds / SECONDS_PER_YEAR
+    }
+
+    // ==== TEST ONLY ====
 
     #[test_only]
     public fun init_module_for_test(account: &signer) {
