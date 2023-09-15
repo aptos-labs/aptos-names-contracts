@@ -38,11 +38,7 @@ module router::target_address_tests {
         if (!exists_in_v2(domain_name, subdomain_name)) {
             option::none()
         }else {
-            let (_expiration_time_sec, target_addr) = aptos_names_v2::v2_domains::get_name_record_props(
-                subdomain_name,
-                domain_name
-            );
-            target_addr
+            aptos_names_v2::v2_domains::get_target_address(domain_name, subdomain_name)
         }
     }
 
