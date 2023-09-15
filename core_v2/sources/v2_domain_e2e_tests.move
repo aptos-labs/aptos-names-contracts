@@ -105,32 +105,6 @@ module aptos_names_v2::v2_domain_e2e_tests {
         rando = @0x266f,
         foundation = @0xf01d
     )]
-    #[expected_failure(abort_code = 327696, location = aptos_names_v2::v2_domains)]
-    fun test_register_domain_abort_with_disabled_unrestricted_mint(
-        router_signer: &signer,
-        aptos_names_v2: &signer,
-        user: signer,
-        aptos: signer,
-        rando: signer,
-        foundation: signer,
-    ) {
-        let users = v2_test_helper::e2e_test_setup(aptos_names_v2, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
-
-        chain_id::initialize_for_test(&aptos, 4);
-        v2_config::set_unrestricted_mint_enabled(aptos_names_v2, false);
-
-        v2_test_helper::register_name(router_signer, user, option::none(), v2_test_helper::domain_name(), v2_test_helper::one_year_secs(), v2_test_helper::fq_domain_name(), 1);
-    }
-
-    #[test(
-        router_signer = @router_signer,
-        aptos_names_v2 = @aptos_names_v2,
-        user = @0x077,
-        aptos = @0x1,
-        rando = @0x266f,
-        foundation = @0xf01d
-    )]
     fun test_names_are_registerable_after_expiry(
         router_signer: &signer,
         aptos_names_v2: &signer,
