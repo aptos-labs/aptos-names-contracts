@@ -133,15 +133,8 @@ module aptos_names_v2::v2_test_helper {
         assert!(user_balance_after == expected_user_balance_after, expected_user_balance_after);
 
         // Ensure the name was registered correctly, with an expiration timestamp one year in the future
-        let (expiration_time_sec, _) = v2_domains::get_name_record_props(
-            subdomain_name,
-            domain_name
-        );
+        let expiration_time_sec = v2_domains::get_expiration(domain_name, subdomain_name);
         assert!(v2_time_helper::seconds_to_days(expiration_time_sec - timestamp::now_seconds()) == 365, 10);
-
-        let (expiration_time_sec_lookup_result, _) = v2_domains::get_name_record_props(subdomain_name, domain_name);
-        assert!(
-            v2_time_helper::seconds_to_days(expiration_time_sec_lookup_result - timestamp::now_seconds()) == 365, 100);
 
         // TODO: Re-enable / Re-write
         // Ensure the properties were set correctly
@@ -188,10 +181,7 @@ module aptos_names_v2::v2_test_helper {
         let maybe_reverse_lookup_before = v2_domains::get_reverse_lookup(user_addr);
 
         v2_domains::set_target_address(user, domain_name, subdomain_name, expected_target_address);
-        let (_expiration_time_sec, target_address) = v2_domains::get_name_record_props(
-            subdomain_name,
-            domain_name
-        );
+        let target_address = v2_domains::get_target_address(domain_name, subdomain_name);
         v2_test_utils::print_actual_expected(
             b"set_domain_address: ",
             target_address,
@@ -252,10 +242,7 @@ module aptos_names_v2::v2_test_helper {
         let maybe_reverse_lookup_before = v2_domains::get_reverse_lookup(user_addr);
 
         v2_domains::clear_target_address(user, subdomain_name, domain_name);
-        let (_expiration_time_sec, target_address) = v2_domains::get_name_record_props(
-            subdomain_name,
-            domain_name
-        );
+        let target_address = v2_domains::get_target_address(domain_name, subdomain_name);
         v2_test_utils::print_actual_expected(b"clear_domain_address: ", target_address, option::none(), false);
         assert!(target_address == option::none(), 32);
 
