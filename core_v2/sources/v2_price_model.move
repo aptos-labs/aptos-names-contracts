@@ -25,6 +25,7 @@ module aptos_names_v2::v2_price_model {
     }
 
     /// There is a fixed cost per each tier of domain names, from 2 to >=6, and it also scales exponentially with number of years to register
+    #[view]
     public fun price_for_domain(domain_length: u64, registration_secs: u64): u64 {
         assert!(domain_length >= 2, error::out_of_range(EDOMAIN_TOO_SHORT));
         let length_to_charge_for = math64::min(domain_length, 6);
@@ -33,6 +34,7 @@ module aptos_names_v2::v2_price_model {
     }
 
     /// Subdomains have a fixed unit cost
+    #[view]
     public fun price_for_subdomain(_registration_duration_secs: u64): u64 {
         v2_config::subdomain_price()
     }
