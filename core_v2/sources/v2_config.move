@@ -21,7 +21,7 @@ module aptos_names_v2::v2_config {
     const CONFIG_KEY_ENABLED: vector<u8> = b"enabled";
     const CONFIG_KEY_ADMIN_ADDRESS: vector<u8> = b"admin_address";
     const CONFIG_KEY_FUND_DESTINATION_ADDRESS: vector<u8> = b"fund_destination_address";
-    const CONFIG_KEY_MAX_NUMBER_OF_YEARS_REGISTERED: vector<u8> = b"max_number_of_years_registered";
+    const CONFIG_KEY_MAX_NUMBER_OF_SECONDS_REGISTERED: vector<u8> = b"max_number_of_seconds_registered";
     const CONFIG_KEY_MAX_DOMAIN_LENGTH: vector<u8> = b"max_domain_length";
     const CONFIG_KEY_MIN_DOMAIN_LENGTH: vector<u8> = b"min_domain_length";
     const CONFIG_KEY_TOKENDATA_DESCRIPTION: vector<u8> = b"tokendata_description";
@@ -42,6 +42,8 @@ module aptos_names_v2::v2_config {
     /// Raised if there is an invalid value for a configuration
     const EINVALID_VALUE: u64 = 2;
 
+    const SECONDS_PER_YEAR: u64 = 60 * 60 * 24 * 365;
+
     struct Config has key, store {
         config: PropertyMap,
     }
@@ -60,7 +62,7 @@ module aptos_names_v2::v2_config {
 
         set_is_enabled(framework, true);
 
-        set_max_number_of_years_registered(framework, 2u8);
+        set_max_number_of_seconds_registered(framework, SECONDS_PER_YEAR * 2);
         set_min_domain_length(framework, 3);
         set_max_domain_length(framework, 63);
 
@@ -101,8 +103,8 @@ module aptos_names_v2::v2_config {
         read_address(@aptos_names_v2, &config_key_admin_address())
     }
 
-    public fun max_number_of_years_registered(): u8 acquires Config {
-        read_u8(@aptos_names_v2, &config_key_max_number_of_years_registered())
+    public fun max_number_of_seconds_registered(): u64 acquires Config {
+        read_u64(@aptos_names_v2, &config_key_max_number_of_seconds_registered())
     }
 
     public fun max_domain_length(): u64 acquires Config {
@@ -190,10 +192,10 @@ module aptos_names_v2::v2_config {
         set(@aptos_names_v2, config_key_admin_address(), &addr)
     }
 
-    public entry fun set_max_number_of_years_registered(sign: &signer, max_years_registered: u8) acquires Config {
+    public entry fun set_max_number_of_seconds_registered(sign: &signer, max_seconds_registered: u64) acquires Config {
         assert_signer_is_admin(sign);
-        assert!(max_years_registered > 0, error::invalid_argument(EINVALID_VALUE));
-        set(@aptos_names_v2, config_key_max_number_of_years_registered(), &max_years_registered)
+        assert!(max_seconds_registered > 0, error::invalid_argument(EINVALID_VALUE));
+        set(@aptos_names_v2, config_key_max_number_of_seconds_registered(), &max_seconds_registered)
     }
 
     public entry fun set_max_domain_length(sign: &signer, domain_length: u64) acquires Config {
@@ -411,9 +413,9 @@ module aptos_names_v2::v2_config {
         set_max_domain_length(myself, 25);
         assert!(max_domain_length() == 25, 3);
 
-        assert!(max_number_of_years_registered() == 2, 4);
-        set_max_number_of_years_registered(myself, 5);
-        assert!(max_number_of_years_registered() == 5, 4);
+        assert!(max_number_of_seconds_registered() == SECONDS_PER_YEAR * 2, 4);
+        set_max_number_of_seconds_registered(myself, SECONDS_PER_YEAR * 5);
+        assert!(max_number_of_seconds_registered() == SECONDS_PER_YEAR * 5, 4);
 
         assert!(fund_destination_address() == signer::address_of(myself), 5);
         coin::register<AptosCoin>(rando);
