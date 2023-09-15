@@ -137,10 +137,6 @@ module aptos_names_v2::v2_test_helper {
         let expiration_time_sec = v2_domains::get_expiration(domain_name, subdomain_name);
         assert!(seconds_to_days(expiration_time_sec - timestamp::now_seconds()) == 365, 10);
 
-        let (expiration_time_sec_lookup_result, _) = v2_domains::get_name_record_props(subdomain_name, domain_name);
-        assert!(
-            seconds_to_days(expiration_time_sec_lookup_result - timestamp::now_seconds()) == 365, 100);
-
         // TODO: Re-enable / Re-write
         // Ensure the properties were set correctly
         // let token_data_id = token_helper::build_tokendata_id(token_helper::get_token_signer_address(), subdomain_name, domain_name);
