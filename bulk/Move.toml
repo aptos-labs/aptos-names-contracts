@@ -1,9 +1,9 @@
 [package]
-name = 'bulk_migrate'
+name = 'bulk'
 version = '1.0.0'
 
 [addresses]
-bulk_migrate = "_"
+bulk = "_"
 
 [dependencies.router]
 local = "../router"
