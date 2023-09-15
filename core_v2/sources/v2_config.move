@@ -17,6 +17,9 @@ module aptos_names_v2::v2_config {
     use std::signer;
     use std::string::{Self, String};
     use std::vector;
+    use aptos_framework::object;
+
+    const CONFIG_OBJECT_SEED: vector<u8> = b"ANS v2 config";
 
     const CONFIG_KEY_ENABLED: vector<u8> = b"enabled";
     const CONFIG_KEY_ADMIN_ADDRESS: vector<u8> = b"admin_address";
@@ -31,9 +34,6 @@ module aptos_names_v2::v2_config {
     /// The number of seconds after a name expires that it can be re-registered
     const CONFIG_KEY_REREGISTRATION_GRACE_SEC: vector<u8> = b"reregistration_grace_sec";
 
-    const DOMAIN_TYPE: vector<u8> = b"domain";
-    const SUBDOMAIN_TYPE: vector<u8> = b"subdomain";
-
     const DOMAIN_COLLECTION_NAME: vector<u8> = b"Aptos Domain Names V2";
     const SUBDOMAIN_COLLECTION_NAME: vector<u8> = b"Aptos Subdomain Names V2";
 
@@ -43,9 +43,25 @@ module aptos_names_v2::v2_config {
     const EINVALID_VALUE: u64 = 2;
 
     const SECONDS_PER_YEAR: u64 = 60 * 60 * 24 * 365;
+    const SECONDS_PER_DAY: u64 = 60 * 60 * 24;
 
     struct Config has key, store {
-        config: PropertyMap,
+        enabled: bool,
+        admin_address: &address,
+        fund_destination_address: &address,
+        max_number_of_seconds_registered: u64,
+        max_domain_length: u64,
+        min_domain_length: u64,
+        tokendata_description: String,
+        tokendata_url_prefix: String,
+        domain_price_length_3: u64,
+        domain_price_length_4: u64,
+        domain_price_length_5: u64,
+        domain_price_length_6_and_above: u64,
+        subdomain_price: u64,
+        /// The number of seconds after a name expires that it can be re-registered
+        reregistration_grace_sec: u64,
+        extend_ref: object::ExtendRef,
     }
 
     public(friend) fun initialize_config(
@@ -53,33 +69,32 @@ module aptos_names_v2::v2_config {
         admin_address: address,
         fund_destination_address: address
     ) acquires Config {
-        move_to(framework, Config {
-            config: property_map::empty(),
+        let constructor_ref = object::create_named_object(
+            framework,
+            CONFIG_OBJECT_SEED,
+        );
+        let extend_ref = object::generate_extend_ref(&constructor_ref);
+        let config_signer = object::generate_signer(&constructor_ref);
+
+        move_to(&config_signer, Config {
+            enabled: true,
+            admin_address: &admin_address,
+            fund_destination_address: &fund_destination_address,
+            max_number_of_seconds_registered: SECONDS_PER_YEAR * 2,
+            max_domain_length: 63,
+            min_domain_length: 3,
+            tokendata_description: string::utf8(b"This is an official Aptos Labs Name Service Name"),
+            tokendata_url_prefix: string::utf8(b"https://www.aptosnames.com/api/mainnet/v1/metadata/"),
+            domain_price_length_3: 20 * octas(),
+            domain_price_length_4: 10 * octas(),
+            domain_price_length_5: 5 * octas(),
+            domain_price_length_6_and_above: octas(),
+            // 0.2 APT
+            subdomain_price: octas() / 5,
+            /// The number of seconds after a name expires that it can be re-registered
+            reregistration_grace_sec: 30 * SECONDS_PER_DAY,
+            extend_ref,
         });
-
-        // Temporarily set this to framework to allow other methods below to be set with framework signer
-        set(@aptos_names_v2, config_key_admin_address(), &signer::address_of(framework));
-
-        set_is_enabled(framework, true);
-
-        set_max_number_of_seconds_registered(framework, SECONDS_PER_YEAR * 2);
-        set_min_domain_length(framework, 3);
-        set_max_domain_length(framework, 63);
-
-        // TODO: SET THIS TO SOMETHING REAL
-        set_tokendata_description(framework, string::utf8(b"This is an official Aptos Labs Name Service Name"));
-        set_tokendata_url_prefix(framework, string::utf8(b"https://www.aptosnames.com/api/mainnet/v1/metadata/"));
-
-        // 0.2 APT
-        set_subdomain_price(framework, octas() / 5);
-        set_domain_price_for_length(framework, (80 * octas()), 3);
-        set_domain_price_for_length(framework, (40 * octas()), 4);
-        set_domain_price_for_length(framework, (20 * octas()), 5);
-        set_domain_price_for_length(framework, (5 * octas()), 6);
-
-        // We set it directly here to allow boostrapping the other values
-        set(@aptos_names_v2, config_key_fund_destination_address(), &fund_destination_address);
-        set(@aptos_names_v2, config_key_admin_address(), &admin_address);
     }
 
 
