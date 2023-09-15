@@ -95,8 +95,14 @@ module aptos_names::config {
         100000000
     }
 
+    // !!!!! DEPRECATED !!!!! please use is_enabled_for_nonadmin()
     public fun is_enabled(): bool acquires ConfigurationV1 {
         read_bool_v1(@aptos_names, &config_key_enabled())
+    }
+
+    // Returns true if enabled flag is true or signer is admin
+    public fun is_enabled_for_nonadmin(sign: &signer): bool acquires ConfigurationV1 {
+        read_bool_v1(@aptos_names, &config_key_enabled()) || signer_is_admin(sign)
     }
 
     public fun fund_destination_address(): address acquires ConfigurationV1 {
@@ -446,8 +452,10 @@ module aptos_names::config {
         initialize_for_test(myself, aptos);
 
         assert!(is_enabled(), 0);
+        assert!(is_enabled_for_nonadmin(myself), 0);
         set_is_enabled(myself, false);
         assert!(!is_enabled(), 0);
+        assert!(is_enabled_for_nonadmin(myself), 0);
 
         assert!(max_domain_length() == 63, 3);
         set_max_domain_length(myself, 25);
