@@ -369,7 +369,7 @@ module aptos_names_v2::v2_domains {
     ///
     /// NOTE: Registration validation already done. This function does not perform any validation on whether `sign` is allowed to register this name
     fun register_name_internal(
-        sign: &signer,
+        buyer: &signer,
         subdomain_name: Option<String>,
         domain_name: String,
         registration_duration_secs: u64,
@@ -393,7 +393,7 @@ module aptos_names_v2::v2_domains {
 
         // If the token already exists, transfer it to the signer
         // Else, create a new one and transfer it to the signer
-        let account_addr = signer::address_of(sign);
+        let account_addr = signer::address_of(buyer);
         let token_addr = get_token_addr_inline(domain_name, subdomain_name);
         if (object::is_object(token_addr)) {
             let record = borrow_global_mut<NameRecord>(token_addr);
