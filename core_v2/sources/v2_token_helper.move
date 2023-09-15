@@ -2,6 +2,7 @@ module aptos_names_v2::v2_token_helper {
     friend aptos_names_v2::v2_domains;
 
     use aptos_names_v2::v2_utf8_utils;
+    use std::error;
     use std::option::{Self, Option};
     use std::string::{Self, String};
 
@@ -10,17 +11,21 @@ module aptos_names_v2::v2_token_helper {
 
     /// The collection does not exist. This should never happen.
     const ECOLLECTION_NOT_EXISTS: u64 = 1;
+    /// The domain name is not a valid name
+    const EDOMAIN_NAME_INVALID: u64 = 2;
+    /// The subdomain name is not a valid name
+    const ESUBDOMAIN_NAME_INVALID: u64 = 3;
 
     public fun get_fully_qualified_domain_name(subdomain_name: Option<String>, domain_name: String): String {
         let (domain_is_allowed, _length) = v2_utf8_utils::string_is_allowed(&domain_name);
-        assert!(domain_is_allowed, 1);
+        assert!(domain_is_allowed, error::invalid_argument(EDOMAIN_NAME_INVALID));
         let subdomain_is_allowed = if (option::is_some(&subdomain_name)) {
             let (subdomain_is_allowed, _length) = v2_utf8_utils::string_is_allowed(option::borrow(&subdomain_name));
             subdomain_is_allowed
         } else {
             true
         };
-        assert!(subdomain_is_allowed, 2);
+        assert!(subdomain_is_allowed, error::invalid_argument(ESUBDOMAIN_NAME_INVALID));
         let combined = combine_sub_and_domain_str(subdomain_name, domain_name);
         string::append_utf8(&mut combined, DOMAIN_SUFFIX);
         combined
