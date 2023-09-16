@@ -164,8 +164,7 @@ module aptos_names_v2::v2_config {
 
     #[view]
     public fun domain_price_for_length(domain_length: u64): u64 acquires Config {
-        // assert!(domain_length >= 3, error::invalid_argument(EINVALID_DOMAIN_LENGTH));
-        assert!(domain_length >= 3, domain_length);
+        assert!(domain_length >= 3, error::invalid_argument(EINVALID_DOMAIN_LENGTH));
         if (domain_length == 3) {
             borrow_global<Config>(get_config_signer_addr()).domain_price_length_3
         } else if (domain_length == 4) {
@@ -254,8 +253,7 @@ module aptos_names_v2::v2_config {
 
     public entry fun set_domain_price_for_length(sign: &signer, price: u64, length: u64) acquires Config {
         assert_signer_is_admin(sign);
-        assert!(price > 0, error::invalid_argument(EINVALID_VALUE));
-        // assert!(length >= 3, error::invalid_argument(EINVALID_DOMAIN_LENGTH));
+        assert!(length >= 3, error::invalid_argument(EINVALID_DOMAIN_LENGTH));
         assert!(length >= 3, length);
         if (length == 3) {
             borrow_global_mut<Config>(get_config_signer_addr()).domain_price_length_3 = price
