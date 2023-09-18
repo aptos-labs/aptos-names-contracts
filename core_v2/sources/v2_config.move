@@ -10,7 +10,6 @@ module aptos_names_v2::v2_config {
 
     use aptos_framework::account;
     use aptos_framework::aptos_account;
-    use aptos_framework::object;
     use std::error;
     use std::signer;
     use std::string::{Self, String};
@@ -30,7 +29,7 @@ module aptos_names_v2::v2_config {
     const SECONDS_PER_YEAR: u64 = 60 * 60 * 24 * 365;
     const SECONDS_PER_DAY: u64 = 60 * 60 * 24;
 
-    #[resource_group_member(group = aptos_names_v2::v2_config::ObjectGroup)]
+    #[resource_group_member(group = aptos_framework::object::ObjectGroup)]
     struct Config has key {
         enabled: bool,
         admin_address: address,
@@ -47,7 +46,6 @@ module aptos_names_v2::v2_config {
         subdomain_price: u64,
         /// The number of seconds after a name expires that it can be re-registered
         reregistration_grace_sec: u64,
-        extend_ref: object::ExtendRef,
     }
 
     public(friend) fun initialize_config(
@@ -55,14 +53,7 @@ module aptos_names_v2::v2_config {
         admin_address: address,
         fund_destination_address: address
     ) {
-        let constructor_ref = object::create_named_object(
-            framework,
-            CONFIG_OBJECT_SEED,
-        );
-        let extend_ref = object::generate_extend_ref(&constructor_ref);
-        let config_signer = object::generate_signer(&constructor_ref);
-
-        move_to(&config_signer, Config {
+        move_to(framework, Config {
             enabled: true,
             admin_address,
             fund_destination_address,
@@ -79,17 +70,8 @@ module aptos_names_v2::v2_config {
             subdomain_price: octas() / 5,
             // The number of seconds after a name expires that it can be re-registered
             reregistration_grace_sec: 30 * SECONDS_PER_DAY,
-            extend_ref,
         })
     }
-
-    // public fun @aptos_names_v2: address {
-    //     object::create_object_address(&@aptos_names_v2, CONFIG_OBJECT_SEED)
-    // }
-    //
-    // fun get_config_signer(): signer acquires Config {
-    //     object::generate_signer_for_extending(&borrow_global<Config>(@aptos_names_v2).extend_ref)
-    // }
 
     //
     // Configuration Shortcuts
