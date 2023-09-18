@@ -44,24 +44,19 @@ Names are currently verified following the below rules:
 
 `Domains` and `Subdomains` are represented on-chain in two ways:
 
-1. As an `NFT`, following our Token Standard. When a name is registered, an NFT resource is created and `moved` into the
-   purchaser's account, and possession of the NFT is proof of ownership of the `Domain` or `Subdomain`. This NFT can be
-   bought, sold, or transferred to another account just like any other `Token`. Names are not permanent, however: much
-   like Web2 domains, the registration will expire after a period of time. Names are currently registrable for durations
-   with increments of 1 year, and the price increases both as the number of years registered increases, and number of
-   glyphs decreases. For more information on pricing, please see the [pricing](#pricing) section.
-2. The central `Registry`, that maps a given `DomainNameKey` (which has both an optional subdmain, and a domain) to its
-   registration details, such as the expiry time, the underlying tokens property version, etc.
+As an `NFT`, following our [Digital Asset Standard](https://aptos.dev/standards/digital-asset). When a name is registered, an `NameRecord` object is created with a reference to represent the ownership. This NFT can be
+bought, sold, or transferred to another account just like any other `Token`. Names are not permanent, however: much
+like Web2 domains, the registration will expire after a period of time. Names are currently registrable for durations
+with increments of 1 year, and the price increases both as the number of years registered increases, and number of
+glyphs decreases. For more information on pricing, please see the [pricing](#pricing) section.
 
 ### Setting Domain/Subdomain Addresses
 
-When a `Domain` or `Subdomain` is registered, it is not automatically associated with an account. Instead, the owner of
-the token can set the address that the name points to. This is done by
-calling `domains::set_name_address(subdomain_name: Option<String>, new_address: address)` to set the address of a name.
+When a `Domain` or `Subdomain` is registered through the router, one can set the target address that the name points to, and can gift the name to another account. 
 The owner can set the name to point to any arbitrary address.
 
 The owner can also `clear` the name by
-calling `domains::clear_name_address(subdomain_name: Option<String>, domain_name: String)`. This will remove the address
+calling `router::clear_target_addr(user: &signer, domain_name: String,  subdomain_name: Option<String>)`. This will remove the address
 from the mapping, but retain ownership. To help combat harassment, any account that this domain points to can also use
 the same method to `clear` the name, removing the mapping.
 
@@ -94,7 +89,23 @@ Additionally, the deploy signer is able to perform all admin actions as well.
 
 Our goal is to move more governance on-chain over time.
 
-### Conventions
+### Primary Name
+A user can set a name as primary name by calling `router::set_primary_name(user: &signer, domain_name: String, subdomain_name: Option<String>)` 
+This name will be used as the default name when you send a transaction to another account.
+If a user purchases a name without primary name set before, the purchased name will be set as the primary name automatically.
 
-- All module methods which accept the domain/subdomain as separate args MUST do it in the following order, to help
-  avoid confusion: `.., subdomain_name: Option<String>, domain_name: String, ...`
+### Domain Renewal
+A domain owner can renew the domain when in the 6-month window before the expiration date by calling `router::renew_domain(
+user: &signer, domain_name: String, renewal_duration_secs: u64)`. If the auto-renewal flag is on for a subdomain, the subdomain 
+expiration will be automatically extended as well.
+
+### Subdomain Management
+A domain owner can mint subdomains for free and transfer the ownership to other accounts. The expiration date of a subdomain 
+can be set in two ways: 
+- The domain owner can set the expiration date of a subdomain to be the same as the domain expiration date.
+- The domain owner can manually set the expiration date of a subdomain to be any date before the domain expiration date. 
+- The domain owner can change the expiration settings for a subdomain at any time.
+
+A domain can also set the transferability of its subdomains by calling `router::domain_admin_set_subdomain_transferability(domain_admin: &signer, 
+domain_name: String, subdomain_name: String, transferable: bool)` If the transferability is set to `false`, the subdomain owner 
+won't be able to transfer the ownership of the subdomain to another account.
