@@ -80,12 +80,15 @@ module aptos_names_v2::v2_domains {
     /// Name is expired and out of grace period
     const ECANNOT_RENEW_NAME_THAT_IS_EXPIRED_AND_PAST_GRACE_PERIOD: u64 = 31;
 
+    #[resource_group(scope = global)]
+    struct ObjectGroup { }
+
     /// Tokens require a signer to create, so this is the signer for the collection
     struct App has key {
         extend_ref: object::ExtendRef,
     }
 
-    #[resource_group_member(group = aptos_framework::object::ObjectGroup)]
+    #[resource_group_member(group = aptos_names_v2::v2_domains::ObjectGroup)]
     struct NameRecord has key {
         domain_name: String,
         expiration_time_sec: u64,
@@ -96,7 +99,7 @@ module aptos_names_v2::v2_domains {
         extend_ref: object::ExtendRef,
     }
 
-    #[resource_group_member(group = aptos_framework::object::ObjectGroup)]
+    #[resource_group_member(group = aptos_names_v2::v2_domains::ObjectGroup)]
     /// This is a subdomain extension that is only used for subdomains
     struct SubdomainExt has key {
         subdomain_name: String,
@@ -107,25 +110,25 @@ module aptos_names_v2::v2_domains {
         token_addr: Option<address>,
     }
 
-    #[resource_group_member(group = aptos_framework::object::ObjectGroup)]
+    #[resource_group_member(group = aptos_names_v2::v2_domains::ObjectGroup)]
     /// Holder for `SetReverseLookupEvent` events
     struct SetReverseLookupEvents has key {
         set_reverse_lookup_events: event::EventHandle<SetReverseLookupEvent>,
     }
 
-    #[resource_group_member(group = aptos_framework::object::ObjectGroup)]
+    #[resource_group_member(group = aptos_names_v2::v2_domains::ObjectGroup)]
     /// Holder for `SetTargetAddressEvent` events
     struct SetTargetAddressEvents has key {
         set_name_events: event::EventHandle<SetTargetAddressEvent>,
     }
 
-    #[resource_group_member(group = aptos_framework::object::ObjectGroup)]
+    #[resource_group_member(group = aptos_names_v2::v2_domains::ObjectGroup)]
     /// Holder for `RegisterNameEvent` events
     struct RegisterNameEvents has key {
         register_name_events: event::EventHandle<RegisterNameEvent>,
     }
 
-    #[resource_group_member(group = aptos_framework::object::ObjectGroup)]
+    #[resource_group_member(group = aptos_names_v2::v2_domains::ObjectGroup)]
     /// Holder for `RenewNameEvent` events
     struct RenewNameEvents has key {
         renew_name_events: event::EventHandle<RenewNameEvent>,
