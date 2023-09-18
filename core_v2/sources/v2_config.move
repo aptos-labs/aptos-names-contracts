@@ -17,19 +17,6 @@ module aptos_names_v2::v2_config {
 
     const CONFIG_OBJECT_SEED: vector<u8> = b"ANS v2 config";
 
-    const CONFIG_KEY_ENABLED: vector<u8> = b"enabled";
-    const CONFIG_KEY_ADMIN_ADDRESS: vector<u8> = b"admin_address";
-    const CONFIG_KEY_FUND_DESTINATION_ADDRESS: vector<u8> = b"fund_destination_address";
-    const CONFIG_KEY_MAX_NUMBER_OF_SECONDS_REGISTERED: vector<u8> = b"max_number_of_seconds_registered";
-    const CONFIG_KEY_MAX_DOMAIN_LENGTH: vector<u8> = b"max_domain_length";
-    const CONFIG_KEY_MIN_DOMAIN_LENGTH: vector<u8> = b"min_domain_length";
-    const CONFIG_KEY_TOKENDATA_DESCRIPTION: vector<u8> = b"tokendata_description";
-    const CONFIG_KEY_TOKENDATA_URL_PREFIX: vector<u8> = b"tokendata_url_prefix";
-    const CONFIG_KEY_DOMAIN_PRICE_PREFIX: vector<u8> = b"domain_price_";
-    const CONFIG_KEY_SUBDOMAIN_PRICE: vector<u8> = b"subdomain_price";
-    /// The number of seconds after a name expires that it can be re-registered
-    const CONFIG_KEY_REREGISTRATION_GRACE_SEC: vector<u8> = b"reregistration_grace_sec";
-
     const DOMAIN_COLLECTION_NAME: vector<u8> = b"Aptos Domain Names V2";
     const SUBDOMAIN_COLLECTION_NAME: vector<u8> = b"Aptos Subdomain Names V2";
 
