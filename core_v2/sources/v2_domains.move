@@ -231,8 +231,7 @@ module aptos_names_v2::v2_domains {
         move_to(&app_signer, SetReverseLookupEvents {
             set_reverse_lookup_events: account::new_event_handle<SetReverseLookupEvent>(&app_signer),
         });
-
-        move_to(account, App {
+        move_to(&app_signer, App {
             extend_ref,
         });
     }
@@ -919,7 +918,7 @@ module aptos_names_v2::v2_domains {
     }
 
     fun get_app_signer(): signer acquires App {
-        object::generate_signer_for_extending(&borrow_global<App>(@aptos_names_v2).extend_ref)
+        object::generate_signer_for_extending(&borrow_global<App>(get_app_signer_addr()).extend_ref)
     }
 
     inline fun get_token_addr_inline(
