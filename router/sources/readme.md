@@ -101,7 +101,7 @@ expiration will be automatically extended as well.
 
 ### Subdomain Management
 A domain owner can mint subdomains for free and transfer the ownership to other accounts. The expiration date of a subdomain 
-can be set in two ways: 
+can be set in three ways: 
 - The domain owner can set the expiration date of a subdomain to be the same as the domain expiration date.
 - The domain owner can manually set the expiration date of a subdomain to be any date before the domain expiration date. 
 - The domain owner can change the expiration settings for a subdomain at any time.
