@@ -147,10 +147,7 @@ module router::router {
     /// If the name is registered and active in v1, then the name can only be registered if we have burned the token (sent it to the router_signer)
     /// Else, the name can only be registered if it is available in v2 (we double check availablity for safety)
     inline fun can_register_in_v2(domain_name: String, subdomain_name: Option<String>): bool {
-        if (domains::name_is_registered(
-            subdomain_name,
-            domain_name
-        ) && !domains::name_is_expired(subdomain_name, domain_name)) {
+        if (!domains::name_is_expired(subdomain_name, domain_name)) {
             let (is_burned, _token_id) = domains::is_token_owner(
                 router_signer_addr(),
                 subdomain_name,
