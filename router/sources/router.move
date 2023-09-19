@@ -531,7 +531,7 @@ module router::router {
             if (option::is_some(&v1_primary_domain_name)) {
                 // If v1 primary name is a domain, migrate it to v2, this will automatically clear it as primary name in v1 and set again in v2
                 if (option::is_none(&v1_primary_subdomain_name)) {
-                    migrate_name(user, *option::borrow(&v1_primary_domain_name), v1_primary_subdomain_name);
+                    migrate_if_eligible(user, *option::borrow(&v1_primary_domain_name), v1_primary_subdomain_name);
                 } else {
                     // else v1 primary name is a subdomain, we only clear it but not migrate it, as migration could fail if its domain has not been migrated
                     domains::clear_reverse_lookup(user);
