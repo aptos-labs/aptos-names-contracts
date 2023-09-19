@@ -85,7 +85,7 @@ module router::router {
         router_config.pending_admin_addr = option::some(pending_admin_addr);
     }
 
-    /// Accept admin. Caller must be the pending admin
+    /// Accept to become admin. Caller must be the pending admin
     public entry fun accept_pending_admin(pending_admin: &signer) acquires RouterConfig {
         let router_config = borrow_global_mut<RouterConfig>(@router);
         assert!(option::is_some(&router_config.pending_admin_addr), error::invalid_state(ENO_PENDING_ADMIN));
@@ -443,7 +443,7 @@ module router::router {
 
     // ==== EXPIRATION ====
 
-    /// @notice Renews the domain. NOTE 1: Not available in MODE_V1. NOTE 2: Will attempt to migrate the name if applicable
+    /// @notice Renews the domain. NOTE 1: Not available in MODE_V1. NOTE 2: Will attempt to migrate the domain. For subdomains, the call may fail unless `migrate_name` is called directly on the subdomain first
     public entry fun renew_domain(
         user: &signer,
         domain_name: String,
@@ -498,7 +498,7 @@ module router::router {
         }
     }
 
-    /// @notice Updates a user's primary name. NOTE: Will attempt to migrate the name if applicable
+    /// @notice Updates a user's primary name. NOTE: Will attempt to migrate the domain. For subdomains, the call may fail unless `migrate_name` is called directly on the subdomain first
     public entry fun set_primary_name(
         user: &signer,
         domain_name: String,
@@ -528,7 +528,7 @@ module router::router {
         }
     }
 
-    /// @notice Clears a user's primary name. NOTE: Will attempt to migrate the name if applicable
+    /// @notice Clears a user's primary name. NOTE: Will attempt to migrate the domain. For subdomains, the call may fail unless `migrate_name` is called directly on the subdomain first
     public entry fun clear_primary_name(user: &signer) acquires RouterConfig {
         let mode = get_mode();
         if (mode == MODE_V1) {
@@ -553,7 +553,7 @@ module router::router {
 
     // ==== METADATA ====
 
-    /// @notice Update a name's target address. NOTE: Will attempt to migrate the name if applicable
+    /// @notice Update a name's target address. NOTE: Will attempt to migrate the domain. For subdomains, the call may fail unless `migrate_name` is called directly on the subdomain first
     public entry fun set_target_addr(
         user: &signer,
         domain_name: String,
@@ -581,7 +581,7 @@ module router::router {
         }
     }
 
-    /// @notice Clear a name's target address. NOTE: Will attempt to migrate the name if applicable
+    /// @notice Clear a name's target address. NOTE: Will attempt to migrate the domain. For subdomains, the call may fail unless `migrate_name` is called directly on the subdomain first
     public entry fun clear_target_addr(
         user: &signer,
         domain_name: String,
