@@ -75,6 +75,7 @@ module router::router {
 
     // == ROUTER MANAGEMENT WRITE FUNCTIONS ==
 
+    /// Sets the pending admin address. Caller must be the admin
     public entry fun set_pending_admin(
         router_admin: &signer,
         pending_admin_addr: address,
@@ -84,6 +85,7 @@ module router::router {
         router_config.pending_admin_addr = option::some(pending_admin_addr);
     }
 
+    /// Accept admin. Caller must be the pending admin
     public entry fun accept_pending_admin(pending_admin: &signer) acquires RouterConfig {
         let router_config = borrow_global_mut<RouterConfig>(@router);
         assert!(option::is_some(&router_config.pending_admin_addr), error::invalid_state(ENO_PENDING_ADMIN));
@@ -96,6 +98,7 @@ module router::router {
         router_config.pending_admin_addr = option::none();
     }
 
+    /// Change the router mode. See ROUTER MODE ENUMS
     public entry fun set_mode(
         router_admin: &signer,
         mode: u8,
@@ -162,6 +165,7 @@ module router::router {
         }
     }
 
+    /// @notice Registers a domain name
     /// @param user The user who is paying for the registration
     /// @param domain_name The domain name to register
     /// @param registration_duration_secs The duration of the registration in seconds
@@ -246,6 +250,7 @@ module router::router {
         };
     }
 
+    /// @notice Registers a subdomain name
     /// @param user The user who is paying for the registration
     /// @param domain_name The domain name to register
     /// @param subdomain_name The subdomain name to register
@@ -323,6 +328,7 @@ module router::router {
 
     // ==== MIGRATION ====
 
+    /// @notice Migrates a name to the current router mode
     public entry fun migrate_name(
         user: &signer,
         domain_name: String,
@@ -437,7 +443,7 @@ module router::router {
 
     // ==== EXPIRATION ====
 
-    // Not available in MODE_V1
+    /// @notice Renews the domain. NOTE 1: Not available in MODE_V1. NOTE 2: Will attempt to migrate the name if applicable
     public entry fun renew_domain(
         user: &signer,
         domain_name: String,
@@ -492,6 +498,7 @@ module router::router {
         }
     }
 
+    /// @notice Updates a user's primary name. NOTE: Will attempt to migrate the name if applicable
     public entry fun set_primary_name(
         user: &signer,
         domain_name: String,
@@ -521,6 +528,7 @@ module router::router {
         }
     }
 
+    /// @notice Clears a user's primary name. NOTE: Will attempt to migrate the name if applicable
     public entry fun clear_primary_name(user: &signer) acquires RouterConfig {
         let mode = get_mode();
         if (mode == MODE_V1) {
@@ -545,6 +553,7 @@ module router::router {
 
     // ==== METADATA ====
 
+    /// @notice Update a name's target address. NOTE: Will attempt to migrate the name if applicable
     public entry fun set_target_addr(
         user: &signer,
         domain_name: String,
@@ -572,6 +581,7 @@ module router::router {
         }
     }
 
+    /// @notice Clear a name's target address. NOTE: Will attempt to migrate the name if applicable
     public entry fun clear_target_addr(
         user: &signer,
         domain_name: String,
@@ -599,7 +609,7 @@ module router::router {
 
     // ==== DOMAIN ADMIN ====
 
-    /// Not available in MODE_V1
+    /// @notice Transfer a subdomain as the domain admin. NOTE: Not available in MODE_V1
     public entry fun domain_admin_transfer_subdomain(
         domain_admin: &signer,
         domain_name: String,
@@ -623,7 +633,7 @@ module router::router {
         }
     }
 
-    /// Not available in MODE_V1
+    /// @notice Toggle subdomain transferrability as the domain admin. NOTE: Not available in MODE_V1
     public entry fun domain_admin_set_subdomain_transferability(
         domain_admin: &signer,
         domain_name: String,
@@ -646,6 +656,7 @@ module router::router {
         }
     }
 
+    /// @notice Update subdomain expiration policy as the domain admin. NOTE: Not available in MODE_V1
     public entry fun domain_admin_set_subdomain_expiration_policy(
         domain_admin: &signer,
         domain_name: String,
@@ -668,6 +679,7 @@ module router::router {
         }
     }
 
+    /// @notice Update subdomain expiration as the domain admin. NOTE: Not available in MODE_V1
     public entry fun domain_admin_set_subdomain_expiration(
         domain_admin: &signer,
         domain_name: String,
