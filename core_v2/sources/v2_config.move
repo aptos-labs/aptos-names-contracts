@@ -49,33 +49,33 @@ module aptos_names_v2::v2_config {
     }
 
     public(friend) fun initialize_config(
-        framework: &signer,
+        deployer: &signer,
         admin_address: address,
         fund_destination_address: address
     ) acquires Config {
-        move_to(framework, Config {
+        move_to(deployer, Config {
             config: property_map::empty(),
         });
 
         // Temporarily set this to framework to allow other methods below to be set with framework signer
-        set(@aptos_names_v2, config_key_admin_address(), &signer::address_of(framework));
+        set(@aptos_names_v2, config_key_admin_address(), &signer::address_of(deployer));
 
-        set_is_enabled(framework, true);
+        set_is_enabled(deployer, true);
 
-        set_max_number_of_seconds_registered(framework, SECONDS_PER_YEAR * 2);
-        set_min_domain_length(framework, 3);
-        set_max_domain_length(framework, 63);
+        set_max_number_of_seconds_registered(deployer, SECONDS_PER_YEAR * 2);
+        set_min_domain_length(deployer, 3);
+        set_max_domain_length(deployer, 63);
 
         // TODO: SET THIS TO SOMETHING REAL
-        set_tokendata_description(framework, string::utf8(b"This is an official Aptos Labs Name Service Name"));
-        set_tokendata_url_prefix(framework, string::utf8(b"https://www.aptosnames.com/api/mainnet/v1/metadata/"));
+        set_tokendata_description(deployer, string::utf8(b"This is an official Aptos Labs Name Service Name"));
+        set_tokendata_url_prefix(deployer, string::utf8(b"https://www.aptosnames.com/api/mainnet/v1/metadata/"));
 
         // 0.2 APT
-        set_subdomain_price(framework, octas() / 5);
-        set_domain_price_for_length(framework, (80 * octas()), 3);
-        set_domain_price_for_length(framework, (40 * octas()), 4);
-        set_domain_price_for_length(framework, (20 * octas()), 5);
-        set_domain_price_for_length(framework, (5 * octas()), 6);
+        set_subdomain_price(deployer, octas() / 5);
+        set_domain_price_for_length(deployer, (80 * octas()), 3);
+        set_domain_price_for_length(deployer, (40 * octas()), 4);
+        set_domain_price_for_length(deployer, (20 * octas()), 5);
+        set_domain_price_for_length(deployer, (5 * octas()), 6);
 
         // We set it directly here to allow boostrapping the other values
         set(@aptos_names_v2, config_key_fund_destination_address(), &fund_destination_address);
