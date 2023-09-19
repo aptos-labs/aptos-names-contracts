@@ -49,11 +49,11 @@ module aptos_names_v2::v2_config {
     }
 
     public(friend) fun initialize_config(
-        framework: &signer,
+        deployer: &signer,
         admin_address: address,
         fund_destination_address: address
     ) {
-        move_to(framework, Config {
+        move_to(deployer, Config {
             enabled: true,
             admin_address,
             fund_destination_address,

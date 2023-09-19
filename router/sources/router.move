@@ -108,9 +108,9 @@ module router::router {
 
     // == ROUTER MANAGEMENT READ FUNCTIONS ==
 
-    inline fun get_router_signer(): signer acquires RouterConfig {
+    inline fun get_router_signer(): &signer acquires RouterConfig {
         let router_config = borrow_global<RouterConfig>(@router);
-        account::create_signer_with_capability(&router_config.signer_cap)
+        &account::create_signer_with_capability(&router_config.signer_cap)
     }
 
     inline fun router_signer_addr(): address acquires RouterConfig {
@@ -188,13 +188,13 @@ module router::router {
         } else if (mode == MODE_V1_AND_V2) {
             assert!(can_register_in_v2(domain_name, option::none()), error::unavailable(ENAME_NOT_AVAILABLE));
             v2_domains::register_domain(
-                &get_router_signer(),
+                get_router_signer(),
                 user,
                 domain_name,
                 registration_duration_secs,
             );
             // Clear the name in v1
-            domains::force_clear_registration(&get_router_signer(), option::none(), domain_name)
+            domains::force_clear_registration(get_router_signer(), option::none(), domain_name)
         } else {
             abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
         };
@@ -240,8 +240,7 @@ module router::router {
             return
         };
 
-        let has_primary_name = has_primary_name(user);
-        if (!has_primary_name) {
+        if (!has_primary_name(user)) {
             set_primary_name(user, domain_name, subdomain_name);
         };
     }
@@ -273,7 +272,7 @@ module router::router {
                 error::unavailable(ENAME_NOT_AVAILABLE)
             );
             v2_domains::register_subdomain(
-                &get_router_signer(),
+                get_router_signer(),
                 user,
                 domain_name,
                 subdomain_name,
@@ -285,7 +284,7 @@ module router::router {
                 subdomain_name,
                 expiration_policy,
             );
-            domains::force_clear_registration(&get_router_signer(), option::some(subdomain_name), domain_name)
+            domains::force_clear_registration(get_router_signer(), option::some(subdomain_name), domain_name)
         } else {
             abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
         };
@@ -304,7 +303,7 @@ module router::router {
         };
         if (mode == MODE_V1_AND_V2) {
             v2_domains::set_subdomain_transferability_as_domain_owner(
-                &get_router_signer(),
+                get_router_signer(),
                 user,
                 domain_name,
                 subdomain_name,
@@ -389,12 +388,16 @@ module router::router {
             let router_signer = get_router_signer();
             aptos_token::token::direct_transfer(
                 user,
-                &router_signer,
+                router_signer,
                 token_id,
                 1,
             );
 
-            // Calculate new expiration
+            // Calculate new expiration. Cases:
+            // 1. Name is a subdomain. Migrate the name with the same expiration
+            // 2. Name is a domain
+            //   a. it expires before AUTO_RENEWAL_EXPIRATION_CUTOFF_SEC. Migrate the name with an extra year to its existing expiration
+            //   b. it expires after AUTO_RENEWAL_EXPIRATION_CUTOFF_SEC. Migrate the name with the same expiration
             let now = timestamp::now_seconds();
             let new_expiration_time_sec = if (option::is_some(&subdomain_name)) {
                 expiration_time_sec
@@ -408,7 +411,7 @@ module router::router {
 
             // Mint token in v2
             v2_domains::register_name_with_router(
-                &router_signer,
+                router_signer,
                 user,
                 domain_name,
                 subdomain_name,
@@ -429,7 +432,7 @@ module router::router {
             };
 
             // Clear the name in v1. Will also clear the primary name if it was a primary name
-            domains::force_clear_registration(&router_signer, subdomain_name, domain_name)
+            domains::force_clear_registration(router_signer, subdomain_name, domain_name)
         } else {
             abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
         }
@@ -635,7 +638,7 @@ module router::router {
             abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
         } else if (mode == MODE_V1_AND_V2) {
             v2_domains::set_subdomain_transferability_as_domain_owner(
-                &get_router_signer(),
+                get_router_signer(),
                 domain_admin,
                 domain_name,
                 subdomain_name,

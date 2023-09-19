@@ -434,14 +434,6 @@ module aptos_names_v2::v2_domains {
         let price = v2_price_model::price_for_domain(length, renewal_duration_secs);
         // pay the price
         coin::transfer<AptosCoin>(sign, v2_config::fund_destination_address(), price);
-        renew_domain_internal(domain_name, renewal_duration_secs, price);
-    }
-
-    fun renew_domain_internal(
-        domain_name: String,
-        renewal_duration_secs: u64,
-        price: u64,
-    ) acquires CollectionCapability, NameRecord, RenewNameEvents, ReverseRecord {
         let record = get_record_mut(domain_name, option::none());
         record.expiration_time_sec = record.expiration_time_sec + renewal_duration_secs;
 
@@ -462,7 +454,6 @@ module aptos_names_v2::v2_domains {
         } else {
             false
         };
-
 
         // log the event
         event::emit_event<RenewNameEvent>(
