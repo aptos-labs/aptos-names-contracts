@@ -394,7 +394,11 @@ module router::router {
                 1,
             );
 
-            // Calculate new expiration
+            // Calculate new expiration. Cases:
+            // 1. Name is a subdomain. Migrate the name with the same expiration
+            // 2. Name is a domain
+            //   a. it expires before AUTO_RENEWAL_EXPIRATION_CUTOFF_SEC. Migrate the name with an extra year to its existing expiration
+            //   b. it expires after AUTO_RENEWAL_EXPIRATION_CUTOFF_SEC. Migrate the name with the same expiration
             let now = timestamp::now_seconds();
             let new_expiration_time_sec = if (option::is_some(&subdomain_name)) {
                 expiration_time_sec
