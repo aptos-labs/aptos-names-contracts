@@ -240,8 +240,7 @@ module router::router {
             return
         };
 
-        let has_primary_name = has_primary_name(user);
-        if (!has_primary_name) {
+        if (!has_primary_name(user)) {
             set_primary_name(user, domain_name, subdomain_name);
         };
     }
