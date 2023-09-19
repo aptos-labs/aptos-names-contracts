@@ -254,9 +254,9 @@ module aptos_names_v2::v2_config {
     use aptos_framework::timestamp;
 
     #[test_only]
-    public fun initialize_aptoscoin_for(framework: &signer) {
-        let (burn_cap, mint_cap) = aptos_framework::aptos_coin::initialize_for_test(framework);
-        coin::register<AptosCoin>(framework);
+    public fun initialize_aptoscoin_for(deployer: &signer) {
+        let (burn_cap, mint_cap) = aptos_framework::aptos_coin::initialize_for_test(deployer);
+        coin::register<AptosCoin>(deployer);
         coin::destroy_burn_cap(burn_cap);
         coin::destroy_mint_cap(mint_cap);
     }
