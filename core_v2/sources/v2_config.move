@@ -10,29 +10,11 @@ module aptos_names_v2::v2_config {
 
     use aptos_framework::account;
     use aptos_framework::aptos_account;
-    use aptos_std::ed25519::{Self, UnvalidatedPublicKey};
-    use aptos_names_v2::v2_string_validator;
-    use aptos_token::property_map::{Self, PropertyMap};
     use std::error;
     use std::signer;
     use std::string::{Self, String};
-    use std::vector;
 
-    const CONFIG_KEY_ENABLED: vector<u8> = b"enabled";
-    const CONFIG_KEY_ADMIN_ADDRESS: vector<u8> = b"admin_address";
-    const CONFIG_KEY_FUND_DESTINATION_ADDRESS: vector<u8> = b"fund_destination_address";
-    const CONFIG_KEY_MAX_NUMBER_OF_SECONDS_REGISTERED: vector<u8> = b"max_number_of_seconds_registered";
-    const CONFIG_KEY_MAX_DOMAIN_LENGTH: vector<u8> = b"max_domain_length";
-    const CONFIG_KEY_MIN_DOMAIN_LENGTH: vector<u8> = b"min_domain_length";
-    const CONFIG_KEY_TOKENDATA_DESCRIPTION: vector<u8> = b"tokendata_description";
-    const CONFIG_KEY_TOKENDATA_URL_PREFIX: vector<u8> = b"tokendata_url_prefix";
-    const CONFIG_KEY_DOMAIN_PRICE_PREFIX: vector<u8> = b"domain_price_";
-    const CONFIG_KEY_SUBDOMAIN_PRICE: vector<u8> = b"subdomain_price";
-    /// The number of seconds after a name expires that it can be re-registered
-    const CONFIG_KEY_REREGISTRATION_GRACE_SEC: vector<u8> = b"reregistration_grace_sec";
-
-    const DOMAIN_TYPE: vector<u8> = b"domain";
-    const SUBDOMAIN_TYPE: vector<u8> = b"subdomain";
+    const CONFIG_OBJECT_SEED: vector<u8> = b"ANS v2 config";
 
     const DOMAIN_COLLECTION_NAME: vector<u8> = b"Aptos Domain Names V2";
     const SUBDOMAIN_COLLECTION_NAME: vector<u8> = b"Aptos Subdomain Names V2";
@@ -41,47 +23,55 @@ module aptos_names_v2::v2_config {
     const ENOT_AUTHORIZED: u64 = 1;
     /// Raised if there is an invalid value for a configuration
     const EINVALID_VALUE: u64 = 2;
+    /// Domain length is invalid, it must be at least 3 characters
+    const EINVALID_DOMAIN_LENGTH: u64 = 3;
 
     const SECONDS_PER_YEAR: u64 = 60 * 60 * 24 * 365;
+    const SECONDS_PER_DAY: u64 = 60 * 60 * 24;
 
-    struct Config has key, store {
-        config: PropertyMap,
+    #[resource_group_member(group = aptos_framework::object::ObjectGroup)]
+    struct Config has key {
+        enabled: bool,
+        admin_address: address,
+        fund_destination_address: address,
+        max_number_of_seconds_registered: u64,
+        max_domain_length: u64,
+        min_domain_length: u64,
+        tokendata_description: String,
+        tokendata_url_prefix: String,
+        domain_price_length_3: u64,
+        domain_price_length_4: u64,
+        domain_price_length_5: u64,
+        domain_price_length_6_and_above: u64,
+        subdomain_price: u64,
+        /// The number of seconds after a name expires that it can be re-registered
+        reregistration_grace_sec: u64,
     }
 
     public(friend) fun initialize_config(
         deployer: &signer,
         admin_address: address,
         fund_destination_address: address
-    ) acquires Config {
+    ) {
         move_to(deployer, Config {
-            config: property_map::empty(),
-        });
-
-        // Temporarily set this to framework to allow other methods below to be set with framework signer
-        set(@aptos_names_v2, config_key_admin_address(), &signer::address_of(deployer));
-
-        set_is_enabled(deployer, true);
-
-        set_max_number_of_seconds_registered(deployer, SECONDS_PER_YEAR * 2);
-        set_min_domain_length(deployer, 3);
-        set_max_domain_length(deployer, 63);
-
-        // TODO: SET THIS TO SOMETHING REAL
-        set_tokendata_description(deployer, string::utf8(b"This is an official Aptos Labs Name Service Name"));
-        set_tokendata_url_prefix(deployer, string::utf8(b"https://www.aptosnames.com/api/mainnet/v1/metadata/"));
-
-        // 0.2 APT
-        set_subdomain_price(deployer, octas() / 5);
-        set_domain_price_for_length(deployer, (80 * octas()), 3);
-        set_domain_price_for_length(deployer, (40 * octas()), 4);
-        set_domain_price_for_length(deployer, (20 * octas()), 5);
-        set_domain_price_for_length(deployer, (5 * octas()), 6);
-
-        // We set it directly here to allow boostrapping the other values
-        set(@aptos_names_v2, config_key_fund_destination_address(), &fund_destination_address);
-        set(@aptos_names_v2, config_key_admin_address(), &admin_address);
+            enabled: true,
+            admin_address,
+            fund_destination_address,
+            max_number_of_seconds_registered: SECONDS_PER_YEAR * 2,
+            max_domain_length: 63,
+            min_domain_length: 3,
+            tokendata_description: string::utf8(b"This is an official Aptos Labs Name Service Name"),
+            tokendata_url_prefix: string::utf8(b"https://www.aptosnames.com/api/mainnet/v1/metadata/"),
+            domain_price_length_3: 20 * octas(),
+            domain_price_length_4: 10 * octas(),
+            domain_price_length_5: 5 * octas(),
+            domain_price_length_6_and_above: octas(),
+            // 0.2 APT
+            subdomain_price: octas() / 5,
+            // The number of seconds after a name expires that it can be re-registered
+            reregistration_grace_sec: 30 * SECONDS_PER_DAY,
+        })
     }
-
 
     //
     // Configuration Shortcuts
@@ -91,28 +81,78 @@ module aptos_names_v2::v2_config {
         100000000
     }
 
+    #[view]
     public fun is_enabled(): bool acquires Config {
-        read_bool(@aptos_names_v2, &config_key_enabled())
+        borrow_global<Config>(@aptos_names_v2).enabled
     }
 
+    #[view]
     public fun fund_destination_address(): address acquires Config {
-        read_address(@aptos_names_v2, &config_key_fund_destination_address())
+        borrow_global<Config>(@aptos_names_v2).fund_destination_address
     }
 
+    #[view]
     public fun admin_address(): address acquires Config {
-        read_address(@aptos_names_v2, &config_key_admin_address())
+        borrow_global<Config>(@aptos_names_v2).admin_address
     }
 
+    #[view]
     public fun max_number_of_seconds_registered(): u64 acquires Config {
-        read_u64(@aptos_names_v2, &config_key_max_number_of_seconds_registered())
+        borrow_global<Config>(@aptos_names_v2).max_number_of_seconds_registered
     }
 
+    #[view]
     public fun max_domain_length(): u64 acquires Config {
-        read_u64(@aptos_names_v2, &config_key_max_domain_length())
+        borrow_global<Config>(@aptos_names_v2).max_domain_length
     }
 
+    #[view]
     public fun min_domain_length(): u64 acquires Config {
-        read_u64(@aptos_names_v2, &config_key_min_domain_length())
+        borrow_global<Config>(@aptos_names_v2).min_domain_length
+    }
+
+    #[view]
+    public fun tokendata_description(): String acquires Config {
+        borrow_global<Config>(@aptos_names_v2).tokendata_description
+    }
+
+    #[view]
+    public fun tokendata_url_prefix(): String acquires Config {
+        borrow_global<Config>(@aptos_names_v2).tokendata_url_prefix
+    }
+
+    #[view]
+    public fun domain_collection_name(): String {
+        return string::utf8(DOMAIN_COLLECTION_NAME)
+    }
+
+    #[view]
+    public fun subdomain_collection_name(): String {
+        return string::utf8(SUBDOMAIN_COLLECTION_NAME)
+    }
+
+    #[view]
+    public fun domain_price_for_length(domain_length: u64): u64 acquires Config {
+        assert!(domain_length >= 3, error::invalid_argument(EINVALID_DOMAIN_LENGTH));
+        if (domain_length == 3) {
+            borrow_global<Config>(@aptos_names_v2).domain_price_length_3
+        } else if (domain_length == 4) {
+            borrow_global<Config>(@aptos_names_v2).domain_price_length_4
+        } else if (domain_length == 5) {
+            borrow_global<Config>(@aptos_names_v2).domain_price_length_5
+        } else {
+            borrow_global<Config>(@aptos_names_v2).domain_price_length_6_and_above
+        }
+    }
+
+    #[view]
+    public fun subdomain_price(): u64 acquires Config {
+        borrow_global<Config>(@aptos_names_v2).subdomain_price
+    }
+
+    #[view]
+    public fun reregistration_grace_sec(): u64 acquires Config {
+        borrow_global<Config>(@aptos_names_v2).reregistration_grace_sec
     }
 
     /// Admins will be able to intervene when necessary.
@@ -126,206 +166,78 @@ module aptos_names_v2::v2_config {
         assert!(signer_is_admin(sign), error::permission_denied(ENOT_AUTHORIZED));
     }
 
-    public fun tokendata_description(): String acquires Config {
-        read_string(@aptos_names_v2, &config_key_tokendata_description())
-    }
-
-    public fun tokendata_url_prefix(): String acquires Config {
-        read_string(@aptos_names_v2, &config_key_tokendata_url_prefix())
-    }
-
-    public fun domain_type(): String {
-        return string::utf8(DOMAIN_TYPE)
-    }
-
-    public fun subdomain_type(): String {
-        return string::utf8(SUBDOMAIN_TYPE)
-    }
-
-    public fun domain_collection_name(): String {
-        return string::utf8(DOMAIN_COLLECTION_NAME)
-    }
-
-    public fun subdomain_collection_name(): String {
-        return string::utf8(SUBDOMAIN_COLLECTION_NAME)
-    }
-
-    public fun domain_price_for_length(domain_length: u64): u64 acquires Config {
-        read_u64(@aptos_names_v2, &config_key_domain_price(domain_length))
-    }
-
-    public fun subdomain_price(): u64 acquires Config {
-        read_u64(@aptos_names_v2, &config_key_subdomain_price())
-    }
-
-    #[view]
-    public fun reregistration_grace_sec(): u64 acquires Config {
-        let key = config_key_reregistration_grace_sec();
-        let key_exists = property_map::contains_key(&borrow_global<Config>(@aptos_names).config, &key);
-        if (key_exists) {
-            read_u64(@aptos_names, &key)
-        } else {
-            // Default to 0 if key DNE
-            0
-        }
-    }
-
     //
     // Setters
     //
 
     public entry fun set_is_enabled(sign: &signer, enabled: bool) acquires Config {
         assert_signer_is_admin(sign);
-        set(@aptos_names_v2, config_key_enabled(), &enabled)
+        borrow_global_mut<Config>(@aptos_names_v2).enabled = enabled
     }
 
     public entry fun set_fund_destination_address(sign: &signer, addr: address) acquires Config {
         assert_signer_is_admin(sign);
         aptos_account::assert_account_is_registered_for_apt(addr);
-
-        set(@aptos_names_v2, config_key_fund_destination_address(), &addr)
+        borrow_global_mut<Config>(@aptos_names_v2).fund_destination_address = addr
     }
 
     public entry fun set_admin_address(sign: &signer, addr: address) acquires Config {
         assert_signer_is_admin(sign);
         assert!(account::exists_at(addr), error::invalid_argument(EINVALID_VALUE));
-        set(@aptos_names_v2, config_key_admin_address(), &addr)
+        borrow_global_mut<Config>(@aptos_names_v2).admin_address = addr
     }
 
     public entry fun set_max_number_of_seconds_registered(sign: &signer, max_seconds_registered: u64) acquires Config {
         assert_signer_is_admin(sign);
         assert!(max_seconds_registered > 0, error::invalid_argument(EINVALID_VALUE));
-        set(@aptos_names_v2, config_key_max_number_of_seconds_registered(), &max_seconds_registered)
+        borrow_global_mut<Config>(@aptos_names_v2).max_number_of_seconds_registered = max_seconds_registered
     }
 
     public entry fun set_max_domain_length(sign: &signer, domain_length: u64) acquires Config {
         assert_signer_is_admin(sign);
         assert!(domain_length > 0, error::invalid_argument(EINVALID_VALUE));
-        set(@aptos_names_v2, config_key_max_domain_length(), &domain_length)
+        borrow_global_mut<Config>(@aptos_names_v2).max_domain_length = domain_length
     }
 
     public entry fun set_min_domain_length(sign: &signer, domain_length: u64) acquires Config {
         assert_signer_is_admin(sign);
         assert!(domain_length > 0, error::invalid_argument(EINVALID_VALUE));
-        set(@aptos_names_v2, config_key_min_domain_length(), &domain_length)
+        borrow_global_mut<Config>(@aptos_names_v2).min_domain_length = domain_length
     }
 
     public entry fun set_tokendata_description(sign: &signer, description: String) acquires Config {
         assert_signer_is_admin(sign);
-        set(@aptos_names_v2, config_key_tokendata_description(), &description)
+        borrow_global_mut<Config>(@aptos_names_v2).tokendata_description = description
     }
 
-    public entry fun set_tokendata_url_prefix(sign: &signer, description: String) acquires Config {
+    public entry fun set_tokendata_url_prefix(sign: &signer, url_prefix: String) acquires Config {
         assert_signer_is_admin(sign);
-        set(@aptos_names_v2, config_key_tokendata_url_prefix(), &description)
+        borrow_global_mut<Config>(@aptos_names_v2).tokendata_url_prefix = url_prefix
     }
 
     public entry fun set_subdomain_price(sign: &signer, price: u64) acquires Config {
         assert_signer_is_admin(sign);
-        set(@aptos_names_v2, config_key_subdomain_price(), &price)
+        borrow_global_mut<Config>(@aptos_names_v2).subdomain_price = price
     }
 
     public entry fun set_domain_price_for_length(sign: &signer, price: u64, length: u64) acquires Config {
         assert_signer_is_admin(sign);
-        assert!(price > 0, error::invalid_argument(EINVALID_VALUE));
-        assert!(length > 0, error::invalid_argument(EINVALID_VALUE));
-        set(@aptos_names_v2, config_key_domain_price(length), &price)
+        assert!(length >= 3, error::invalid_argument(EINVALID_DOMAIN_LENGTH));
+        assert!(length >= 3, length);
+        if (length == 3) {
+            borrow_global_mut<Config>(@aptos_names_v2).domain_price_length_3 = price
+        } else if (length == 4) {
+            borrow_global_mut<Config>(@aptos_names_v2).domain_price_length_4 = price
+        } else if (length == 5) {
+            borrow_global_mut<Config>(@aptos_names_v2).domain_price_length_5 = price
+        } else {
+            borrow_global_mut<Config>(@aptos_names_v2).domain_price_length_6_and_above = price
+        }
     }
 
     public entry fun set_reregistration_grace_sec(sign: &signer, reregistration_grace_sec: u64) acquires Config {
         assert_signer_is_admin(sign);
-        set(@aptos_names, config_key_reregistration_grace_sec(), &reregistration_grace_sec);
-    }
-
-    //
-    // Configuration Methods
-    //
-
-    public fun config_key_enabled(): String {
-        string::utf8(CONFIG_KEY_ENABLED)
-    }
-
-    public fun config_key_admin_address(): String {
-        string::utf8(CONFIG_KEY_ADMIN_ADDRESS)
-    }
-
-    public fun config_key_fund_destination_address(): String {
-        string::utf8(CONFIG_KEY_FUND_DESTINATION_ADDRESS)
-    }
-
-    public fun config_key_max_number_of_seconds_registered(): String {
-        string::utf8(CONFIG_KEY_MAX_NUMBER_OF_SECONDS_REGISTERED)
-    }
-
-    public fun config_key_max_domain_length(): String {
-        string::utf8(CONFIG_KEY_MAX_DOMAIN_LENGTH)
-    }
-
-    public fun config_key_min_domain_length(): String {
-        string::utf8(CONFIG_KEY_MIN_DOMAIN_LENGTH)
-    }
-
-    public fun config_key_tokendata_description(): String {
-        string::utf8(CONFIG_KEY_TOKENDATA_DESCRIPTION)
-    }
-
-    public fun config_key_tokendata_url_prefix(): String {
-        string::utf8(CONFIG_KEY_TOKENDATA_URL_PREFIX)
-    }
-
-    public fun config_key_domain_price(domain_length: u64): String {
-        let key = string::utf8(CONFIG_KEY_DOMAIN_PRICE_PREFIX);
-        string::append(&mut key, v2_string_validator::u128_to_string((domain_length as u128)));
-        key
-    }
-
-    public fun config_key_subdomain_price(): String {
-        string::utf8(CONFIG_KEY_SUBDOMAIN_PRICE)
-    }
-
-    public fun config_key_reregistration_grace_sec(): String {
-        string::utf8(CONFIG_KEY_REREGISTRATION_GRACE_SEC)
-    }
-
-    fun set<T: copy>(addr: address, config_name: String, value: &T) acquires Config {
-        let map = &mut borrow_global_mut<Config>(addr).config;
-        let value = property_map::create_property_value(value);
-        if (property_map::contains_key(map, &config_name)) {
-            property_map::update_property_value(map, &config_name, value);
-        } else {
-            property_map::add(map, config_name, value);
-        };
-    }
-
-    public fun read_string(addr: address, key: &String): String acquires Config {
-        property_map::read_string(&borrow_global<Config>(addr).config, key)
-    }
-
-    public fun read_u8(addr: address, key: &String): u8 acquires Config {
-        property_map::read_u8(&borrow_global<Config>(addr).config, key)
-    }
-
-    public fun read_u64(addr: address, key: &String): u64 acquires Config {
-        property_map::read_u64(&borrow_global<Config>(addr).config, key)
-    }
-
-    public fun read_address(addr: address, key: &String): address acquires Config {
-        property_map::read_address(&borrow_global<Config>(addr).config, key)
-    }
-
-    public fun read_u128(addr: address, key: &String): u128 acquires Config {
-        property_map::read_u128(&borrow_global<Config>(addr).config, key)
-    }
-
-    public fun read_bool(addr: address, key: &String): bool acquires Config {
-        property_map::read_bool(&borrow_global<Config>(addr).config, key)
-    }
-
-    public fun read_unvalidated_public_key(addr: address, key: &String): UnvalidatedPublicKey acquires Config {
-        let value = property_map::borrow_value(property_map::borrow(&borrow_global<Config>(addr).config, key));
-        // remove the length of this vector recorded at index 0
-        vector::remove(&mut value, 0);
-        ed25519::new_unvalidated_public_key_from_bytes(value)
+        borrow_global_mut<Config>(@aptos_names_v2).reregistration_grace_sec = reregistration_grace_sec
     }
 
     //
@@ -342,21 +254,21 @@ module aptos_names_v2::v2_config {
     use aptos_framework::timestamp;
 
     #[test_only]
-    public fun initialize_aptoscoin_for(framework: &signer) {
-        let (burn_cap, mint_cap) = aptos_framework::aptos_coin::initialize_for_test(framework);
-        coin::register<AptosCoin>(framework);
+    public fun initialize_aptoscoin_for(deployer: &signer) {
+        let (burn_cap, mint_cap) = aptos_framework::aptos_coin::initialize_for_test(deployer);
+        coin::register<AptosCoin>(deployer);
         coin::destroy_burn_cap(burn_cap);
         coin::destroy_mint_cap(mint_cap);
     }
 
     #[test_only]
     public fun set_fund_destination_address_test_only(addr: address) acquires Config {
-        set(@aptos_names_v2, config_key_fund_destination_address(), &addr)
+        borrow_global_mut<Config>(@aptos_names_v2).fund_destination_address = addr;
     }
 
     #[test_only]
     public fun set_admin_address_test_only(addr: address) acquires Config {
-        set(@aptos_names_v2, config_key_admin_address(), &addr)
+        borrow_global_mut<Config>(@aptos_names_v2).admin_address = addr
     }
 
     #[test_only]
@@ -364,7 +276,7 @@ module aptos_names_v2::v2_config {
         timestamp::set_time_has_started_for_testing(aptos);
         initialize_aptoscoin_for(aptos);
         initialize_config(aptos_names_v2, @aptos_names_v2, @aptos_names_v2);
-        set_admin_address_test_only(signer::address_of(aptos_names_v2));
+        set_admin_address_test_only(@aptos_names_v2);
     }
 
     #[test(myself = @aptos_names_v2)]
@@ -372,7 +284,7 @@ module aptos_names_v2::v2_config {
         account::create_account_for_test(signer::address_of(&myself));
 
         initialize_config(&myself, @aptos_names_v2, @aptos_names_v2);
-        set(@aptos_names_v2, config_key_admin_address(), &@aptos_names_v2);
+        set_fund_destination_address_test_only(@aptos_names_v2);
 
         set_tokendata_description(&myself, string::utf8(b"test description"));
         assert!(tokendata_description() == string::utf8(b"test description"), 1);
@@ -386,7 +298,7 @@ module aptos_names_v2::v2_config {
         account::create_account_for_test(signer::address_of(&myself));
 
         initialize_config(&myself, @aptos_names_v2, @aptos_names_v2);
-        set(@aptos_names_v2, config_key_admin_address(), &@aptos_names_v2);
+        set_fund_destination_address_test_only(@aptos_names_v2);
 
         set_tokendata_description(&myself, string::utf8(b"test description"));
         assert!(tokendata_description() == string::utf8(b"test description"), 1);

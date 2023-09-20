@@ -105,7 +105,7 @@ module aptos_names_v2::v2_domain_e2e_tests {
         rando = @0x266f,
         foundation = @0xf01d
     )]
-    fun test_names_are_registerable_after_expiry(
+    fun test_names_are_registerable_after_expiry_and_past_grace_period(
         router_signer: &signer,
         aptos_names_v2: &signer,
         user: signer,
@@ -120,9 +120,9 @@ module aptos_names_v2::v2_domain_e2e_tests {
         // Register the domain
         v2_test_helper::register_name(router_signer, user, option::none(), v2_test_helper::domain_name(), v2_test_helper::one_year_secs(), v2_test_helper::fq_domain_name(), 1);
 
-        // Set the time past the domain's expiration time
+        // Set the time past the domain's expiration time and past grace period
         let expiration_time_sec = v2_domains::get_expiration(v2_test_helper::domain_name(), option::none());
-        timestamp::update_global_time_for_test_secs(expiration_time_sec + 5);
+        timestamp::update_global_time_for_test_secs(expiration_time_sec + v2_config::reregistration_grace_sec() + 5);
 
         // It should now be: expired, registered, AND registerable
         assert!(v2_domains::is_name_expired(v2_test_helper::domain_name(), option::none()), 80);
@@ -137,7 +137,7 @@ module aptos_names_v2::v2_domain_e2e_tests {
 
         // And again!
         let expiration_time_sec = v2_domains::get_expiration(v2_test_helper::domain_name(), option::none());
-        timestamp::update_global_time_for_test_secs(expiration_time_sec + 5);
+        timestamp::update_global_time_for_test_secs(expiration_time_sec + v2_config::reregistration_grace_sec() + 5);
 
         // It should now be: expired, registered, AND registerable
         assert!(v2_domains::is_name_expired(v2_test_helper::domain_name(), option::none()), 80);
