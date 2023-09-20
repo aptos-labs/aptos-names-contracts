@@ -54,7 +54,7 @@ module router::router {
     // == STRUCTS ==
 
     struct RouterConfig has key {
-        pending_admin_addr: address,
+        pending_admin_addr: Option<address>,
         admin_addr: address,
         mode: u8,
         signer_cap: SignerCapability,
@@ -66,7 +66,7 @@ module router::router {
             ROUTER_SIGNER_SEED,
         );
         move_to(deployer, RouterConfig {
-            pending_admin_addr: @0x0,
+            pending_admin_addr: option::none(),
             admin_addr: signer::address_of(deployer),
             mode: MODE_V1,
             signer_cap,
@@ -82,18 +82,18 @@ module router::router {
     ) acquires RouterConfig {
         let router_config = borrow_global_mut<RouterConfig>(@router);
         assert!(router_config.admin_addr == signer::address_of(router_admin), error::permission_denied(ENOT_ADMIN));
-        router_config.pending_admin_addr = pending_admin_addr;
+        router_config.pending_admin_addr = option::some(pending_admin_addr);
     }
 
     /// Accept to become admin. Caller must be the pending admin
     public entry fun accept_pending_admin(pending_admin: &signer) acquires RouterConfig {
         let router_config = borrow_global_mut<RouterConfig>(@router);
         assert!(
-            router_config.pending_admin_addr == signer::address_of(pending_admin),
+            router_config.pending_admin_addr == option::some(signer::address_of(pending_admin)),
             error::permission_denied(ENOT_PENDING_ADMIN)
         );
-        router_config.admin_addr = router_config.pending_admin_addr;
-        router_config.pending_admin_addr = @0x0;
+        router_config.admin_addr = *option::borrow(&router_config.pending_admin_addr);
+        router_config.pending_admin_addr = option::none();
     }
 
     /// Change the router mode. See ROUTER MODE ENUMS
@@ -127,7 +127,7 @@ module router::router {
     }
 
     #[view]
-    public fun get_pending_admin_addr(): address acquires RouterConfig {
+    public fun get_pending_admin_addr(): Option<address> acquires RouterConfig {
         borrow_global<RouterConfig>(@router).pending_admin_addr
     }
 
