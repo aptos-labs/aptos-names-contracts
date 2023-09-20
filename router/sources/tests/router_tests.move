@@ -29,7 +29,7 @@ module router::router_tests {
         router::init_module_for_test(router);
         router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user, &aptos, rando, &foundation);
         assert!(router::get_admin_addr() == @router, 0);
-        assert!(option::is_none(&router::get_pending_admin_addr()), 1);
+        assert!(router::get_pending_admin_addr() == @0x0, 1);
         assert!(router::get_mode() == 0, 2)
     }
 
@@ -58,11 +58,11 @@ module router::router_tests {
 
         router::set_pending_admin(router, user_addr);
         assert!(router::get_admin_addr() == @router, 0);
-        assert!(option::extract(&mut router::get_pending_admin_addr()) == user_addr, 1);
+        assert!(router::get_pending_admin_addr() == user_addr, 1);
 
         router::accept_pending_admin(user);
         assert!(router::get_admin_addr() == user_addr, 0);
-        assert!(option::is_none(&router::get_pending_admin_addr()), 1);
+        assert!(router::get_pending_admin_addr() == @0x0, 1);
     }
 
     #[test(
@@ -91,7 +91,7 @@ module router::router_tests {
 
         router::set_pending_admin(router, user_addr);
         assert!(router::get_admin_addr() == @router, 0);
-        assert!(option::extract(&mut router::get_pending_admin_addr()) == user_addr, 1);
+        assert!(router::get_pending_admin_addr() == user_addr, 1);
 
         router::accept_pending_admin(router);
     }

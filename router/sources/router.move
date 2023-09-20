@@ -7,7 +7,7 @@ module router::router {
     use aptos_names_v2::v2_domains;
     use std::error;
     use std::option::{Self, Option};
-    use std::signer::address_of;
+    use std::signer;
     use std::string::{String};
 
     // == ROUTER MODE ENUMS ==
@@ -54,7 +54,7 @@ module router::router {
     // == STRUCTS ==
 
     struct RouterConfig has key {
-        pending_admin_addr: Option<address>,
+        pending_admin_addr: address,
         admin_addr: address,
         mode: u8,
         signer_cap: SignerCapability,
@@ -66,8 +66,8 @@ module router::router {
             ROUTER_SIGNER_SEED,
         );
         move_to(deployer, RouterConfig {
-            pending_admin_addr: option::none(),
-            admin_addr: address_of(deployer),
+            pending_admin_addr: @0x0,
+            admin_addr: signer::address_of(deployer),
             mode: MODE_V1,
             signer_cap,
         });
@@ -81,21 +81,19 @@ module router::router {
         pending_admin_addr: address,
     ) acquires RouterConfig {
         let router_config = borrow_global_mut<RouterConfig>(@router);
-        assert!(router_config.admin_addr == address_of(router_admin), error::permission_denied(ENOT_ADMIN));
-        router_config.pending_admin_addr = option::some(pending_admin_addr);
+        assert!(router_config.admin_addr == signer::address_of(router_admin), error::permission_denied(ENOT_ADMIN));
+        router_config.pending_admin_addr = pending_admin_addr;
     }
 
     /// Accept to become admin. Caller must be the pending admin
     public entry fun accept_pending_admin(pending_admin: &signer) acquires RouterConfig {
         let router_config = borrow_global_mut<RouterConfig>(@router);
-        assert!(option::is_some(&router_config.pending_admin_addr), error::invalid_state(ENO_PENDING_ADMIN));
-        let pending_admin_addr = address_of(pending_admin);
         assert!(
-            option::extract(&mut router_config.pending_admin_addr) == pending_admin_addr,
+            router_config.pending_admin_addr == signer::address_of(pending_admin),
             error::permission_denied(ENOT_PENDING_ADMIN)
         );
-        router_config.admin_addr = pending_admin_addr;
-        router_config.pending_admin_addr = option::none();
+        router_config.admin_addr = router_config.pending_admin_addr;
+        router_config.pending_admin_addr = @0x0;
     }
 
     /// Change the router mode. See ROUTER MODE ENUMS
@@ -105,7 +103,7 @@ module router::router {
     ) acquires RouterConfig {
         assert!(is_valid_mode(mode), error::invalid_argument(EINVALID_MODE));
         let router_config = borrow_global_mut<RouterConfig>(@router);
-        assert!(router_config.admin_addr == address_of(router_admin), error::permission_denied(ENOT_ADMIN));
+        assert!(router_config.admin_addr == signer::address_of(router_admin), error::permission_denied(ENOT_ADMIN));
         router_config.mode = mode;
     }
 
@@ -132,7 +130,7 @@ module router::router {
     }
 
     #[view]
-    public fun get_pending_admin_addr(): Option<address> acquires RouterConfig {
+    public fun get_pending_admin_addr(): address acquires RouterConfig {
         let router_config = borrow_global<RouterConfig>(@router);
         router_config.pending_admin_addr
     }
@@ -229,7 +227,7 @@ module router::router {
         domain_name: String,
         subdomain_name: Option<String>,
     ) acquires RouterConfig {
-        let owner_addr = address_of(user);
+        let owner_addr = signer::address_of(user);
 
         // if the owner address is not the buyer address
         if (option::is_some(&to_addr) && to_addr != option::some(owner_addr)) {
@@ -334,7 +332,7 @@ module router::router {
         if (mode == MODE_V1) {
             abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
         } else if (mode == MODE_V1_AND_V2) {
-            let user_addr = address_of(user);
+            let user_addr = signer::address_of(user);
             // Check name is not already migrated
             assert!(
                 !exists_in_v2(domain_name, subdomain_name),
@@ -469,7 +467,7 @@ module router::router {
         // Migrate if the name is still in v1 and is a domain.
         // We do not migrate the subdomain because it might fail due to domain hasn't been migrated
         if (!exists_in_v2(domain_name, subdomain_name) && is_v1_name_owner(
-            address_of(user),
+            signer::address_of(user),
             domain_name,
             subdomain_name
         )) {
@@ -488,10 +486,10 @@ module router::router {
     ): bool acquires RouterConfig {
         let mode = get_mode();
         if (mode == MODE_V1) {
-            let reverse_lookup_result = domains::get_reverse_lookup(address_of(user));
+            let reverse_lookup_result = domains::get_reverse_lookup(signer::address_of(user));
             return (option::is_some(&reverse_lookup_result))
         } else if (mode == MODE_V1_AND_V2) {
-            let reverse_lookup_result = v2_domains::get_reverse_lookup(address_of(user));
+            let reverse_lookup_result = v2_domains::get_reverse_lookup(signer::address_of(user));
             return (option::is_some(&reverse_lookup_result))
         } else {
             abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
