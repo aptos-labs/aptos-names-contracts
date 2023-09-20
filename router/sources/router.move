@@ -140,18 +140,20 @@ module router::router {
 
     // ==== REGISTRATION ====
 
-    /// If the name is registered and active in v1, then the name can only be registered if we have burned the token (sent it to the router_signer)
-    /// Else, the name can only be registered if it is available in v2 (we double check availablity for safety)
+    /// If the name is registerable in v1, the name can only be registered if it is also available in v2.
+    /// Else the name is registered and active in v1, then the name can only be registered if we have burned the token
+    /// (sent it to the router_signer)
     fun can_register_in_v2(domain_name: String, subdomain_name: Option<String>): bool acquires RouterConfig {
-        if (!domains::name_is_expired_past_grace(subdomain_name, domain_name)) {
+        let registerable_in_v1 = domains::name_is_expired_past_grace(subdomain_name, domain_name);
+        if (registerable_in_v1) {
+            v2_domains::is_name_registerable(domain_name, subdomain_name)
+        } else {
             let (is_burned, _token_id) = domains::is_token_owner(
                 router_signer_addr(),
                 subdomain_name,
                 domain_name
             );
             is_burned
-        } else {
-            v2_domains::is_name_registerable(domain_name, subdomain_name)
         }
     }
 
@@ -507,7 +509,7 @@ module router::router {
         } else if (mode == MODE_V1_AND_V2) {
             migrate_if_eligible(user, domain_name, subdomain_name);
             // Clear primary name in v1 if exists so we do not have primary name in both v1 and v2
-            let (_, v1_primary_domain_name) = get_v1_primary_name(address_of(user));
+            let (_, v1_primary_domain_name) = get_v1_primary_name(signer::address_of(user));
             if (option::is_some(&v1_primary_domain_name)) {
                 domains::clear_reverse_lookup(user);
             };
@@ -528,7 +530,7 @@ module router::router {
             domains::clear_reverse_lookup(user);
         } else if (mode == MODE_V1_AND_V2) {
             // Clear primary name in v1 if exists so we do not have primary name in both v1 and v2
-            let (v1_primary_subdomain_name, v1_primary_domain_name) = get_v1_primary_name(address_of(user));
+            let (v1_primary_subdomain_name, v1_primary_domain_name) = get_v1_primary_name(signer::address_of(user));
             if (option::is_some(&v1_primary_domain_name)) {
                 // If v1 primary name is a domain, migrate it to v2, this will automatically clear it as primary name in v1 and set again in v2
                 if (option::is_none(&v1_primary_subdomain_name)) {

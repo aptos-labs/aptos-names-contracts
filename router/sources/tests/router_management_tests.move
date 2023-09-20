@@ -2,7 +2,6 @@
 module router::router_management_tests {
     use router::router;
     use router::router_test_helper;
-    use std::option;
     use std::signer::address_of;
     use std::vector;
 
