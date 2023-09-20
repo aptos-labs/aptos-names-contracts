@@ -110,13 +110,11 @@ module router::router {
     // == ROUTER MANAGEMENT READ FUNCTIONS ==
 
     inline fun get_router_signer(): &signer acquires RouterConfig {
-        let router_config = borrow_global<RouterConfig>(@router);
-        &account::create_signer_with_capability(&router_config.signer_cap)
+        &account::create_signer_with_capability(&borrow_global<RouterConfig>(@router).signer_cap)
     }
 
     inline fun router_signer_addr(): address acquires RouterConfig {
-        let router_config = borrow_global<RouterConfig>(@router);
-        account::get_signer_capability_address(&router_config.signer_cap)
+        signer::address_of(get_router_signer())
     }
 
     inline fun is_valid_mode(mode: u8): bool {
@@ -125,20 +123,17 @@ module router::router {
 
     #[view]
     public fun get_admin_addr(): address acquires RouterConfig {
-        let router_config = borrow_global<RouterConfig>(@router);
-        router_config.admin_addr
+        borrow_global<RouterConfig>(@router).admin_addr
     }
 
     #[view]
     public fun get_pending_admin_addr(): address acquires RouterConfig {
-        let router_config = borrow_global<RouterConfig>(@router);
-        router_config.pending_admin_addr
+        borrow_global<RouterConfig>(@router).pending_admin_addr
     }
 
     #[view]
     public fun get_mode(): u8 acquires RouterConfig {
-        let router_config = borrow_global<RouterConfig>(@router);
-        router_config.mode
+        borrow_global<RouterConfig>(@router).mode
     }
 
     // == ROUTER WRITE FUNCTIONS ==
@@ -147,7 +142,7 @@ module router::router {
 
     /// If the name is registered and active in v1, then the name can only be registered if we have burned the token (sent it to the router_signer)
     /// Else, the name can only be registered if it is available in v2 (we double check availablity for safety)
-    inline fun can_register_in_v2(domain_name: String, subdomain_name: Option<String>): bool {
+    fun can_register_in_v2(domain_name: String, subdomain_name: Option<String>): bool acquires RouterConfig {
         if (!domains::name_is_expired_past_grace(subdomain_name, domain_name)) {
             let (is_burned, _token_id) = domains::is_token_owner(
                 router_signer_addr(),
