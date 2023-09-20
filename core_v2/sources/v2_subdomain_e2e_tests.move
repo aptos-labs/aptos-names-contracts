@@ -7,6 +7,7 @@ module aptos_names_v2::v2_subdomain_e2e_tests {
     use std::option;
     use std::signer;
     use std::vector;
+    use aptos_names_v2::v2_config;
 
     const MAX_REMAINING_TIME_FOR_RENEWAL_SEC: u64 = 15552000;
     const SECONDS_PER_YEAR: u64 = 60 * 60 * 24 * 365;
@@ -510,7 +511,7 @@ module aptos_names_v2::v2_subdomain_e2e_tests {
         rando = @0x266f,
         foundation = @0xf01d
     )]
-    fun test_names_are_registerable_after_expiry_e2e(
+    fun test_names_are_registerable_after_expiry_past_grace_e2e(
         router_signer: &signer,
         aptos_names_v2: &signer,
         user: signer,
@@ -530,9 +531,9 @@ module aptos_names_v2::v2_subdomain_e2e_tests {
         // Set the subdomain auto-renewal policy to false
         v2_domains::set_subdomain_expiration_policy(user, v2_test_helper::domain_name(), v2_test_helper::subdomain_name(), 0);
 
-        // Set the time past the domain's expiration time
+        // Set the time past the domain's expiration time and past grace period
         let expiration_time_sec = v2_domains::get_expiration(v2_test_helper::domain_name(), option::some(v2_test_helper::subdomain_name()));
-        timestamp::update_global_time_for_test_secs(expiration_time_sec + 5);
+        timestamp::update_global_time_for_test_secs(expiration_time_sec + v2_config::reregistration_grace_sec() + 5);
 
         // The domain should now be: expired, registered, AND registerable
         assert!(v2_domains::is_name_expired(v2_test_helper::domain_name(), option::none()), 80);
@@ -565,7 +566,7 @@ module aptos_names_v2::v2_subdomain_e2e_tests {
 
         // And again!
         let expiration_time_sec = v2_domains::get_expiration(v2_test_helper::domain_name(), option::some(v2_test_helper::subdomain_name()));
-        timestamp::update_global_time_for_test_secs(expiration_time_sec + 5);
+        timestamp::update_global_time_for_test_secs(expiration_time_sec + v2_config::reregistration_grace_sec() + 5);
 
 
         // The domain should now be: expired, registered, AND registerable

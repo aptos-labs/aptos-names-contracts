@@ -121,7 +121,7 @@ module aptos_names_v2::v2_test_helper {
                 string::length(&domain_name),
                 registration_duration_secs
             );
-            assert!(domain_price / v2_config::octas() == 40, domain_price / v2_config::octas());
+            assert!(domain_price / v2_config::octas() == 10, domain_price / v2_config::octas());
             expected_user_balance_after = user_balance_before - domain_price;
         };
 

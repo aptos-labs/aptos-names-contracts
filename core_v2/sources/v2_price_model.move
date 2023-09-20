@@ -39,20 +39,19 @@ module aptos_names_v2::v2_price_model {
         v2_config::initialize_config(myself, @aptos_names_v2, @aptos_names_v2);
 
         v2_config::set_subdomain_price(myself, v2_config::octas() / 5);
-        v2_config::set_domain_price_for_length(myself, (100 * v2_config::octas()), 2);
         v2_config::set_domain_price_for_length(myself, (60 * v2_config::octas()), 3);
         v2_config::set_domain_price_for_length(myself, (30 * v2_config::octas()), 4);
         v2_config::set_domain_price_for_length(myself, (15 * v2_config::octas()), 5);
         v2_config::set_domain_price_for_length(myself, (5 * v2_config::octas()), 6);
 
-        let price = price_for_domain(2, SECONDS_PER_YEAR) / v2_config::octas();
-        assert!(price == 100, price);
+        let price = price_for_domain(3, SECONDS_PER_YEAR) / v2_config::octas();
+        assert!(price == 60, price);
 
         let price = price_for_domain(4, SECONDS_PER_YEAR) / v2_config::octas();
         assert!(price == 30, price);
 
-        let price = price_for_domain(2, 3 * SECONDS_PER_YEAR) / v2_config::octas();
-        assert!(price == 300, price);
+        let price = price_for_domain(4, 3 * SECONDS_PER_YEAR) / v2_config::octas();
+        assert!(price == 90, price);
 
         let price = price_for_domain(5, SECONDS_PER_YEAR) / v2_config::octas();
         assert!(price == 15, price);
