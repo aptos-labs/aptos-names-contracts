@@ -5,8 +5,8 @@ This includes things like the maximum number of years that a name can be registe
 Anyone can read, but only admins can write, as all write methods are gated via permissions checks
 */
 
-module aptos_names_v2::v2_config {
-    friend aptos_names_v2::v2_domains;
+module aptos_names_v2::v2_1_config {
+    friend aptos_names_v2::v2_1_domains;
 
     use aptos_framework::account;
     use aptos_framework::aptos_account;
@@ -245,7 +245,7 @@ module aptos_names_v2::v2_config {
     //
 
     #[test_only]
-    friend aptos_names_v2::v2_price_model;
+    friend aptos_names_v2::v2_1_price_model;
     #[test_only]
     use aptos_framework::coin;
     #[test_only]
@@ -357,7 +357,7 @@ module aptos_names_v2::v2_config {
     }
 
     #[test(myself = @aptos_names_v2, rando = @0x266f, aptos = @0x1)]
-    #[expected_failure(abort_code = 327681, location = aptos_names_v2::v2_config)]
+    #[expected_failure(abort_code = 327681, location = aptos_names_v2::v2_1_config)]
     fun test_foundation_config_requires_admin(myself: &signer, rando: &signer, aptos: &signer) acquires Config {
         account::create_account_for_test(signer::address_of(myself));
         account::create_account_for_test(signer::address_of(rando));
@@ -371,7 +371,7 @@ module aptos_names_v2::v2_config {
     }
 
     #[test(myself = @aptos_names_v2, rando = @0x266f, aptos = @0x1)]
-    #[expected_failure(abort_code = 327681, location = aptos_names_v2::v2_config)]
+    #[expected_failure(abort_code = 327681, location = aptos_names_v2::v2_1_config)]
     fun test_admin_config_requires_admin(myself: &signer, rando: &signer, aptos: &signer) acquires Config {
         account::create_account_for_test(signer::address_of(myself));
         account::create_account_for_test(signer::address_of(rando));

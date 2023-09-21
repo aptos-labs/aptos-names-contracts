@@ -57,10 +57,10 @@ module router::subdomain_transfer_tests {
         );
         assert!(router::is_name_owner(user2_addr, domain_name, subdomain_name_opt), 0);
         // Subdomain owner should not be able to transfer it now
-        let token_addr = aptos_names_v2::v2_domains::get_token_addr(domain_name, subdomain_name_opt);
+        let token_addr = aptos_names_v2::v2_1_domains::get_token_addr(domain_name, subdomain_name_opt);
         object::transfer(
             user2,
-            object::address_to_object<aptos_names_v2::v2_domains::NameRecord>(token_addr),
+            object::address_to_object<aptos_names_v2::v2_1_domains::NameRecord>(token_addr),
             user1_addr,
         );
     }
@@ -113,10 +113,10 @@ module router::subdomain_transfer_tests {
         // Disable owner transfer as domain admin
         router::domain_admin_set_subdomain_transferability(user1, domain_name, subdomain_name, false);
         // Subdomain owner should not be able to transfer it now
-        let token_addr = aptos_names_v2::v2_domains::get_token_addr(domain_name, subdomain_name_opt);
+        let token_addr = aptos_names_v2::v2_1_domains::get_token_addr(domain_name, subdomain_name_opt);
         object::transfer(
             user2,
-            object::address_to_object<aptos_names_v2::v2_domains::NameRecord>(token_addr),
+            object::address_to_object<aptos_names_v2::v2_1_domains::NameRecord>(token_addr),
             user1_addr,
         );
     }
@@ -168,10 +168,10 @@ module router::subdomain_transfer_tests {
         // Enable owner transfer as domain admin
         router::domain_admin_set_subdomain_transferability(user1, domain_name, subdomain_name, true);
         // Subdomain owner should be able to transfer it now
-        let token_addr = aptos_names_v2::v2_domains::get_token_addr(domain_name, subdomain_name_opt);
+        let token_addr = aptos_names_v2::v2_1_domains::get_token_addr(domain_name, subdomain_name_opt);
         object::transfer(
             user2,
-            object::address_to_object<aptos_names_v2::v2_domains::NameRecord>(token_addr),
+            object::address_to_object<aptos_names_v2::v2_1_domains::NameRecord>(token_addr),
             user1_addr,
         );
         assert!(router::is_name_owner(user1_addr, domain_name, subdomain_name_opt), 1);

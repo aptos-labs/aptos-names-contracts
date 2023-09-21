@@ -99,35 +99,35 @@ module bulk::bulk_tests {
         // Verify names exist in v2 now
         {
             assert!(
-                aptos_names_v2::v2_domains::is_token_owner(
+                aptos_names_v2::v2_1_domains::is_token_owner(
                     user1_addr,
                     domain_name1,
                     option::none()
-                ) && !aptos_names_v2::v2_domains::is_name_expired(domain_name1, option::none()),
+                ) && !aptos_names_v2::v2_1_domains::is_name_expired(domain_name1, option::none()),
                 3
             );
             assert!(
-                aptos_names_v2::v2_domains::is_token_owner(
+                aptos_names_v2::v2_1_domains::is_token_owner(
                     user1_addr,
                     domain_name1,
                     subdomain_name_opt,
-                ) && !aptos_names_v2::v2_domains::is_name_expired(domain_name1, subdomain_name_opt),
+                ) && !aptos_names_v2::v2_1_domains::is_name_expired(domain_name1, subdomain_name_opt),
                 4
             );
             assert!(
-                aptos_names_v2::v2_domains::is_token_owner(
+                aptos_names_v2::v2_1_domains::is_token_owner(
                     user1_addr,
                     domain_name2,
                     option::none()
-                ) && !aptos_names_v2::v2_domains::is_name_expired(domain_name2, option::none()),
+                ) && !aptos_names_v2::v2_1_domains::is_name_expired(domain_name2, option::none()),
                 3
             );
             assert!(
-                aptos_names_v2::v2_domains::is_token_owner(
+                aptos_names_v2::v2_1_domains::is_token_owner(
                     user1_addr,
                     domain_name2,
                     subdomain_name_opt,
-                ) && !aptos_names_v2::v2_domains::is_name_expired(domain_name2, subdomain_name_opt),
+                ) && !aptos_names_v2::v2_1_domains::is_name_expired(domain_name2, subdomain_name_opt),
                 4
             );
         }

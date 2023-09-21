@@ -28,7 +28,7 @@ module router::renewal_domain_tests {
         domain_name: String,
         subdomain_name: Option<String>
     ): u64 {
-        let expiration_time_sec = aptos_names_v2::v2_domains::get_expiration(domain_name, subdomain_name);
+        let expiration_time_sec = aptos_names_v2::v2_1_domains::get_expiration(domain_name, subdomain_name);
         expiration_time_sec
     }
 
@@ -137,8 +137,8 @@ module router::renewal_domain_tests {
             let (is_v1_owner, _) = aptos_names::domains::is_token_owner(user_addr, option::none(), domain_name);
             assert!(!is_v1_owner, 1);
             // v2 name should be owned by user
-            assert!(aptos_names_v2::v2_domains::is_token_owner(user_addr, domain_name, option::none()), 2);
-            assert!(!aptos_names_v2::v2_domains::is_name_expired(domain_name, option::none()), 3);
+            assert!(aptos_names_v2::v2_1_domains::is_token_owner(user_addr, domain_name, option::none()), 2);
+            assert!(!aptos_names_v2::v2_1_domains::is_name_expired(domain_name, option::none()), 3);
             // v2 name expiration should be 1 year after original expiration
             assert!(
                 get_v2_expiration(
@@ -159,7 +159,7 @@ module router::renewal_domain_tests {
         aptos = @0x1,
         foundation = @0xf01d
     )]
-    #[expected_failure(abort_code = 196626, location = aptos_names_v2::v2_domains)]
+    #[expected_failure(abort_code = 196626, location = aptos_names_v2::v2_1_domains)]
     fun test_renew_v1_name_eligible_for_free_extension_should_trigger_auto_migration_and_fail(
         router: &signer,
         aptos_names: &signer,
@@ -232,7 +232,7 @@ module router::renewal_domain_tests {
         aptos = @0x1,
         foundation = @0xf01d
     )]
-    #[expected_failure(abort_code = 196639, location = aptos_names_v2::v2_domains)]
+    #[expected_failure(abort_code = 196639, location = aptos_names_v2::v2_1_domains)]
     fun test_cannot_renew_expired_past_grace_period_domain_in_v2(
         router: &signer,
         aptos_names: &signer,
