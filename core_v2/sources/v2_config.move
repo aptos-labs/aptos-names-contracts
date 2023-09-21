@@ -67,7 +67,7 @@ module aptos_names_v2::v2_config {
             domain_price_length_5: 5 * octas(),
             domain_price_length_6_and_above: octas(),
             // 0.2 APT
-            subdomain_price: octas() / 5,
+            subdomain_price: 0,
             // The number of seconds after a name expires that it can be re-registered
             reregistration_grace_sec: 30 * SECONDS_PER_DAY,
         })
