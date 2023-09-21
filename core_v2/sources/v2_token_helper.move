@@ -1,7 +1,7 @@
-module aptos_names_v2::v2_token_helper {
-    friend aptos_names_v2::v2_domains;
+module aptos_names_v2_1::v2_token_helper {
+    friend aptos_names_v2_1::v2_domains;
 
-    use aptos_names_v2::v2_string_validator;
+    use aptos_names_v2_1::v2_string_validator;
     use std::error;
     use std::option::{Self, Option};
     use std::string::{Self, String};

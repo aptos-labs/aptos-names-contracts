@@ -27,17 +27,17 @@ module router::primary_name_tests {
 
     /// Returns true if the name is tracked in v2
     inline fun exists_in_v2(domain_name: String, subdomain_name: Option<String>): bool {
-        object::is_object(aptos_names_v2::v2_domains::get_token_addr(domain_name, subdomain_name))
+        object::is_object(aptos_names_v2_1::v2_domains::get_token_addr(domain_name, subdomain_name))
     }
 
     inline fun get_v2_primary_name(
         user_addr: address
     ): (Option<String>, Option<String>) {
-        let token_addr = aptos_names_v2::v2_domains::get_reverse_lookup(user_addr);
+        let token_addr = aptos_names_v2_1::v2_domains::get_reverse_lookup(user_addr);
         if (option::is_none(&token_addr)) {
             (option::none(), option::none())
         } else {
-            let (subdomain_name, domain_name) = aptos_names_v2::v2_domains::get_name_props_from_token_addr(
+            let (subdomain_name, domain_name) = aptos_names_v2_1::v2_domains::get_name_props_from_token_addr(
                 *option::borrow(&token_addr)
             );
             (subdomain_name, option::some(domain_name))
@@ -47,7 +47,7 @@ module router::primary_name_tests {
     #[test(
         router = @router,
         aptos_names = @aptos_names,
-        aptos_names_v2 = @aptos_names_v2,
+        aptos_names_v2_1 = @aptos_names_v2_1,
         user1 = @0x077,
         user2 = @0x266f,
         aptos = @0x1,
@@ -56,14 +56,14 @@ module router::primary_name_tests {
     fun test_set_primary_name_when_register(
         router: &signer,
         aptos_names: &signer,
-        aptos_names_v2: &signer,
+        aptos_names_v2_1: &signer,
         user1: signer,
         user2: signer,
         aptos: signer,
         foundation: signer
     ) {
         router::init_module_for_test(router);
-        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user1, &aptos, user2, &foundation);
+        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
         let user = vector::borrow(&users, 0);
         let user_addr = address_of(user);
         let domain_name = utf8(b"test");
@@ -91,7 +91,7 @@ module router::primary_name_tests {
     #[test(
         router = @router,
         aptos_names = @aptos_names,
-        aptos_names_v2 = @aptos_names_v2,
+        aptos_names_v2_1 = @aptos_names_v2_1,
         user1 = @0x077,
         user2 = @0x266f,
         aptos = @0x1,
@@ -100,14 +100,14 @@ module router::primary_name_tests {
     fun test_set_primary_name(
         router: &signer,
         aptos_names: &signer,
-        aptos_names_v2: &signer,
+        aptos_names_v2_1: &signer,
         user1: signer,
         user2: signer,
         aptos: signer,
         foundation: signer
     ) {
         router::init_module_for_test(router);
-        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user1, &aptos, user2, &foundation);
+        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
         let user = vector::borrow(&users, 0);
         let user_addr = address_of(user);
         let domain_name = utf8(b"test");
@@ -193,7 +193,7 @@ module router::primary_name_tests {
     #[test(
         router = @router,
         aptos_names = @aptos_names,
-        aptos_names_v2 = @aptos_names_v2,
+        aptos_names_v2_1 = @aptos_names_v2_1,
         user1 = @0x077,
         user2 = @0x266f,
         aptos = @0x1,
@@ -203,14 +203,14 @@ module router::primary_name_tests {
     fun test_set_primary_name_should_trigger_auto_migration(
         router: &signer,
         aptos_names: &signer,
-        aptos_names_v2: &signer,
+        aptos_names_v2_1: &signer,
         user1: signer,
         user2: signer,
         aptos: signer,
         foundation: signer
     ) {
         router::init_module_for_test(router);
-        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user1, &aptos, user2, &foundation);
+        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
         let user = vector::borrow(&users, 0);
         let user_addr = address_of(user);
         let domain_name = utf8(b"test");
@@ -253,8 +253,8 @@ module router::primary_name_tests {
         router::set_primary_name(user, domain_name2, option::none());
         {
             // domain2 should be successfully migrated to v2
-            assert!(aptos_names_v2::v2_domains::is_token_owner(user_addr, domain_name2, option::none()), 2);
-            assert!(!aptos_names_v2::v2_domains::is_name_expired(domain_name2, option::none()), 3);
+            assert!(aptos_names_v2_1::v2_domains::is_token_owner(user_addr, domain_name2, option::none()), 2);
+            assert!(!aptos_names_v2_1::v2_domains::is_name_expired(domain_name2, option::none()), 3);
             // v1 primary name should be cleared
             let (_, v1_primary_domain_name) = get_v1_primary_name(user_addr);
             assert!(option::is_none(&v1_primary_domain_name), 2);
@@ -272,7 +272,7 @@ module router::primary_name_tests {
     #[test(
         router = @router,
         aptos_names = @aptos_names,
-        aptos_names_v2 = @aptos_names_v2,
+        aptos_names_v2_1 = @aptos_names_v2_1,
         user1 = @0x077,
         user2 = @0x266f,
         aptos = @0x1,
@@ -281,14 +281,14 @@ module router::primary_name_tests {
     fun test_clear_domain_primary_name_should_trigger_auto_migration(
         router: &signer,
         aptos_names: &signer,
-        aptos_names_v2: &signer,
+        aptos_names_v2_1: &signer,
         user1: signer,
         user2: signer,
         aptos: signer,
         foundation: signer
     ) {
         router::init_module_for_test(router);
-        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user1, &aptos, user2, &foundation);
+        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
         let user = vector::borrow(&users, 0);
         let user_addr = address_of(user);
         let domain_name = utf8(b"test");
@@ -319,8 +319,8 @@ module router::primary_name_tests {
             // domain should be successfully migrated to v2
             let (is_owner_of_v1_name, _) = aptos_names::domains::is_token_owner(user_addr, option::none(), domain_name);
             assert!(!is_owner_of_v1_name, 1);
-            assert!(aptos_names_v2::v2_domains::is_token_owner(user_addr, domain_name, option::none()), 2);
-            assert!(!aptos_names_v2::v2_domains::is_name_expired(domain_name, option::none()), 2);
+            assert!(aptos_names_v2_1::v2_domains::is_token_owner(user_addr, domain_name, option::none()), 2);
+            assert!(!aptos_names_v2_1::v2_domains::is_name_expired(domain_name, option::none()), 2);
             // v1 primary name should be cleared
             let (v1_primary_subdomain_name, v1_primary_domain_name) = get_v1_primary_name(user_addr);
             assert!(option::is_none(&v1_primary_domain_name), 3);
@@ -335,7 +335,7 @@ module router::primary_name_tests {
     #[test(
         router = @router,
         aptos_names = @aptos_names,
-        aptos_names_v2 = @aptos_names_v2,
+        aptos_names_v2_1 = @aptos_names_v2_1,
         user1 = @0x077,
         user2 = @0x266f,
         aptos = @0x1,
@@ -344,14 +344,14 @@ module router::primary_name_tests {
     fun test_clear_subdomain_primary_name_should_not_trigger_auto_migration(
         router: &signer,
         aptos_names: &signer,
-        aptos_names_v2: &signer,
+        aptos_names_v2_1: &signer,
         user1: signer,
         user2: signer,
         aptos: signer,
         foundation: signer
     ) {
         router::init_module_for_test(router);
-        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user1, &aptos, user2, &foundation);
+        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
         let user = vector::borrow(&users, 0);
         let user_addr = address_of(user);
         let domain_name = utf8(b"test");
@@ -385,8 +385,8 @@ module router::primary_name_tests {
             let (is_owner_of_v1_name, _) = aptos_names::domains::is_token_owner(user_addr, subdomain_name_opt, domain_name);
             assert!(!aptos_names::domains::name_is_expired(subdomain_name_opt, domain_name), 1);
             assert!(is_owner_of_v1_name, 1);
-            assert!(!aptos_names_v2::v2_domains::is_token_owner(user_addr, domain_name, subdomain_name_opt), 2);
-            assert!(aptos_names_v2::v2_domains::is_name_expired(domain_name, subdomain_name_opt), 2);
+            assert!(!aptos_names_v2_1::v2_domains::is_token_owner(user_addr, domain_name, subdomain_name_opt), 2);
+            assert!(aptos_names_v2_1::v2_domains::is_name_expired(domain_name, subdomain_name_opt), 2);
             // v1 primary name should be cleared
             let (v1_primary_subdomain_name, v1_primary_domain_name) = get_v1_primary_name(user_addr);
             assert!(option::is_none(&v1_primary_domain_name), 2);

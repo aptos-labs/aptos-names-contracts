@@ -1,7 +1,7 @@
-module aptos_names_v2::v2_string_validator {
-    friend aptos_names_v2::v2_domains;
-    friend aptos_names_v2::v2_token_helper;
-    friend aptos_names_v2::v2_config;
+module aptos_names_v2_1::v2_string_validator {
+    friend aptos_names_v2_1::v2_domains;
+    friend aptos_names_v2_1::v2_token_helper;
+    friend aptos_names_v2_1::v2_config;
     use std::string::{Self, String};
     use std::vector;
 
