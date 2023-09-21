@@ -57,7 +57,7 @@ module aptos_names_v2::v2_config {
             enabled: true,
             admin_address,
             fund_destination_address,
-            max_number_of_seconds_registered: SECONDS_PER_YEAR * 2,
+            max_number_of_seconds_registered: SECONDS_PER_YEAR,
             max_domain_length: 63,
             min_domain_length: 3,
             tokendata_description: string::utf8(b"This is an official Aptos Labs Name Service Name"),
