@@ -1,9 +1,4 @@
-#[test_only]
-<<<<<<<< HEAD:core_v2/sources/v2_1_test_utils.move
-module aptos_names_v2::v2_1_test_utils {
-========
-module aptos_names_v2_1::v2_test_utils {
->>>>>>>> j/rename-package:core_v2/sources/tests/v2_test_utils.move
+module aptos_names_v2_1::v2_1_test_utils {
 
     use std::string::{Self, String};
     use aptos_std::debug;

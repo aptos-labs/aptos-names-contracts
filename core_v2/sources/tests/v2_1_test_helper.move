@@ -1,24 +1,13 @@
 #[test_only]
-<<<<<<<< HEAD:core_v2/sources/v2_1_test_helper.move
-module aptos_names_v2::v2_1_test_helper {
-========
-module aptos_names_v2_1::v2_test_helper {
->>>>>>>> j/rename-package:core_v2/sources/tests/v2_test_helper.move
+module aptos_names_v2_1::v2_1_test_helper {
     use aptos_framework::account;
     use aptos_framework::aptos_coin::AptosCoin;
     use aptos_framework::coin;
     use aptos_framework::timestamp;
-<<<<<<<< HEAD:core_v2/sources/v2_1_test_helper.move
-    use aptos_names_v2::v2_1_config;
-    use aptos_names_v2::v2_1_domains;
-    use aptos_names_v2::v2_1_price_model;
-    use aptos_names_v2::v2_1_test_utils;
-========
-    use aptos_names_v2_1::v2_config;
-    use aptos_names_v2_1::v2_domains;
-    use aptos_names_v2_1::v2_price_model;
-    use aptos_names_v2_1::v2_test_utils;
->>>>>>>> j/rename-package:core_v2/sources/tests/v2_test_helper.move
+    use aptos_names_v2_1::v2_1_config;
+    use aptos_names_v2_1::v2_1_domains;
+    use aptos_names_v2_1::v2_1_price_model;
+    use aptos_names_v2_1::v2_1_test_utils;
     use std::option::{Self, Option};
     use std::signer;
     use std::string::{Self, String};
@@ -73,13 +62,8 @@ module aptos_names_v2_1::v2_test_helper {
         account::create_account_for_test(@aptos_names_v2_1);
         let new_accounts = setup_and_fund_accounts(aptos, foundation, vector[user, rando]);
         timestamp::set_time_has_started_for_testing(aptos);
-<<<<<<<< HEAD:core_v2/sources/v2_1_test_helper.move
-        aptos_names_v2::v2_1_domains::init_module_for_test(aptos_names_v2);
+        aptos_names_v2_1::v2_1_domains::init_module_for_test(aptos_names_v2_1);
         v2_1_config::set_fund_destination_address_test_only(signer::address_of(foundation));
-========
-        aptos_names_v2_1::v2_domains::init_module_for_test(aptos_names_v2_1);
-        v2_config::set_fund_destination_address_test_only(signer::address_of(foundation));
->>>>>>>> j/rename-package:core_v2/sources/tests/v2_test_helper.move
         new_accounts
     }
 
