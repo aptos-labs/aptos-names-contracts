@@ -196,27 +196,61 @@ module router::router {
         };
 
         // Common operations that handle modes via the router
-        if (option::is_some(&target_addr)) {
-            set_target_addr(
-                user,
-                domain_name,
-                option::none(),
-                *option::borrow(&target_addr)
-            );
-        };
         if (option::is_some(&to_addr)) {
             transfer_name(user, domain_name, option::none(), *option::borrow(&to_addr));
         };
 
-        set_primary_name_when_register(
+        if (should_set_primary_name_when_register(
             user,
             target_addr,
             to_addr,
-            domain_name,
-            option::none(),
-        );
+        )) {
+            // This will set primary name and target address
+            set_primary_name_when_register(
+                user,
+                target_addr,
+                to_addr,
+                domain_name,
+                option::none(),
+            )
+        } else {
+            // This will only set target address
+            let target_addr = if (option::is_some(&target_addr)) {
+                *option::borrow(&target_addr)
+            } else {
+                signer::address_of(user)
+            };
+            set_target_addr(
+                user,
+                domain_name,
+                option::none(),
+                target_addr
+            );
+        }
     }
 
+    fun should_set_primary_name_when_register(
+        user: &signer,
+        target_addr: Option<address>,
+        to_addr: Option<address>,
+    ): bool acquires RouterConfig {
+        let owner_addr = signer::address_of(user);
+
+        // if the owner address is not the buyer address
+        if (option::is_some(&to_addr) && to_addr != option::some(owner_addr)) {
+            return false
+        };
+
+        // if the target address is not the buyer address
+        if (option::is_some(&target_addr) && target_addr != option::some(owner_addr)) {
+            return false
+        };
+
+        // Only should set primary name when user does not have a primary name now
+        !has_primary_name(user)
+    }
+
+    /// This will set primary name AND target address at the same time
     fun set_primary_name_when_register(
         user: &signer,
         target_addr: Option<address>,
@@ -287,14 +321,6 @@ module router::router {
         };
 
         // Common operations that handle modes via the router
-        if (option::is_some(&target_addr)) {
-            set_target_addr(
-                user,
-                domain_name,
-                option::some(subdomain_name),
-                *option::borrow(&target_addr)
-            );
-        };
         if (option::is_some(&to_addr)) {
             transfer_name(user, domain_name, option::some(subdomain_name), *option::borrow(&to_addr));
         };
@@ -308,13 +334,33 @@ module router::router {
             );
         };
 
-        set_primary_name_when_register(
+        if (should_set_primary_name_when_register(
             user,
             target_addr,
             to_addr,
-            domain_name,
-            option::some(subdomain_name),
-        );
+        )) {
+            // This will set primary name and target address
+            set_primary_name_when_register(
+                user,
+                target_addr,
+                to_addr,
+                domain_name,
+                option::some(subdomain_name),
+            )
+        } else {
+            // This will only set target address
+            let target_addr = if (option::is_some(&target_addr)) {
+                *option::borrow(&target_addr)
+            } else {
+                signer::address_of(user)
+            };
+            set_target_addr(
+                user,
+                domain_name,
+                option::some(subdomain_name),
+                target_addr
+            );
+        }
     }
 
     // ==== MIGRATION ====
