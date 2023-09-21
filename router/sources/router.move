@@ -4,7 +4,7 @@ module router::router {
     use aptos_framework::object;
     use aptos_framework::timestamp;
     use aptos_names::domains;
-    use aptos_names_v2::v2_1_domains;
+    use aptos_names_v2_1::v2_1_domains;
     use std::error;
     use std::option::{Self, Option};
     use std::signer;

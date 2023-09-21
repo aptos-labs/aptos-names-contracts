@@ -1,5 +1,5 @@
-module aptos_names_v2::v2_1_price_model {
-    use aptos_names_v2::v2_1_config;
+module aptos_names_v2_1::v2_1_price_model {
+    use aptos_names_v2_1::v2_1_config;
     use aptos_std::math64;
     use std::error;
 
@@ -23,9 +23,9 @@ module aptos_names_v2::v2_1_price_model {
         v2_1_config::subdomain_price()
     }
 
-    #[test(myself = @aptos_names_v2, framework = @0x1)]
+    #[test(myself = @aptos_names_v2_1, framework = @0x1)]
     fun test_price_for_domain(myself: &signer, framework: &signer) {
-        use aptos_names_v2::v2_1_config;
+        use aptos_names_v2_1::v2_1_config;
         use aptos_framework::aptos_coin::AptosCoin;
         use aptos_framework::coin;
         use aptos_framework::account;
@@ -36,7 +36,7 @@ module aptos_names_v2::v2_1_price_model {
 
         v2_1_config::initialize_aptoscoin_for(framework);
         coin::register<AptosCoin>(myself);
-        v2_1_config::initialize_config(myself, @aptos_names_v2, @aptos_names_v2);
+        v2_1_config::initialize_config(myself, @aptos_names_v2_1, @aptos_names_v2_1);
 
         v2_1_config::set_subdomain_price(myself, v2_1_config::octas() / 5);
         v2_1_config::set_domain_price_for_length(myself, (60 * v2_1_config::octas()), 3);

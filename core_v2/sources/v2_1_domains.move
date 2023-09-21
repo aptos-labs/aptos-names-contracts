@@ -1,4 +1,4 @@
-module aptos_names_v2::v2_1_domains {
+module aptos_names_v2_1::v2_1_domains {
     use aptos_framework::account;
     use aptos_framework::aptos_account;
     use aptos_framework::aptos_coin::AptosCoin;
@@ -6,10 +6,10 @@ module aptos_names_v2::v2_1_domains {
     use aptos_framework::event;
     use aptos_framework::object::{Self, Object, ExtendRef, TransferRef};
     use aptos_framework::timestamp;
-    use aptos_names_v2::v2_1_config;
-    use aptos_names_v2::v2_1_price_model;
-    use aptos_names_v2::v2_1_token_helper;
-    use aptos_names_v2::v2_1_string_validator;
+    use aptos_names_v2_1::v2_1_config;
+    use aptos_names_v2_1::v2_1_price_model;
+    use aptos_names_v2_1::v2_1_token_helper;
+    use aptos_names_v2_1::v2_1_string_validator;
     use aptos_token_objects::collection;
     use aptos_token_objects::token;
     use std::error;
@@ -88,7 +88,7 @@ module aptos_names_v2::v2_1_domains {
         extend_ref: ExtendRef,
     }
 
-    #[resource_group_member(group = aptos_names_v2::v2_1_domains::ObjectGroup)]
+    #[resource_group_member(group = aptos_names_v2_1::v2_1_domains::ObjectGroup)]
     struct NameRecord has key {
         domain_name: String,
         expiration_time_sec: u64,
@@ -99,7 +99,7 @@ module aptos_names_v2::v2_1_domains {
         extend_ref: ExtendRef,
     }
 
-    #[resource_group_member(group = aptos_names_v2::v2_1_domains::ObjectGroup)]
+    #[resource_group_member(group = aptos_names_v2_1::v2_1_domains::ObjectGroup)]
     /// This is a subdomain extension that is only used for subdomains
     struct SubdomainExt has key {
         subdomain_name: String,
@@ -110,25 +110,25 @@ module aptos_names_v2::v2_1_domains {
         token_addr: Option<address>,
     }
 
-    #[resource_group_member(group = aptos_names_v2::v2_1_domains::ObjectGroup)]
+    #[resource_group_member(group = aptos_names_v2_1::v2_1_domains::ObjectGroup)]
     /// Holder for `SetReverseLookupEvent` events
     struct SetReverseLookupEvents has key {
         set_reverse_lookup_events: event::EventHandle<SetReverseLookupEvent>,
     }
 
-    #[resource_group_member(group = aptos_names_v2::v2_1_domains::ObjectGroup)]
+    #[resource_group_member(group = aptos_names_v2_1::v2_1_domains::ObjectGroup)]
     /// Holder for `SetTargetAddressEvent` events
     struct SetTargetAddressEvents has key {
         set_name_events: event::EventHandle<SetTargetAddressEvent>,
     }
 
-    #[resource_group_member(group = aptos_names_v2::v2_1_domains::ObjectGroup)]
+    #[resource_group_member(group = aptos_names_v2_1::v2_1_domains::ObjectGroup)]
     /// Holder for `RegisterNameEvent` events
     struct RegisterNameEvents has key {
         register_name_events: event::EventHandle<RegisterNameEvent>,
     }
 
-    #[resource_group_member(group = aptos_names_v2::v2_1_domains::ObjectGroup)]
+    #[resource_group_member(group = aptos_names_v2_1::v2_1_domains::ObjectGroup)]
     /// Holder for `RenewNameEvent` events
     struct RenewNameEvents has key {
         renew_name_events: event::EventHandle<RenewNameEvent>,
@@ -914,7 +914,7 @@ module aptos_names_v2::v2_1_domains {
     }
 
     public fun get_app_signer_addr(): address {
-        object::create_object_address(&@aptos_names_v2, APP_OBJECT_SEED)
+        object::create_object_address(&@aptos_names_v2_1, APP_OBJECT_SEED)
     }
 
     fun get_app_signer(): signer acquires DomainObject {

@@ -14,7 +14,7 @@ module router::migration_tests {
     #[test(
         router = @router,
         aptos_names = @aptos_names,
-        aptos_names_v2 = @aptos_names_v2,
+        aptos_names_v2_1 = @aptos_names_v2_1,
         user1 = @0x077,
         user2 = @0x266f,
         aptos = @0x1,
@@ -23,14 +23,14 @@ module router::migration_tests {
     fun test_migrate_domain(
         router: &signer,
         aptos_names: &signer,
-        aptos_names_v2: &signer,
+        aptos_names_v2_1: &signer,
         user1: signer,
         user2: signer,
         aptos: signer,
         foundation: signer
     ) {
         router::init_module_for_test(router);
-        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user1, &aptos, user2, &foundation);
+        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
         let user = vector::borrow(&users, 0);
         let user_addr = address_of(user);
         let domain_name = utf8(b"test");
@@ -86,7 +86,7 @@ module router::migration_tests {
     #[test(
         router = @router,
         aptos_names = @aptos_names,
-        aptos_names_v2 = @aptos_names_v2,
+        aptos_names_v2_1 = @aptos_names_v2_1,
         user1 = @0x077,
         user2 = @0x266f,
         aptos = @0x1,
@@ -96,14 +96,14 @@ module router::migration_tests {
     fun test_migrate_domain_as_non_owner(
         router: &signer,
         aptos_names: &signer,
-        aptos_names_v2: &signer,
+        aptos_names_v2_1: &signer,
         user1: signer,
         user2: signer,
         aptos: signer,
         foundation: signer
     ) {
         router::init_module_for_test(router);
-        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user1, &aptos, user2, &foundation);
+        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
         let user1 = vector::borrow(&users, 0);
         let user2 = vector::borrow(&users, 1);
         let domain_name = utf8(b"test");
@@ -121,7 +121,7 @@ module router::migration_tests {
     #[test(
         router = @router,
         aptos_names = @aptos_names,
-        aptos_names_v2 = @aptos_names_v2,
+        aptos_names_v2_1 = @aptos_names_v2_1,
         user1 = @0x077,
         user2 = @0x266f,
         aptos = @0x1,
@@ -130,14 +130,14 @@ module router::migration_tests {
     fun test_migrate_domain_no_autorenewal(
         router: &signer,
         aptos_names: &signer,
-        aptos_names_v2: &signer,
+        aptos_names_v2_1: &signer,
         user1: signer,
         user2: signer,
         aptos: signer,
         foundation: signer
     ) {
         router::init_module_for_test(router);
-        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user1, &aptos, user2, &foundation);
+        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
         let user = vector::borrow(&users, 0);
         let domain_name = utf8(b"test");
 
@@ -164,7 +164,7 @@ module router::migration_tests {
     #[test(
         router = @router,
         aptos_names = @aptos_names,
-        aptos_names_v2 = @aptos_names_v2,
+        aptos_names_v2_1 = @aptos_names_v2_1,
         user1 = @0x077,
         user2 = @0x266f,
         aptos = @0x1,
@@ -173,14 +173,14 @@ module router::migration_tests {
     fun test_migrate_subdomain(
         router: &signer,
         aptos_names: &signer,
-        aptos_names_v2: &signer,
+        aptos_names_v2_1: &signer,
         user1: signer,
         user2: signer,
         aptos: signer,
         foundation: signer
     ) {
         router::init_module_for_test(router);
-        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user1, &aptos, user2, &foundation);
+        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
         let user = vector::borrow(&users, 0);
         let user_addr = address_of(user);
         let domain_name = utf8(b"test");
@@ -250,7 +250,7 @@ module router::migration_tests {
     #[test(
         router = @router,
         aptos_names = @aptos_names,
-        aptos_names_v2 = @aptos_names_v2,
+        aptos_names_v2_1 = @aptos_names_v2_1,
         user1 = @0x077,
         user2 = @0x266f,
         aptos = @0x1,
@@ -260,14 +260,14 @@ module router::migration_tests {
     fun test_migrate_subdomain_as_non_owner(
         router: &signer,
         aptos_names: &signer,
-        aptos_names_v2: &signer,
+        aptos_names_v2_1: &signer,
         user1: signer,
         user2: signer,
         aptos: signer,
         foundation: signer
     ) {
         router::init_module_for_test(router);
-        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user1, &aptos, user2, &foundation);
+        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
         let user1 = vector::borrow(&users, 0);
         let user2 = vector::borrow(&users, 1);
         let domain_name = utf8(b"test");
@@ -300,7 +300,7 @@ module router::migration_tests {
     #[test(
         router = @router,
         aptos_names = @aptos_names,
-        aptos_names_v2 = @aptos_names_v2,
+        aptos_names_v2_1 = @aptos_names_v2_1,
         user1 = @0x077,
         user2 = @0x266f,
         aptos = @0x1,
@@ -310,14 +310,14 @@ module router::migration_tests {
     fun test_cannot_migrate_subdomain_before_domain(
         router: &signer,
         aptos_names: &signer,
-        aptos_names_v2: &signer,
+        aptos_names_v2_1: &signer,
         user1: signer,
         user2: signer,
         aptos: signer,
         foundation: signer
     ) {
         router::init_module_for_test(router);
-        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user1, &aptos, user2, &foundation);
+        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
         let user = vector::borrow(&users, 0);
         let domain_name = utf8(b"test");
         let subdomain_name = utf8(b"sub");
@@ -346,7 +346,7 @@ module router::migration_tests {
     #[test(
         router = @router,
         aptos_names = @aptos_names,
-        aptos_names_v2 = @aptos_names_v2,
+        aptos_names_v2_1 = @aptos_names_v2_1,
         user1 = @0x077,
         user2 = @0x266f,
         aptos = @0x1,
@@ -356,14 +356,14 @@ module router::migration_tests {
     fun test_cannot_migrate_twice(
         router: &signer,
         aptos_names: &signer,
-        aptos_names_v2: &signer,
+        aptos_names_v2_1: &signer,
         user1: signer,
         user2: signer,
         aptos: signer,
         foundation: signer
     ) {
         router::init_module_for_test(router);
-        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user1, &aptos, user2, &foundation);
+        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
         let user = vector::borrow(&users, 0);
         let domain_name = utf8(b"test");
 
@@ -381,7 +381,7 @@ module router::migration_tests {
     #[test(
         router = @router,
         aptos_names = @aptos_names,
-        aptos_names_v2 = @aptos_names_v2,
+        aptos_names_v2_1 = @aptos_names_v2_1,
         user1 = @0x077,
         user2 = @0x266f,
         aptos = @0x1,
@@ -390,14 +390,14 @@ module router::migration_tests {
     fun test_migrate_expired_but_still_in_grace_period_name(
         router: &signer,
         aptos_names: &signer,
-        aptos_names_v2: &signer,
+        aptos_names_v2_1: &signer,
         user1: signer,
         user2: signer,
         aptos: signer,
         foundation: signer
     ) {
         router::init_module_for_test(router);
-        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user1, &aptos, user2, &foundation);
+        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
         let user = vector::borrow(&users, 0);
         let domain_name = utf8(b"test");
 
@@ -421,7 +421,7 @@ module router::migration_tests {
     #[test(
         router = @router,
         aptos_names = @aptos_names,
-        aptos_names_v2 = @aptos_names_v2,
+        aptos_names_v2_1 = @aptos_names_v2_1,
         user1 = @0x077,
         user2 = @0x266f,
         aptos = @0x1,
@@ -431,14 +431,14 @@ module router::migration_tests {
     fun test_cannot_migrate_expired_past_grace_period_name(
         router: &signer,
         aptos_names: &signer,
-        aptos_names_v2: &signer,
+        aptos_names_v2_1: &signer,
         user1: signer,
         user2: signer,
         aptos: signer,
         foundation: signer
     ) {
         router::init_module_for_test(router);
-        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user1, &aptos, user2, &foundation);
+        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
         let user = vector::borrow(&users, 0);
         let domain_name = utf8(b"test");
 
