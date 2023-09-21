@@ -1,5 +1,5 @@
 #[test_only]
-module aptos_names_v2_1::v2_domain_e2e_tests {
+module aptos_names_v2_1::v2_1_domain_e2e_tests {
     use aptos_framework::timestamp;
     use aptos_framework::object;
     use aptos_names_v2_1::v2_1_config;
