@@ -325,7 +325,7 @@ module aptos_names_v2::v2_config {
         set_max_domain_length(myself, 25);
         assert!(max_domain_length() == 25, 3);
 
-        assert!(max_number_of_seconds_registered() == SECONDS_PER_YEAR * 2, 4);
+        assert!(max_number_of_seconds_registered() == SECONDS_PER_YEAR, 4);
         set_max_number_of_seconds_registered(myself, SECONDS_PER_YEAR * 5);
         assert!(max_number_of_seconds_registered() == SECONDS_PER_YEAR * 5, 4);
 
