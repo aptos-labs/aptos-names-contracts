@@ -61,7 +61,7 @@ module aptos_names_v2::v2_config {
             max_domain_length: 63,
             min_domain_length: 3,
             tokendata_description: string::utf8(b"This is an official Aptos Labs Name Service Name"),
-            tokendata_url_prefix: string::utf8(b"https://www.aptosnames.com/api/mainnet/v1/metadata/"),
+            tokendata_url_prefix: string::utf8(b"https://www.aptosnames.com/api/mainnet/v2/metadata/"),
             domain_price_length_3: 20 * octas(),
             domain_price_length_4: 10 * octas(),
             domain_price_length_5: 5 * octas(),
