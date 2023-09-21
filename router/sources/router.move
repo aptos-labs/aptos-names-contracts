@@ -196,7 +196,6 @@ module router::router {
         };
 
         // Common operations that handle modes via the router
-        // This will only set target address
         let target_addr_copy = if (option::is_some(&target_addr)) {
             *option::borrow(&target_addr)
         } else {
@@ -212,17 +211,15 @@ module router::router {
             transfer_name(user, domain_name, option::none(), *option::borrow(&to_addr));
         };
 
-        // This will set primary name and target address
         set_primary_name_when_register(
             user,
             target_addr,
             to_addr,
             domain_name,
             option::none(),
-        )
+        );
     }
 
-    /// This will set primary name AND target address at the same time
     fun set_primary_name_when_register(
         user: &signer,
         target_addr: Option<address>,
@@ -293,7 +290,6 @@ module router::router {
         };
 
         // Common operations that handle modes via the router
-        // This will only set target address
         let target_addr_copy = if (option::is_some(&target_addr)) {
             *option::borrow(&target_addr)
         } else {
@@ -325,7 +321,7 @@ module router::router {
             to_addr,
             domain_name,
             option::some(subdomain_name),
-        )
+        );
     }
 
     // ==== MIGRATION ====
