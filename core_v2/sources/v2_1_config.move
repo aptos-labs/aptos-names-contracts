@@ -61,13 +61,13 @@ module aptos_names_v2_1::v2_1_config {
             max_domain_length: 63,
             min_domain_length: 3,
             tokendata_description: string::utf8(b"This is an official Aptos Labs Name Service Name"),
-            tokendata_url_prefix: string::utf8(b"https://www.aptosnames.com/api/mainnet/v1/metadata/"),
+            tokendata_url_prefix: string::utf8(b"https://www.aptosnames.com/api/mainnet/v2/metadata/"),
             domain_price_length_3: 20 * octas(),
             domain_price_length_4: 10 * octas(),
             domain_price_length_5: 5 * octas(),
             domain_price_length_6_and_above: octas(),
             // 0.2 APT
-            subdomain_price: octas() / 5,
+            subdomain_price: 0,
             // The number of seconds after a name expires that it can be re-registered
             reregistration_grace_sec: 30 * SECONDS_PER_DAY,
         })
