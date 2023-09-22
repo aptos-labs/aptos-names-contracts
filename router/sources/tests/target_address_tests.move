@@ -88,10 +88,9 @@ module router::target_address_tests {
             let target_address = get_v1_target_addr(domain_name, option::none());
             assert!(*option::borrow(&target_address) == user_addr, 1);
         };
-        // Subdomain target address should be none, because we don't auto set target address in v1
         {
             let target_address = get_v1_target_addr(domain_name, subdomain_name_opt);
-            assert!(option::is_none(&target_address), 2);
+            assert!(*option::borrow(&target_address) == user_addr, 2);
         };
 
         // Set domain target address to user2_addr
