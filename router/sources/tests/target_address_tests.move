@@ -161,6 +161,9 @@ module router::target_address_tests {
             let target_address = get_v2_target_addr(domain_name, subdomain_name_opt);
             assert!(option::is_none(&target_address), 6);
         };
+
+        // v1 primary name is cleared
+        assert!(option::is_none(&aptos_names::domains::get_reverse_lookup(user_addr)), 7);
     }
 
     #[test(

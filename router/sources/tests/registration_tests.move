@@ -48,6 +48,13 @@ module router::registration_tests {
         router::register_domain(user, domain_name2, SECONDS_PER_YEAR, option::none(), option::none());
         assert!(router::is_name_owner(user_addr, domain_name1, option::none()), 2);
         assert!(router::is_name_owner(user_addr, domain_name2, option::none()), 3);
+
+        // v1 primary name is cleared
+        assert!(option::is_none(&aptos_names::domains::get_reverse_lookup(address_of(user))), 4);
+        // v2 primary name is properly set
+        let (primary_subdomain_name, primary_domain_name) = router::router::get_primary_name(address_of(user));
+        assert!(option::is_none(&primary_subdomain_name), 5);
+        assert!(option::some(domain_name2) == primary_domain_name, 6);
     }
 
     #[test(
