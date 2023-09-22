@@ -28,14 +28,14 @@ module router::renewal_domain_tests {
         domain_name: String,
         subdomain_name: Option<String>
     ): u64 {
-        let expiration_time_sec = aptos_names_v2::v2_domains::get_expiration(domain_name, subdomain_name);
+        let expiration_time_sec = aptos_names_v2_1::v2_1_domains::get_expiration(domain_name, subdomain_name);
         expiration_time_sec
     }
 
     #[test(
         router = @router,
         aptos_names = @aptos_names,
-        aptos_names_v2 = @aptos_names_v2,
+        aptos_names_v2_1 = @aptos_names_v2_1,
         user1 = @0x077,
         user2 = @0x266f,
         aptos = @0x1,
@@ -45,14 +45,14 @@ module router::renewal_domain_tests {
     fun test_renew_domain_in_v1(
         router: &signer,
         aptos_names: &signer,
-        aptos_names_v2: &signer,
+        aptos_names_v2_1: &signer,
         user1: signer,
         user2: signer,
         aptos: signer,
         foundation: signer
     ) {
         router::init_module_for_test(router);
-        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user1, &aptos, user2, &foundation);
+        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
         let user = vector::borrow(&users, 0);
         let domain_name = utf8(b"test");
 
@@ -62,7 +62,7 @@ module router::renewal_domain_tests {
     #[test(
         router = @router,
         aptos_names = @aptos_names,
-        aptos_names_v2 = @aptos_names_v2,
+        aptos_names_v2_1 = @aptos_names_v2_1,
         user1 = @0x077,
         user2 = @0x266f,
         aptos = @0x1,
@@ -71,14 +71,14 @@ module router::renewal_domain_tests {
     fun test_renew_domain_in_v2(
         router: &signer,
         aptos_names: &signer,
-        aptos_names_v2: &signer,
+        aptos_names_v2_1: &signer,
         user1: signer,
         user2: signer,
         aptos: signer,
         foundation: signer
     ) {
         router::init_module_for_test(router);
-        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user1, &aptos, user2, &foundation);
+        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
         let user = vector::borrow(&users, 0);
         let domain_name = utf8(b"test");
 
@@ -97,7 +97,7 @@ module router::renewal_domain_tests {
     #[test(
         router = @router,
         aptos_names = @aptos_names,
-        aptos_names_v2 = @aptos_names_v2,
+        aptos_names_v2_1 = @aptos_names_v2_1,
         user1 = @0x077,
         user2 = @0x266f,
         aptos = @0x1,
@@ -106,14 +106,14 @@ module router::renewal_domain_tests {
     fun test_renew_v1_name_not_eligible_for_free_extension_should_trigger_auto_migration(
         router: &signer,
         aptos_names: &signer,
-        aptos_names_v2: &signer,
+        aptos_names_v2_1: &signer,
         user1: signer,
         user2: signer,
         aptos: signer,
         foundation: signer
     ) {
         router::init_module_for_test(router);
-        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user1, &aptos, user2, &foundation);
+        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
         let user = vector::borrow(&users, 0);
         let user_addr = signer::address_of(user);
         let domain_name = utf8(b"test");
@@ -137,8 +137,8 @@ module router::renewal_domain_tests {
             let (is_v1_owner, _) = aptos_names::domains::is_token_owner(user_addr, option::none(), domain_name);
             assert!(!is_v1_owner, 1);
             // v2 name should be owned by user
-            assert!(aptos_names_v2::v2_domains::is_token_owner(user_addr, domain_name, option::none()), 2);
-            assert!(!aptos_names_v2::v2_domains::is_name_expired(domain_name, option::none()), 3);
+            assert!(aptos_names_v2_1::v2_1_domains::is_token_owner(user_addr, domain_name, option::none()), 2);
+            assert!(!aptos_names_v2_1::v2_1_domains::is_name_expired(domain_name, option::none()), 3);
             // v2 name expiration should be 1 year after original expiration
             assert!(
                 get_v2_expiration(
@@ -153,24 +153,24 @@ module router::renewal_domain_tests {
     #[test(
         router = @router,
         aptos_names = @aptos_names,
-        aptos_names_v2 = @aptos_names_v2,
+        aptos_names_v2_1 = @aptos_names_v2_1,
         user1 = @0x077,
         user2 = @0x266f,
         aptos = @0x1,
         foundation = @0xf01d
     )]
-    #[expected_failure(abort_code = 196626, location = aptos_names_v2::v2_domains)]
+    #[expected_failure(abort_code = 196626, location = aptos_names_v2_1::v2_1_domains)]
     fun test_renew_v1_name_eligible_for_free_extension_should_trigger_auto_migration_and_fail(
         router: &signer,
         aptos_names: &signer,
-        aptos_names_v2: &signer,
+        aptos_names_v2_1: &signer,
         user1: signer,
         user2: signer,
         aptos: signer,
         foundation: signer
     ) {
         router::init_module_for_test(router);
-        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user1, &aptos, user2, &foundation);
+        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
         let user = vector::borrow(&users, 0);
         let domain_name = utf8(b"test");
 
@@ -189,7 +189,7 @@ module router::renewal_domain_tests {
     #[test(
         router = @router,
         aptos_names = @aptos_names,
-        aptos_names_v2 = @aptos_names_v2,
+        aptos_names_v2_1 = @aptos_names_v2_1,
         user1 = @0x077,
         user2 = @0x266f,
         aptos = @0x1,
@@ -198,14 +198,14 @@ module router::renewal_domain_tests {
     fun test_renew_expired_but_still_in_grace_period_domain_in_v2(
         router: &signer,
         aptos_names: &signer,
-        aptos_names_v2: &signer,
+        aptos_names_v2_1: &signer,
         user1: signer,
         user2: signer,
         aptos: signer,
         foundation: signer
     ) {
         router::init_module_for_test(router);
-        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user1, &aptos, user2, &foundation);
+        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
         let user = vector::borrow(&users, 0);
         let domain_name = utf8(b"test");
 
@@ -226,24 +226,24 @@ module router::renewal_domain_tests {
     #[test(
         router = @router,
         aptos_names = @aptos_names,
-        aptos_names_v2 = @aptos_names_v2,
+        aptos_names_v2_1 = @aptos_names_v2_1,
         user1 = @0x077,
         user2 = @0x266f,
         aptos = @0x1,
         foundation = @0xf01d
     )]
-    #[expected_failure(abort_code = 196639, location = aptos_names_v2::v2_domains)]
+    #[expected_failure(abort_code = 196639, location = aptos_names_v2_1::v2_1_domains)]
     fun test_cannot_renew_expired_past_grace_period_domain_in_v2(
         router: &signer,
         aptos_names: &signer,
-        aptos_names_v2: &signer,
+        aptos_names_v2_1: &signer,
         user1: signer,
         user2: signer,
         aptos: signer,
         foundation: signer
     ) {
         router::init_module_for_test(router);
-        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2, user1, &aptos, user2, &foundation);
+        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
         let user = vector::borrow(&users, 0);
         let domain_name = utf8(b"test");
 

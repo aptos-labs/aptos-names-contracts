@@ -1,10 +1,10 @@
 [package]
-name = 'aptos_names_v2'
+name = 'aptos_names_v2_1'
 version = '1.0.0'
 
 [addresses]
 router_signer = "_"
-aptos_names_v2 = "_"
+aptos_names_v2_1 = "_"
 aptos_names_admin = "_"
 aptos_names_funds = "_"
 

@@ -1,7 +1,7 @@
-module aptos_names_v2::v2_token_helper {
-    friend aptos_names_v2::v2_domains;
+module aptos_names_v2_1::v2_1_token_helper {
+    friend aptos_names_v2_1::v2_1_domains;
 
-    use aptos_names_v2::v2_string_validator;
+    use aptos_names_v2_1::v2_1_string_validator;
     use std::error;
     use std::option::{Self, Option};
     use std::string::{Self, String};
@@ -17,10 +17,10 @@ module aptos_names_v2::v2_token_helper {
     const ESUBDOMAIN_NAME_INVALID: u64 = 3;
 
     public(friend) fun get_fully_qualified_domain_name(subdomain_name: Option<String>, domain_name: String): String {
-        let (domain_is_allowed, _length) = v2_string_validator::string_is_allowed(&domain_name);
+        let (domain_is_allowed, _length) = v2_1_string_validator::string_is_allowed(&domain_name);
         assert!(domain_is_allowed, error::invalid_argument(EDOMAIN_NAME_INVALID));
         let subdomain_is_allowed = if (option::is_some(&subdomain_name)) {
-            let (subdomain_is_allowed, _length) = v2_string_validator::string_is_allowed(option::borrow(&subdomain_name));
+            let (subdomain_is_allowed, _length) = v2_1_string_validator::string_is_allowed(option::borrow(&subdomain_name));
             subdomain_is_allowed
         } else {
             true
