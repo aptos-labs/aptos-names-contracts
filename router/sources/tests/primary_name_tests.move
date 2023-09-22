@@ -86,6 +86,9 @@ module router::primary_name_tests {
         let (primary_subdomain_name, primary_domain_name) = router::get_primary_name(user_addr);
         assert!(*option::borrow(&primary_domain_name) == domain_name, 1);
         assert!(option::is_none(&primary_subdomain_name), 2);
+
+        // v1 primary name is cleared
+        assert!(option::is_none(&aptos_names::domains::get_reverse_lookup(address_of(user))), 14);
     }
 
     #[test(

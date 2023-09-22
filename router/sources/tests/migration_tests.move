@@ -154,11 +154,17 @@ module router::migration_tests {
         // Make v1 read only except for admin
         aptos_names::config::set_is_enabled(aptos_names, false);
 
-        // Migration fails because user2 does not own `domain_name`
         router::migrate_name(user, domain_name, option::none());
 
         // Auto-renewal is off because the expiration is after 2024/03/07
         assert!(router::get_expiration(domain_name, option::none()) == now + SECONDS_PER_YEAR, 14);
+
+        // v1 target is cleared
+        assert!(option::is_none(&aptos_names::domains::name_resolved_address(option::none(), domain_name)), 17);
+        // v1 primary name is cleared
+        assert!(option::is_none(&aptos_names::domains::get_reverse_lookup(address_of(user))), 17);
+        // v1 registration is cleared
+        assert!(!aptos_names::domains::name_is_registered(option::none(), domain_name), 18);
     }
 
     #[test(
@@ -243,8 +249,14 @@ module router::migration_tests {
             assert!(*option::borrow(&primary_subdomain_name) == subdomain_name, 11);
         };
 
+        // v1 target is cleared
+        assert!(option::is_none(&aptos_names::domains::name_resolved_address(option::none(), domain_name)), 12);
+        assert!(option::is_none(&aptos_names::domains::name_resolved_address(subdomain_name_opt, domain_name)), 13);
+        // v1 primary name is cleared
+        assert!(option::is_none(&aptos_names::domains::get_reverse_lookup(address_of(user))), 14);
         // v1 registration is cleared
-        assert!(!aptos_names::domains::name_is_registered(subdomain_name_opt, domain_name), 18);
+        assert!(!aptos_names::domains::name_is_registered(option::none(), domain_name), 15);
+        assert!(!aptos_names::domains::name_is_registered(subdomain_name_opt, domain_name), 16);
     }
 
     #[test(
@@ -257,7 +269,7 @@ module router::migration_tests {
         foundation = @0xf01d
     )]
     #[expected_failure(abort_code = 327688, location = router)]
-    fun test_migrate_subdomain_as_non_owner(
+    fun test_cannot_migrate_subdomain_as_non_owner(
         router: &signer,
         aptos_names: &signer,
         aptos_names_v2_1: &signer,
@@ -416,6 +428,13 @@ module router::migration_tests {
         router::migrate_name(user, domain_name, option::none());
         // New expiration date is 1 year after original expiration date
         assert!(router::get_expiration(domain_name, option::none()) == SECONDS_PER_YEAR * 2, 2);
+
+        // v1 target is cleared
+        assert!(option::is_none(&aptos_names::domains::name_resolved_address(option::none(), domain_name)), 12);
+        // v1 primary name is cleared
+        assert!(option::is_none(&aptos_names::domains::get_reverse_lookup(address_of(user))), 14);
+        // v1 registration is cleared
+        assert!(!aptos_names::domains::name_is_registered(option::none(), domain_name), 15);
     }
 
     #[test(
