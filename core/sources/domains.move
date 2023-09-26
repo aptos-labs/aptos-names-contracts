@@ -455,7 +455,6 @@ module aptos_names::domains {
         clear_reverse_lookup_internal(account_addr);
     }
 
-
     /// Checks for the name not existing, or being expired
     /// Returns true if the name is available for registration
     /// if this is a subdomain, and the domain doesn't exist, returns false
