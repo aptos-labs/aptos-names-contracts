@@ -84,7 +84,7 @@ module router::registration_tests {
         // Register with v1
         router::register_domain(user, domain_name, SECONDS_PER_YEAR, option::none(), option::none());
 
-        // Bump mode and disable v1
+        // Bump mode
         router::set_mode(router, 1);
 
         // Fail to register with v2 because name is still active in v1
