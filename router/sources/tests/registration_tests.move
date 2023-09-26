@@ -121,7 +121,6 @@ module router::registration_tests {
         aptos_names::config::set_is_enabled(aptos_names, false);
         router::set_mode(router, 1);
 
-        // Fail to register with v2 because name is still active in v1
         let domain_name = utf8(b"test2");
         router::register_domain(user, domain_name, SECONDS_PER_YEAR, option::none(), option::none());
     }
