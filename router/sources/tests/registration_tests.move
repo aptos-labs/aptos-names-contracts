@@ -49,12 +49,12 @@ module router::registration_tests {
         assert!(router::is_name_owner(user_addr, domain_name1, option::none()), 2);
         assert!(router::is_name_owner(user_addr, domain_name2, option::none()), 3);
 
-        // v1 primary name is cleared
-        assert!(option::is_none(&aptos_names::domains::get_reverse_lookup(address_of(user))), 4);
+        // v1 primary name is not cleared. v1 primary name only gets unset for explicit change of primary name.
+        assert!(option::is_some(&aptos_names::domains::get_reverse_lookup(address_of(user))), 4);
         // v2 primary name is properly set
         let (primary_subdomain_name, primary_domain_name) = router::router::get_primary_name(address_of(user));
         assert!(option::is_none(&primary_subdomain_name), 5);
-        assert!(option::some(domain_name2) == primary_domain_name, 6);
+        assert!(option::some(domain_name1) == primary_domain_name, 6);
     }
 
     #[test(
@@ -112,10 +112,17 @@ module router::registration_tests {
         router::init_module_for_test(router);
         let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
         let user = vector::borrow(&users, 0);
-        let domain_name = utf8(b"test1");
+        let user_addr = address_of(user);
+        let domain_name1 = utf8(b"test1");
 
         // Register with v1
-        router::register_domain(user, domain_name, SECONDS_PER_YEAR, option::none(), option::none());
+        router::register_domain(user, domain_name1, SECONDS_PER_YEAR, option::none(), option::none());
+        {
+            // Primary name should be `domain_name1`
+            let (primary_subdomain, primary_domain) = router::get_primary_name(user_addr);
+            assert!(primary_subdomain == option::none(), 3);
+            assert!(*option::borrow(&primary_domain) == domain_name1, 4);
+        };
 
         // Bump mode and disable v1
         aptos_names::config::set_is_enabled(aptos_names, false);
@@ -123,6 +130,12 @@ module router::registration_tests {
 
         let domain_name = utf8(b"test2");
         router::register_domain(user, domain_name, SECONDS_PER_YEAR, option::none(), option::none());
+        {
+            // Primary name should still be `domain_name1`
+            let (primary_subdomain, primary_domain) = router::get_primary_name(user_addr);
+            assert!(primary_subdomain == option::none(), 3);
+            assert!(*option::borrow(&primary_domain) == domain_name1, 4);
+        };
     }
 
     #[test(
