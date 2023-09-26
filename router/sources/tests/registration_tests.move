@@ -100,6 +100,40 @@ module router::registration_tests {
         aptos = @0x1,
         foundation = @0xf01d
     )]
+    fun test_register_diff_domain_in_v1_and_v2(
+        router: &signer,
+        aptos_names: &signer,
+        aptos_names_v2_1: &signer,
+        user1: signer,
+        user2: signer,
+        aptos: signer,
+        foundation: signer
+    ) {
+        router::init_module_for_test(router);
+        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
+        let user = vector::borrow(&users, 0);
+        let domain_name = utf8(b"test1");
+
+        // Register with v1
+        router::register_domain(user, domain_name, SECONDS_PER_YEAR, option::none(), option::none());
+
+        // Bump mode and disable v1
+        aptos_names::config::set_is_enabled(aptos_names, false);
+        router::set_mode(router, 1);
+
+        let domain_name = utf8(b"test2");
+        router::register_domain(user, domain_name, SECONDS_PER_YEAR, option::none(), option::none());
+    }
+
+    #[test(
+        router = @router,
+        aptos_names = @aptos_names,
+        aptos_names_v2_1 = @aptos_names_v2_1,
+        user1 = @0x077,
+        user2 = @0x266f,
+        aptos = @0x1,
+        foundation = @0xf01d
+    )]
     fun test_register_domain_with_target_addr_and_to_addr(
         router: &signer,
         aptos_names: &signer,
