@@ -446,6 +446,16 @@ module aptos_names::domains {
         };
     }
 
+    /// Clears the user's reverse lookup.
+    public fun force_clear_reverse_lookup(
+        admin: &signer,
+        account_addr: address,
+    ) acquires ReverseLookupRegistryV1, SetReverseLookupEventsV1 {
+        config::assert_signer_is_admin(admin);
+        clear_reverse_lookup_internal(account_addr);
+    }
+
+
     /// Checks for the name not existing, or being expired
     /// Returns true if the name is available for registration
     /// if this is a subdomain, and the domain doesn't exist, returns false

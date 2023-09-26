@@ -517,9 +517,10 @@ module router::router {
         } else if (mode == MODE_V1_AND_V2) {
             migrate_if_eligible(user, domain_name, subdomain_name);
             // Clear primary name in v1 if exists so we do not have primary name in both v1 and v2
-            let (_, v1_primary_domain_name) = get_v1_primary_name(signer::address_of(user));
+            let user_addr = signer::address_of(user);
+            let (_, v1_primary_domain_name) = get_v1_primary_name(user_addr);
             if (option::is_some(&v1_primary_domain_name)) {
-                domains::clear_reverse_lookup(user);
+                domains::force_clear_reverse_lookup(get_router_signer(), user_addr);
             };
             v2_1_domains::set_reverse_lookup(
                 user,
