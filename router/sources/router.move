@@ -157,6 +157,18 @@ module router::router {
         }
     }
 
+    #[view]
+    public fun can_register(domain_name: String, subdomain_name: Option<String>): bool acquires RouterConfig {
+        let mode = get_mode();
+        if (mode == MODE_V1) {
+            domains::name_is_expired_past_grace(subdomain_name, domain_name)
+        } else if (mode == MODE_V1_AND_V2) {
+            can_register_in_v2(domain_name, subdomain_name)
+        } else {
+            abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
+        }
+    }
+
     /// @notice Registers a domain name
     /// @param user The user who is paying for the registration
     /// @param domain_name The domain name to register
