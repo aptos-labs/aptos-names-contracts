@@ -494,8 +494,7 @@ module router::router {
             let reverse_lookup_result = domains::get_reverse_lookup(signer::address_of(user));
             return (option::is_some(&reverse_lookup_result))
         } else if (mode == MODE_V1_AND_V2) {
-            let reverse_lookup_result = v2_1_domains::get_reverse_lookup(signer::address_of(user));
-            return (option::is_some(&reverse_lookup_result))
+            return (option::is_some(&domains::get_reverse_lookup(signer::address_of(user))) || option::is_some(&v2_1_domains::get_reverse_lookup(signer::address_of(user))))
         } else {
             abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
         }
