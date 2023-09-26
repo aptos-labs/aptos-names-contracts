@@ -494,6 +494,8 @@ module router::router {
             let reverse_lookup_result = domains::get_reverse_lookup(signer::address_of(user));
             return (option::is_some(&reverse_lookup_result))
         } else if (mode == MODE_V1_AND_V2) {
+            // Returns true if the user has a primary name in v1 or v2. We are essentially accepting that a v1 primary name is valid while in MODE_V1_AND_V2.
+            // That said, as long as v1 is read-only and changes to v2 names will clear the v1 name, this is acceptable
             return (option::is_some(&domains::get_reverse_lookup(signer::address_of(user))) || option::is_some(&v2_1_domains::get_reverse_lookup(signer::address_of(user))))
         } else {
             abort error::not_implemented(ENOT_IMPLEMENTED_IN_MODE)
