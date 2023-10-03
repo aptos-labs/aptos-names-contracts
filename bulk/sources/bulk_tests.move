@@ -1,7 +1,7 @@
 #[test_only]
 module bulk::bulk_tests {
     use aptos_framework::timestamp;
-    use bulk::bulk::{bulk_renew_domain, bulk_migrate_domain, bulk_migrate_subdomain};
+    use bulk::bulk::{bulk_renew_domain, bulk_migrate_domain, bulk_migrate_subdomain, bulk_force_renew_domain};
     use router::router;
     use router::router_test_helper;
     use std::option;
@@ -170,5 +170,42 @@ module bulk::bulk_tests {
         // Verify names new expiration
         let expiration = router::get_expiration(domain_name, option::none());
         assert!(expiration == SECONDS_PER_YEAR * 2, 1);
+    }
+
+    #[test(
+        router = @router,
+        aptos_names = @aptos_names,
+        aptos_names_v2_1 = @aptos_names_v2_1,
+        user1 = @0x077,
+        user2 = @0x266f,
+        aptos = @0x1,
+        foundation = @0xf01d
+    )]
+    fun test_bulk_force_renew_happy_path(
+        router: &signer,
+        aptos_names: &signer,
+        aptos_names_v2_1: &signer,
+        user1: signer,
+        user2: signer,
+        aptos: signer,
+        foundation: signer
+    ) {
+        router::init_module_for_test(router);
+        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
+        let user1 = vector::borrow(&users, 0);
+        let domain_name = utf8(b"test");
+
+        // Bump mode
+        router::set_mode(router, 1);
+
+        // Register with v2
+        router::register_domain(user1, domain_name, SECONDS_PER_YEAR, option::none(), option::none());
+
+        // renew domain for 10 years. not in the renewal window. exceed the max expiration
+        bulk_force_renew_domain(aptos_names_v2_1, vector [ domain_name ], vector [ SECONDS_PER_YEAR * 10]);
+
+        // Verify names new expiration
+        let expiration = router::get_expiration(domain_name, option::none());
+        assert!(expiration == SECONDS_PER_YEAR * 10, 1);
     }
 }

@@ -1,10 +1,12 @@
 module bulk::bulk {
+    use aptos_framework::timestamp;
+    use aptos_names_v2_1::v2_1_domains;
+    use router::router;
     use std::error;
-    use std::option;
     use std::option::Option;
+    use std::option;
     use std::string::String;
     use std::vector;
-    use router::router;
 
     /// For bulk migrate endpoint, domain names vector must have same length as subdomain names vector
     const EDOMAIN_AND_SUBDOMAIN_MUST_HAVE_SAME_LENGTH: u64 = 1;
@@ -78,4 +80,29 @@ module bulk::bulk {
         bulk_migrate_domain(user, migrate_domain_names);
         bulk_renew_domain(user, renew_domain_names, renewal_duration_secs);
     }
+
+
+    // === Force Renewal ===
+    /// Domains only
+    public entry fun bulk_force_renew_domain(
+        v2_1_admin: &signer,
+        domain_names: vector<String>,
+        renewal_duration_secs: vector<u64>,
+    ) {
+        assert!(
+            vector::length(&domain_names) == vector::length(&renewal_duration_secs),
+            error::invalid_argument(EDOMAIN_AND_RENEWAL_DURATION_MUST_HAVE_SAME_LENGTH)
+        );
+
+        let idx = 0;
+        while (idx < vector::length(&domain_names)) {
+            let domain_name = *vector::borrow(&domain_names, idx);
+            let renewal_duration_sec = *vector::borrow(&renewal_duration_secs, idx);
+            let new_expiration = timestamp::now_seconds() + renewal_duration_sec;
+
+            v2_1_domains::force_set_name_expiration(v2_1_admin, domain_name, option::none(), new_expiration);
+            idx = idx + 1
+        }
+    }
+
 }
