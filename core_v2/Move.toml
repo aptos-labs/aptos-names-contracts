@@ -1,0 +1,24 @@
+[package]
+name = 'aptos_names_v2_1'
+version = '1.0.0'
+
+[addresses]
+router_signer = "_"
+aptos_names_v2_1 = "_"
+aptos_names_admin = "_"
+aptos_names_funds = "_"
+
+[dependencies.AptosFramework]
+git = 'https://github.com/aptos-labs/aptos-core.git'
+rev = 'main'
+subdir = 'aptos-move/framework/aptos-framework'
+
+[dependencies.AptosToken]
+git = 'https://github.com/aptos-labs/aptos-core.git'
+rev = 'main'
+subdir = 'aptos-move/framework/aptos-token'
+
+[dependencies.AptosTokenObjects]
+git = 'https://github.com/aptos-labs/aptos-core.git'
+rev = 'main'
+subdir = 'aptos-move/framework/aptos-token-objects'
