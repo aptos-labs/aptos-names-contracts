@@ -78,4 +78,33 @@ module bulk::bulk {
         bulk_migrate_domain(user, migrate_domain_names);
         bulk_renew_domain(user, renew_domain_names, renewal_duration_secs);
     }
+
+    // ==== Registration ====
+
+    /// Subdomains only
+    public entry fun bulk_register_subdomain(
+        domain_admin: &signer,
+        domain_names: vector<String>,
+        subdomain_names: vector<String>,
+        expiration_time_secs: vector<u64>,
+        expiration_policies: vector<u8>,
+        transferrable: vector<bool>,
+        target_addrs: vector<address>,
+        to_addrs: vector<address>,
+    ) {
+        let idx = 0;
+        while (idx < vector::length(&domain_names)) {
+            router::register_subdomain(
+                domain_admin,
+                *vector::borrow(&domain_names, idx),
+                *vector::borrow(&subdomain_names, idx),
+                *vector::borrow(&expiration_time_secs, idx),
+                *vector::borrow(&expiration_policies, idx),
+                *vector::borrow(&transferrable, idx),
+                option::some(*vector::borrow(&target_addrs, idx)),
+                option::some(*vector::borrow(&to_addrs, idx)),
+            );
+            idx = idx + 1
+        }
+    }
 }
