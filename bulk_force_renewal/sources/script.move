@@ -6,8 +6,32 @@ script {
 
     fun main(admin: &signer) {
         let names = vector [
-            b"name01",
-            b"name02",
+            b"ans",
+            b"aptos-foundation",
+            b"aptos-labs",
+            b"aptos-name-service",
+            b"aptos-names-service",
+            b"aptos-names",
+            b"aptos",
+            b"aptosfoundation",
+            b"aptoslabs",
+            b"aptosnames",
+            b"aptosnameservice",
+            b"aptosnamesservice",
+            b"faucet",
+            b"foundation",
+            b"gas",
+            b"move-lang",
+            b"move-language",
+            b"move",
+            b"null",
+            b"octa",
+            b"petra-foundation",
+            b"petra",
+            b"petrafoundation",
+            b"petrawallet",
+            b"undefined",
+            b"validators",
         ];
         let years_to_expire = 100;
 
