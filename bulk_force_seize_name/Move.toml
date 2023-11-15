@@ -1,0 +1,12 @@
+[package]
+name = 'aptos_names_bulk_force_seize_name'
+version = '1.0.0'
+
+[addresses]
+repository = "_"
+
+[dependencies.aptos_names]
+local = "../core"
+
+[dependencies.bulk]
+local = "../bulk"
