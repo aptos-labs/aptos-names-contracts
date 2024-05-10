@@ -428,12 +428,22 @@ module router::router {
             };
 
             // Mint token in v2
+            // Names past the cutoff date will end up with a negative
+            // registration duration. The following logic ensures that duration
+            // is >= 1
+            let registration_duration_secs = if (new_expiration_time_sec > now)
+            {
+                new_expiration_time_sec - now
+            } else {
+                // Must be non-zero so that the name is not considered expired
+                1
+            };
             v2_1_domains::register_name_with_router(
                 router_signer,
                 user,
                 domain_name,
                 subdomain_name,
-                new_expiration_time_sec - now
+                registration_duration_secs,
             );
 
             // If the name was a primary name, carry it over (`target_addr` gets automatically carried over too)
@@ -770,7 +780,7 @@ module router::router {
         subdomain_name: Option<String>,
     ): bool {
         let (is_owner, _token_id) = domains::is_token_owner(owner_addr, subdomain_name, domain_name);
-        is_owner && !domains::name_is_expired(subdomain_name, domain_name)
+        is_owner && !domains::name_is_expired_past_grace(subdomain_name, domain_name)
     }
 
     #[view]
