@@ -30,7 +30,7 @@ module aptos_names_v2_1::v2_1_string_validator {
             if (c == 45) {
                 if (i == 0 || i == len - 1) {
                     // hyphen at beginning or end is not allowed
-                    return (false, len)
+                    return(false, len)
                 };
                 // We ignore hyphens from the character set count, it's easy to determine later
             }
@@ -43,7 +43,7 @@ module aptos_names_v2_1::v2_1_string_validator {
                 // these are valid
             } else {
                 // uknown character set: this is not valid
-                return (false, len)
+                return(false, len)
             };
             i = i + 1;
         };
@@ -89,7 +89,7 @@ module aptos_names_v2_1::v2_1_string_validator {
                 let char1 = (char1 as u64);
                 let char2 = (*vector::borrow(bytes, i + 1) as u64);
                 let char3 = (*vector::borrow(bytes, i + 2) as u64);
-                vector::push_back(&mut result, (char1 << 16) | (char2 << 8) | char3);
+                vector::push_back(&mut result, (char1 << 16) |(char2 << 8) | char3);
                 i = i + 2;
             } else if (prefix == 15) {
                 // 1111 0xxx  10xx xxxx  10xx xxxx  10xx xxxx
@@ -97,7 +97,7 @@ module aptos_names_v2_1::v2_1_string_validator {
                 let char2 = (*vector::borrow(bytes, i + 1) as u64);
                 let char3 = (*vector::borrow(bytes, i + 2) as u64);
                 let char4 = (*vector::borrow(bytes, i + 3) as u64);
-                vector::push_back(&mut result, (char1 << 24) | (char2 << 16) | (char3 << 8) | char4);
+                vector::push_back(&mut result, (char1 << 24) |(char2 << 16) |(char3 << 8) | char4);
                 i = i + 3;
             } else {
                 assert!(char1 <= 14u8, EINVALID_UTF8_START);
@@ -133,8 +133,7 @@ module aptos_names_v2_1::v2_1_string_validator {
             Example { text: b"01234-56789", length: 11, },
             Example { text: b"abcdefgh-ijklmnopqrstuvwxyz", length: 27, },
             Example { text: b"a", length: 1, },
-            Example { text: b"", length: 0, },
-        ];
+            Example { text: b"", length: 0, },];
         // Reverse it so the errors are in order
         vector::reverse(&mut allowed_tests);
         let i = 0;
@@ -155,8 +154,7 @@ module aptos_names_v2_1::v2_1_string_validator {
             Example { text: b"-", length: 1, },
             Example { text: b"_", length: 1, },
             Example { text: b"a!b", length: 3, },
-            Example { text: b"A", length: 1, },
-        ];
+            Example { text: b"A", length: 1, },];
         // Reverse it so the errors are in order
         vector::reverse(&mut not_allowed);
         let i = 0;

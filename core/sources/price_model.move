@@ -3,7 +3,6 @@ module aptos_names::price_model {
     use aptos_std::math64;
     use std::error;
 
-
     /// The domain length is too short- currently the minimum is 2 characters
     const EDOMAIN_TOO_SHORT: u64 = 1;
 
@@ -27,7 +26,8 @@ module aptos_names::price_model {
     public fun price_for_domain_v1(domain_length: u64, registration_years: u8): u64 {
         assert!(domain_length >= 2, error::out_of_range(EDOMAIN_TOO_SHORT));
         let length_to_charge_for = math64::min(domain_length, 6);
-        scale_price_for_years(config::domain_price_for_length(length_to_charge_for), registration_years)
+        scale_price_for_years(config::domain_price_for_length(length_to_charge_for),
+            registration_years)
     }
 
     /// Subdomains have a fixed unit cost
@@ -104,15 +104,15 @@ module aptos_names::price_model {
             YearPricePair { years: 7, expected_price: 1085 },
             YearPricePair { years: 8, expected_price: 1360 },
             YearPricePair { years: 9, expected_price: 1680 },
-            YearPricePair { years: 10, expected_price: 2050 },
-        ];
+            YearPricePair { years: 10, expected_price: 2050 },];
 
         account::create_account_for_test(signer::address_of(myself));
         account::create_account_for_test(signer::address_of(framework));
 
         while (vector::length(&prices_and_years) > 0) {
             let pair = vector::pop_back(&mut prices_and_years);
-            let price = scale_price_for_years(100 * config::octas(), pair.years) / config::octas();
+            let price =
+                scale_price_for_years(100 * config::octas(), pair.years) / config::octas();
             assert!(price == pair.expected_price, price);
         };
     }

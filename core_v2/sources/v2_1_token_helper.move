@@ -16,15 +16,17 @@ module aptos_names_v2_1::v2_1_token_helper {
     /// The subdomain name is not a valid name
     const ESUBDOMAIN_NAME_INVALID: u64 = 3;
 
-    public(friend) fun get_fully_qualified_domain_name(subdomain_name: Option<String>, domain_name: String): String {
+    public(friend) fun get_fully_qualified_domain_name(
+        subdomain_name: Option<String>, domain_name: String
+    ): String {
         let (domain_is_allowed, _length) = v2_1_string_validator::string_is_allowed(&domain_name);
         assert!(domain_is_allowed, error::invalid_argument(EDOMAIN_NAME_INVALID));
-        let subdomain_is_allowed = if (option::is_some(&subdomain_name)) {
-            let (subdomain_is_allowed, _length) = v2_1_string_validator::string_is_allowed(option::borrow(&subdomain_name));
-            subdomain_is_allowed
-        } else {
-            true
-        };
+        let subdomain_is_allowed =
+            if (option::is_some(&subdomain_name)) {
+                let (subdomain_is_allowed, _length) =
+                    v2_1_string_validator::string_is_allowed(option::borrow(&subdomain_name));
+                subdomain_is_allowed
+            } else { true };
         assert!(subdomain_is_allowed, error::invalid_argument(ESUBDOMAIN_NAME_INVALID));
         let combined = combine_sub_and_domain_str(subdomain_name, domain_name);
         string::append_utf8(&mut combined, DOMAIN_SUFFIX);
@@ -34,7 +36,9 @@ module aptos_names_v2_1::v2_1_token_helper {
     /// Combines a subdomain and domain into a new string, separated by a `.`
     /// Used for building fully qualified domain names (Ex: `{subdomain_name}.{domain_name}.apt`)
     /// If there is no subdomain, just returns the domain name
-    public(friend) fun combine_sub_and_domain_str(subdomain_name: Option<String>, domain_name: String): String {
+    public(friend) fun combine_sub_and_domain_str(
+        subdomain_name: Option<String>, domain_name: String
+    ): String {
         if (option::is_none(&subdomain_name)) {
             return domain_name
         };
@@ -47,17 +51,28 @@ module aptos_names_v2_1::v2_1_token_helper {
 
     #[test]
     fun test_get_fully_qualified_domain_name() {
-        assert!(get_fully_qualified_domain_name(option::none(), string::utf8(b"test")) == string::utf8(b"test.apt"), 1);
-        assert!(get_fully_qualified_domain_name(option::none(), string::utf8(b"wowthisislong")) == string::utf8(b"wowthisislong.apt"), 2);
-        assert!(get_fully_qualified_domain_name(option::none(), string::utf8(b"123")) == string::utf8(b"123.apt"), 2);
-        assert!(get_fully_qualified_domain_name(option::some(string::utf8(b"sub")), string::utf8(b"test")) == string::utf8(b"sub.test.apt"), 2);
+        assert!(get_fully_qualified_domain_name(option::none(), string::utf8(b"test"))
+            == string::utf8(b"test.apt"),
+            1);
+        assert!(get_fully_qualified_domain_name(option::none(),
+                string::utf8(b"wowthisislong"))
+            == string::utf8(b"wowthisislong.apt"),
+            2);
+        assert!(get_fully_qualified_domain_name(option::none(), string::utf8(b"123"))
+            == string::utf8(b"123.apt"),
+            2);
+        assert!(get_fully_qualified_domain_name(option::some(string::utf8(b"sub")),
+                string::utf8(b"test"))
+            == string::utf8(b"sub.test.apt"),
+            2);
     }
 
     #[test]
     fun test_combine_sub_and_domain_str() {
         let subdomain_name = string::utf8(b"sub");
         let domain_name = string::utf8(b"dom");
-        let combined = combine_sub_and_domain_str(option::some(subdomain_name), domain_name);
+        let combined =
+            combine_sub_and_domain_str(option::some(subdomain_name), domain_name);
         assert!(combined == string::utf8(b"sub.dom"), 1);
     }
 
