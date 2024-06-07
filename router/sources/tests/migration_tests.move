@@ -11,15 +11,7 @@ module router::migration_tests {
     const MAX_MODE: u8 = 1;
     const SECONDS_PER_YEAR: u64 = 60 * 60 * 24 * 365;
 
-    #[test(
-        router = @router,
-        aptos_names = @aptos_names,
-        aptos_names_v2_1 = @aptos_names_v2_1,
-        user1 = @0x077,
-        user2 = @0x266f,
-        aptos = @0x1,
-        foundation = @0xf01d
-    )]
+    #[test(router = @router, aptos_names = @aptos_names, aptos_names_v2_1 = @aptos_names_v2_1, user1 = @0x077, user2 = @0x266f, aptos = @0x1, foundation = @0xf01d)]
     fun test_migrate_domain(
         router: &signer,
         aptos_names: &signer,
@@ -30,19 +22,25 @@ module router::migration_tests {
         foundation: signer
     ) {
         router::init_module_for_test(router);
-        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
+        let users =
+            router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos,
+                user2, &foundation);
         let user = vector::borrow(&users, 0);
         let user_addr = address_of(user);
         let domain_name = utf8(b"test");
 
         // Register with v1
         let now = timestamp::now_seconds();
-        router::register_domain(user, domain_name, SECONDS_PER_YEAR, option::none(), option::none());
+        router::register_domain(user, domain_name, SECONDS_PER_YEAR, option::none(),
+            option::none());
         assert!(router::is_name_owner(user_addr, domain_name, option::none()), 1);
-        assert!(*option::borrow(&router::get_target_addr(domain_name, option::none())) == user_addr, 2);
-        assert!(router::get_expiration(domain_name, option::none()) == now + SECONDS_PER_YEAR, 3);
+        assert!(*option::borrow(&router::get_target_addr(domain_name, option::none())) == user_addr,
+            2);
+        assert!(router::get_expiration(domain_name, option::none())
+            == now + SECONDS_PER_YEAR, 3);
         {
-            let (primary_subdomain_name, primary_domain_name) = router::get_primary_name(user_addr);
+            let (primary_subdomain_name, primary_domain_name) = router::get_primary_name(
+                user_addr);
             assert!(*option::borrow(&primary_domain_name) == domain_name, 4);
             assert!(option::is_none(&primary_subdomain_name), 5);
         };
@@ -52,10 +50,13 @@ module router::migration_tests {
 
         // Attributes should still be the same
         assert!(router::is_name_owner(user_addr, domain_name, option::none()), 7);
-        assert!(*option::borrow(&router::get_target_addr(domain_name, option::none())) == user_addr, 8);
-        assert!(router::get_expiration(domain_name, option::none()) == now + SECONDS_PER_YEAR, 9);
+        assert!(*option::borrow(&router::get_target_addr(domain_name, option::none())) == user_addr,
+            8);
+        assert!(router::get_expiration(domain_name, option::none())
+            == now + SECONDS_PER_YEAR, 9);
         {
-            let (primary_subdomain_name, primary_domain_name) = router::get_primary_name(user_addr);
+            let (primary_subdomain_name, primary_domain_name) = router::get_primary_name(
+                user_addr);
             assert!(*option::borrow(&primary_domain_name) == domain_name, 10);
             assert!(option::is_none(&primary_subdomain_name), 11);
         };
@@ -66,32 +67,29 @@ module router::migration_tests {
         // Migrate to v2
         router::migrate_name(user, domain_name, option::none());
         assert!(router::is_name_owner(user_addr, domain_name, option::none()), 12);
-        assert!(*option::borrow(&router::get_target_addr(domain_name, option::none())) == user_addr, 13);
+        assert!(*option::borrow(&router::get_target_addr(domain_name, option::none())) == user_addr,
+            13);
         // Auto-renewal is on because the expiration is 2 years from epoch
-        assert!(router::get_expiration(domain_name, option::none()) == now + SECONDS_PER_YEAR * 2, 14);
+        assert!(router::get_expiration(domain_name, option::none())
+            == now + SECONDS_PER_YEAR * 2, 14);
         {
-            let (primary_subdomain_name, primary_domain_name) = router::get_primary_name(user_addr);
+            let (primary_subdomain_name, primary_domain_name) = router::get_primary_name(
+                user_addr);
             assert!(*option::borrow(&primary_domain_name) == domain_name, 15);
             assert!(option::is_none(&primary_subdomain_name), 16);
         };
 
         // v1 target is cleared
-        assert!(option::is_none(&aptos_names::domains::name_resolved_address(option::none(), domain_name)), 17);
+        assert!(option::is_none(&aptos_names::domains::name_resolved_address(option::none(),
+                    domain_name)),
+            17);
         // v1 primary name is cleared
         assert!(option::is_none(&aptos_names::domains::get_reverse_lookup(user_addr)), 17);
         // v1 registration is cleared
         assert!(!aptos_names::domains::name_is_registered(option::none(), domain_name), 18);
     }
 
-    #[test(
-        router = @router,
-        aptos_names = @aptos_names,
-        aptos_names_v2_1 = @aptos_names_v2_1,
-        user1 = @0x077,
-        user2 = @0x266f,
-        aptos = @0x1,
-        foundation = @0xf01d
-    )]
+    #[test(router = @router, aptos_names = @aptos_names, aptos_names_v2_1 = @aptos_names_v2_1, user1 = @0x077, user2 = @0x266f, aptos = @0x1, foundation = @0xf01d)]
     #[expected_failure(abort_code = 327688, location = router)]
     fun test_migrate_domain_as_non_owner(
         router: &signer,
@@ -103,13 +101,16 @@ module router::migration_tests {
         foundation: signer
     ) {
         router::init_module_for_test(router);
-        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
+        let users =
+            router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos,
+                user2, &foundation);
         let user1 = vector::borrow(&users, 0);
         let user2 = vector::borrow(&users, 1);
         let domain_name = utf8(b"test");
 
         // Register with v1
-        router::register_domain(user1, domain_name, SECONDS_PER_YEAR, option::none(), option::none());
+        router::register_domain(user1, domain_name, SECONDS_PER_YEAR, option::none(),
+            option::none());
 
         // Bump mode
         router::set_mode(router, 1);
@@ -118,15 +119,7 @@ module router::migration_tests {
         router::migrate_name(user2, domain_name, option::none());
     }
 
-    #[test(
-        router = @router,
-        aptos_names = @aptos_names,
-        aptos_names_v2_1 = @aptos_names_v2_1,
-        user1 = @0x077,
-        user2 = @0x266f,
-        aptos = @0x1,
-        foundation = @0xf01d
-    )]
+    #[test(router = @router, aptos_names = @aptos_names, aptos_names_v2_1 = @aptos_names_v2_1, user1 = @0x077, user2 = @0x266f, aptos = @0x1, foundation = @0xf01d)]
     fun test_migrate_domain_no_autorenewal(
         router: &signer,
         aptos_names: &signer,
@@ -137,7 +130,9 @@ module router::migration_tests {
         foundation: signer
     ) {
         router::init_module_for_test(router);
-        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
+        let users =
+            router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos,
+                user2, &foundation);
         let user = vector::borrow(&users, 0);
         let domain_name = utf8(b"test");
 
@@ -146,7 +141,8 @@ module router::migration_tests {
         let now = timestamp::now_seconds();
 
         // Register with v1
-        router::register_domain(user, domain_name, SECONDS_PER_YEAR, option::none(), option::none());
+        router::register_domain(user, domain_name, SECONDS_PER_YEAR, option::none(),
+            option::none());
 
         // Bump mode
         router::set_mode(router, 1);
@@ -157,25 +153,21 @@ module router::migration_tests {
         router::migrate_name(user, domain_name, option::none());
 
         // Auto-renewal is off because the expiration is after 2024/03/07
-        assert!(router::get_expiration(domain_name, option::none()) == now + SECONDS_PER_YEAR, 14);
+        assert!(router::get_expiration(domain_name, option::none())
+            == now + SECONDS_PER_YEAR, 14);
 
         // v1 target is cleared
-        assert!(option::is_none(&aptos_names::domains::name_resolved_address(option::none(), domain_name)), 17);
+        assert!(option::is_none(&aptos_names::domains::name_resolved_address(option::none(),
+                    domain_name)),
+            17);
         // v1 primary name is cleared
-        assert!(option::is_none(&aptos_names::domains::get_reverse_lookup(address_of(user))), 17);
+        assert!(option::is_none(&aptos_names::domains::get_reverse_lookup(address_of(user))),
+            17);
         // v1 registration is cleared
         assert!(!aptos_names::domains::name_is_registered(option::none(), domain_name), 18);
     }
 
-    #[test(
-        router = @router,
-        aptos_names = @aptos_names,
-        aptos_names_v2_1 = @aptos_names_v2_1,
-        user1 = @0x077,
-        user2 = @0x266f,
-        aptos = @0x1,
-        foundation = @0xf01d
-    )]
+    #[test(router = @router, aptos_names = @aptos_names, aptos_names_v2_1 = @aptos_names_v2_1, user1 = @0x077, user2 = @0x266f, aptos = @0x1, foundation = @0xf01d)]
     fun test_migrate_subdomain(
         router: &signer,
         aptos_names: &signer,
@@ -186,7 +178,9 @@ module router::migration_tests {
         foundation: signer
     ) {
         router::init_module_for_test(router);
-        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
+        let users =
+            router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos,
+                user2, &foundation);
         let user = vector::borrow(&users, 0);
         let user_addr = address_of(user);
         let domain_name = utf8(b"test");
@@ -195,23 +189,25 @@ module router::migration_tests {
 
         // Register with v1
         let now = timestamp::now_seconds();
-        router::register_domain(user, domain_name, SECONDS_PER_YEAR, option::none(), option::none());
-        router::register_subdomain(
-            user,
+        router::register_domain(user, domain_name, SECONDS_PER_YEAR, option::none(),
+            option::none());
+        router::register_subdomain(user,
             domain_name,
             subdomain_name,
             SECONDS_PER_YEAR,
             0,
             false,
             option::none(),
-            option::none(),
-        );
+            option::none(),);
         router::set_primary_name(user, domain_name, subdomain_name_opt);
         assert!(router::is_name_owner(user_addr, domain_name, subdomain_name_opt), 7);
-        assert!(*option::borrow(&router::get_target_addr(domain_name, subdomain_name_opt)) == user_addr, 8);
-        assert!(router::get_expiration(domain_name, option::none()) == now + SECONDS_PER_YEAR, 9);
+        assert!(*option::borrow(&router::get_target_addr(domain_name, subdomain_name_opt)) ==
+             user_addr, 8);
+        assert!(router::get_expiration(domain_name, option::none())
+            == now + SECONDS_PER_YEAR, 9);
         {
-            let (primary_subdomain_name, primary_domain_name) = router::get_primary_name(user_addr);
+            let (primary_subdomain_name, primary_domain_name) = router::get_primary_name(
+                user_addr);
             assert!(*option::borrow(&primary_domain_name) == domain_name, 10);
             assert!(*option::borrow(&primary_subdomain_name) == subdomain_name, 11);
         };
@@ -224,11 +220,15 @@ module router::migration_tests {
 
         // Attribtes should be the same
         assert!(router::is_name_owner(user_addr, domain_name, subdomain_name_opt), 7);
-        assert!(*option::borrow(&router::get_target_addr(domain_name, subdomain_name_opt)) == user_addr, 8);
-        assert!(router::get_expiration(domain_name, option::none()) == now + SECONDS_PER_YEAR, 9);
-        assert!(router::get_expiration(domain_name, subdomain_name_opt) == now + SECONDS_PER_YEAR, 9);
+        assert!(*option::borrow(&router::get_target_addr(domain_name, subdomain_name_opt)) ==
+             user_addr, 8);
+        assert!(router::get_expiration(domain_name, option::none())
+            == now + SECONDS_PER_YEAR, 9);
+        assert!(router::get_expiration(domain_name, subdomain_name_opt)
+            == now + SECONDS_PER_YEAR, 9);
         {
-            let (primary_subdomain_name, primary_domain_name) = router::get_primary_name(user_addr);
+            let (primary_subdomain_name, primary_domain_name) = router::get_primary_name(
+                user_addr);
             assert!(*option::borrow(&primary_domain_name) == domain_name, 10);
             assert!(*option::borrow(&primary_subdomain_name) == subdomain_name, 11);
         };
@@ -237,37 +237,35 @@ module router::migration_tests {
         router::migrate_name(user, domain_name, option::none());
         router::migrate_name(user, domain_name, subdomain_name_opt);
         assert!(router::is_name_owner(user_addr, domain_name, subdomain_name_opt), 7);
-        assert!(*option::borrow(&router::get_target_addr(domain_name, subdomain_name_opt)) == user_addr, 8);
+        assert!(*option::borrow(&router::get_target_addr(domain_name, subdomain_name_opt)) ==
+             user_addr, 8);
         // Auto-renewal will not happen for subdomain. Its expiration remains the same
-        assert!(
-            router::get_expiration(domain_name, subdomain_name_opt) == now + SECONDS_PER_YEAR,
-            9
-        );
+        assert!(router::get_expiration(domain_name, subdomain_name_opt)
+            == now + SECONDS_PER_YEAR, 9);
         {
-            let (primary_subdomain_name, primary_domain_name) = router::get_primary_name(user_addr);
+            let (primary_subdomain_name, primary_domain_name) = router::get_primary_name(
+                user_addr);
             assert!(*option::borrow(&primary_domain_name) == domain_name, 10);
             assert!(*option::borrow(&primary_subdomain_name) == subdomain_name, 11);
         };
 
         // v1 target is cleared
-        assert!(option::is_none(&aptos_names::domains::name_resolved_address(option::none(), domain_name)), 12);
-        assert!(option::is_none(&aptos_names::domains::name_resolved_address(subdomain_name_opt, domain_name)), 13);
+        assert!(option::is_none(&aptos_names::domains::name_resolved_address(option::none(),
+                    domain_name)),
+            12);
+        assert!(option::is_none(&aptos_names::domains::name_resolved_address(
+                    subdomain_name_opt, domain_name)),
+            13);
         // v1 primary name is cleared
-        assert!(option::is_none(&aptos_names::domains::get_reverse_lookup(address_of(user))), 14);
+        assert!(option::is_none(&aptos_names::domains::get_reverse_lookup(address_of(user))),
+            14);
         // v1 registration is cleared
         assert!(!aptos_names::domains::name_is_registered(option::none(), domain_name), 15);
-        assert!(!aptos_names::domains::name_is_registered(subdomain_name_opt, domain_name), 16);
+        assert!(!aptos_names::domains::name_is_registered(subdomain_name_opt, domain_name),
+            16);
     }
 
-    #[test(
-        router = @router,
-        aptos_names = @aptos_names,
-        aptos_names_v2_1 = @aptos_names_v2_1,
-        user1 = @0x077,
-        user2 = @0x266f,
-        aptos = @0x1,
-        foundation = @0xf01d
-    )]
+    #[test(router = @router, aptos_names = @aptos_names, aptos_names_v2_1 = @aptos_names_v2_1, user1 = @0x077, user2 = @0x266f, aptos = @0x1, foundation = @0xf01d)]
     #[expected_failure(abort_code = 327688, location = router)]
     fun test_cannot_migrate_subdomain_as_non_owner(
         router: &signer,
@@ -279,7 +277,9 @@ module router::migration_tests {
         foundation: signer
     ) {
         router::init_module_for_test(router);
-        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
+        let users =
+            router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos,
+                user2, &foundation);
         let user1 = vector::borrow(&users, 0);
         let user2 = vector::borrow(&users, 1);
         let domain_name = utf8(b"test");
@@ -287,17 +287,16 @@ module router::migration_tests {
         let subdomain_name_opt = option::some(subdomain_name);
 
         // Register with v1
-        router::register_domain(user1, domain_name, SECONDS_PER_YEAR, option::none(), option::none());
-        router::register_subdomain(
-            user1,
+        router::register_domain(user1, domain_name, SECONDS_PER_YEAR, option::none(),
+            option::none());
+        router::register_subdomain(user1,
             domain_name,
             subdomain_name,
             SECONDS_PER_YEAR,
             0,
             false,
             option::none(),
-            option::none(),
-        );
+            option::none(),);
 
         // Bump mode
         router::set_mode(router, 1);
@@ -309,15 +308,7 @@ module router::migration_tests {
         router::migrate_name(user2, domain_name, subdomain_name_opt);
     }
 
-    #[test(
-        router = @router,
-        aptos_names = @aptos_names,
-        aptos_names_v2_1 = @aptos_names_v2_1,
-        user1 = @0x077,
-        user2 = @0x266f,
-        aptos = @0x1,
-        foundation = @0xf01d
-    )]
+    #[test(router = @router, aptos_names = @aptos_names, aptos_names_v2_1 = @aptos_names_v2_1, user1 = @0x077, user2 = @0x266f, aptos = @0x1, foundation = @0xf01d)]
     #[expected_failure(abort_code = 196618, location = router)]
     fun test_cannot_migrate_subdomain_before_domain(
         router: &signer,
@@ -329,24 +320,25 @@ module router::migration_tests {
         foundation: signer
     ) {
         router::init_module_for_test(router);
-        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
+        let users =
+            router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos,
+                user2, &foundation);
         let user = vector::borrow(&users, 0);
         let domain_name = utf8(b"test");
         let subdomain_name = utf8(b"sub");
         let subdomain_name_opt = option::some(subdomain_name);
 
         // Register with v1
-        router::register_domain(user, domain_name, SECONDS_PER_YEAR, option::none(), option::none());
-        router::register_subdomain(
-            user,
+        router::register_domain(user, domain_name, SECONDS_PER_YEAR, option::none(),
+            option::none());
+        router::register_subdomain(user,
             domain_name,
             subdomain_name,
             SECONDS_PER_YEAR,
             0,
             false,
             option::none(),
-            option::none(),
-        );
+            option::none(),);
 
         // Bump mode
         router::set_mode(router, 1);
@@ -355,15 +347,7 @@ module router::migration_tests {
         router::migrate_name(user, domain_name, subdomain_name_opt);
     }
 
-    #[test(
-        router = @router,
-        aptos_names = @aptos_names,
-        aptos_names_v2_1 = @aptos_names_v2_1,
-        user1 = @0x077,
-        user2 = @0x266f,
-        aptos = @0x1,
-        foundation = @0xf01d
-    )]
+    #[test(router = @router, aptos_names = @aptos_names, aptos_names_v2_1 = @aptos_names_v2_1, user1 = @0x077, user2 = @0x266f, aptos = @0x1, foundation = @0xf01d)]
     #[expected_failure(abort_code = 196619, location = router)]
     fun test_cannot_migrate_twice(
         router: &signer,
@@ -375,12 +359,15 @@ module router::migration_tests {
         foundation: signer
     ) {
         router::init_module_for_test(router);
-        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
+        let users =
+            router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos,
+                user2, &foundation);
         let user = vector::borrow(&users, 0);
         let domain_name = utf8(b"test");
 
         // Register with v1
-        router::register_domain(user, domain_name, SECONDS_PER_YEAR, option::none(), option::none());
+        router::register_domain(user, domain_name, SECONDS_PER_YEAR, option::none(),
+            option::none());
 
         // Bump mode
         router::set_mode(router, 1);
@@ -390,15 +377,7 @@ module router::migration_tests {
         router::migrate_name(user, domain_name, option::none());
     }
 
-    #[test(
-        router = @router,
-        aptos_names = @aptos_names,
-        aptos_names_v2_1 = @aptos_names_v2_1,
-        user1 = @0x077,
-        user2 = @0x266f,
-        aptos = @0x1,
-        foundation = @0xf01d
-    )]
+    #[test(router = @router, aptos_names = @aptos_names, aptos_names_v2_1 = @aptos_names_v2_1, user1 = @0x077, user2 = @0x266f, aptos = @0x1, foundation = @0xf01d)]
     fun test_migrate_expired_but_still_in_grace_period_name(
         router: &signer,
         aptos_names: &signer,
@@ -409,12 +388,15 @@ module router::migration_tests {
         foundation: signer
     ) {
         router::init_module_for_test(router);
-        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
+        let users =
+            router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos,
+                user2, &foundation);
         let user = vector::borrow(&users, 0);
         let domain_name = utf8(b"test");
 
         // Register with v1
-        router::register_domain(user, domain_name, SECONDS_PER_YEAR, option::none(), option::none());
+        router::register_domain(user, domain_name, SECONDS_PER_YEAR, option::none(),
+            option::none());
 
         // Bump mode
         router::set_mode(router, 1);
@@ -427,25 +409,21 @@ module router::migration_tests {
         timestamp::update_global_time_for_test_secs(SECONDS_PER_YEAR + 100);
         router::migrate_name(user, domain_name, option::none());
         // New expiration date is 1 year after original expiration date
-        assert!(router::get_expiration(domain_name, option::none()) == SECONDS_PER_YEAR * 2, 2);
+        assert!(router::get_expiration(domain_name, option::none())
+            == SECONDS_PER_YEAR * 2, 2);
 
         // v1 target is cleared
-        assert!(option::is_none(&aptos_names::domains::name_resolved_address(option::none(), domain_name)), 12);
+        assert!(option::is_none(&aptos_names::domains::name_resolved_address(option::none(),
+                    domain_name)),
+            12);
         // v1 primary name is cleared
-        assert!(option::is_none(&aptos_names::domains::get_reverse_lookup(address_of(user))), 14);
+        assert!(option::is_none(&aptos_names::domains::get_reverse_lookup(address_of(user))),
+            14);
         // v1 registration is cleared
         assert!(!aptos_names::domains::name_is_registered(option::none(), domain_name), 15);
     }
 
-    #[test(
-        router = @router,
-        aptos_names = @aptos_names,
-        aptos_names_v2_1 = @aptos_names_v2_1,
-        user1 = @0x077,
-        user2 = @0x266f,
-        aptos = @0x1,
-        foundation = @0xf01d
-    )]
+    #[test(router = @router, aptos_names = @aptos_names, aptos_names_v2_1 = @aptos_names_v2_1, user1 = @0x077, user2 = @0x266f, aptos = @0x1, foundation = @0xf01d)]
     #[expected_failure(abort_code = 196615, location = router)]
     fun test_cannot_migrate_expired_past_grace_period_name(
         router: &signer,
@@ -457,12 +435,15 @@ module router::migration_tests {
         foundation: signer
     ) {
         router::init_module_for_test(router);
-        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
+        let users =
+            router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos,
+                user2, &foundation);
         let user = vector::borrow(&users, 0);
         let domain_name = utf8(b"test");
 
         // Register with v1
-        router::register_domain(user, domain_name, SECONDS_PER_YEAR, option::none(), option::none());
+        router::register_domain(user, domain_name, SECONDS_PER_YEAR, option::none(),
+            option::none());
 
         // Bump mode
         router::set_mode(router, 1);
