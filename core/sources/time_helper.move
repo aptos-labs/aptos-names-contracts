@@ -34,8 +34,10 @@ module aptos_names::time_helper {
         SECONDS_PER_YEAR * years
     }
 
+
     #[test]
-    fun test_time_conversion() {
+    fun test_time_conversion()
+    {
         assert!(minutes_to_seconds(1) == 60, minutes_to_seconds(1));
         assert!(minutes_to_seconds(60) == hours_to_seconds(1), minutes_to_seconds(1));
 
@@ -45,7 +47,6 @@ module aptos_names::time_helper {
 
         assert!(years_to_seconds(1) == days_to_seconds(1) * 365, years_to_seconds(1));
 
-        assert!(1 == seconds_to_years(years_to_seconds(1)),
-            seconds_to_years(years_to_seconds(1)));
+        assert!(1 == seconds_to_years(years_to_seconds(1)), seconds_to_years(years_to_seconds(1)));
     }
 }

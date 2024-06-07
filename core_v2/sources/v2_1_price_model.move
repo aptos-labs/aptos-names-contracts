@@ -3,14 +3,15 @@ module aptos_names_v2_1::v2_1_price_model {
     use aptos_std::math64;
     use std::error;
 
-    /// The domain length is too short- currently the minimum is 3 characters
+
+    /// The domain length is too short- currently the minimum is 2 characters
     const EDOMAIN_TOO_SHORT: u64 = 1;
     const SECONDS_PER_YEAR: u64 = 60 * 60 * 24 * 365;
 
     #[view]
-    /// There is a fixed cost per each tier of domain names, from 3 to >=6, and it also scales exponentially with number of years to register
+    /// There is a fixed cost per each tier of domain names, from 2 to >=6, and it also scales exponentially with number of years to register
     public fun price_for_domain(domain_length: u64, registration_secs: u64): u64 {
-        assert!(domain_length >= 3, error::out_of_range(EDOMAIN_TOO_SHORT));
+        assert!(domain_length >= 2, error::out_of_range(EDOMAIN_TOO_SHORT));
         let length_to_charge_for = math64::min(domain_length, 6);
         let registration_years = (registration_secs / SECONDS_PER_YEAR as u8);
         v2_1_config::domain_price_for_length(length_to_charge_for) * (registration_years as u64)
@@ -64,8 +65,7 @@ module aptos_names_v2_1::v2_1_price_model {
         let price = price_for_domain(15, SECONDS_PER_YEAR) / v2_1_config::octas();
         assert!(price == 5, price);
 
-        let price =
-            price_for_domain(15, 10 * SECONDS_PER_YEAR) / v2_1_config::octas();
+        let price = price_for_domain(15, 10 * SECONDS_PER_YEAR) / v2_1_config::octas();
         assert!(price == 50, price);
     }
 

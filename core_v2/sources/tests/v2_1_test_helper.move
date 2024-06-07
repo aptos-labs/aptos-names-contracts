@@ -86,14 +86,15 @@ module aptos_names_v2_1::v2_1_test_helper {
         let set_target_address_event_event_count_before = v2_1_domains::get_set_target_address_event_count();
 
         if (option::is_none(&subdomain_name)) {
-            v2_1_domains::register_domain(router_signer, user, domain_name,
-                registration_duration_secs);
+            v2_1_domains::register_domain(router_signer, user, domain_name, registration_duration_secs);
         } else {
-            v2_1_domains::register_subdomain(router_signer,
+            v2_1_domains::register_subdomain(
+                router_signer,
                 user,
                 domain_name,
                 *option::borrow(&subdomain_name),
-                timestamp::now_seconds() + registration_duration_secs);
+                timestamp::now_seconds() + registration_duration_secs
+            );
         };
 
         // It should now be: not expired, registered, and not registerable
@@ -101,8 +102,7 @@ module aptos_names_v2_1::v2_1_test_helper {
         assert!(!v2_1_domains::is_name_registerable(domain_name, subdomain_name), 13);
         assert!(v2_1_domains::is_name_registered(domain_name, subdomain_name), 14);
 
-        let is_owner =
-            v2_1_domains::is_token_owner(user_addr, domain_name, subdomain_name);
+        let is_owner = v2_1_domains::is_token_owner(user_addr, domain_name, subdomain_name);
         let is_expired = v2_1_domains::is_name_expired(domain_name, subdomain_name);
         // TODO: Re-enable / Re-write
         // let (tdi_creator, tdi_collection, tdi_name, tdi_property_version) = token::get_token_id_fields(&token_id);
@@ -114,19 +114,24 @@ module aptos_names_v2_1::v2_1_test_helper {
         if (is_subdomain) {
             // If it's a subdomain, we only charge a nomincal fee
             expected_user_balance_after = user_balance_before - v2_1_price_model::price_for_subdomain(
-                registration_duration_secs);
+                registration_duration_secs
+            );
         } else {
-            let domain_price =
-                v2_1_price_model::price_for_domain(string::length(&domain_name),
-                    registration_duration_secs);
+            let domain_price = v2_1_price_model::price_for_domain(
+                string::length(&domain_name),
+                registration_duration_secs
+            );
             assert!(domain_price / v2_1_config::octas() == 10, domain_price / v2_1_config::octas());
             expected_user_balance_after = user_balance_before - domain_price;
         };
 
-        v2_1_test_utils::print_actual_expected(b"user_balance_after: ", user_balance_after,
-            expected_user_balance_after, false);
-        assert!(user_balance_after == expected_user_balance_after,
-            expected_user_balance_after);
+        v2_1_test_utils::print_actual_expected(
+            b"user_balance_after: ",
+            user_balance_after,
+            expected_user_balance_after,
+            false
+        );
+        assert!(user_balance_after == expected_user_balance_after, expected_user_balance_after);
 
         // Ensure the name was registered correctly, with an expiration timestamp one year in the future
         let expiration_time_sec = v2_1_domains::get_expiration(domain_name, subdomain_name);
@@ -141,17 +146,25 @@ module aptos_names_v2_1::v2_1_test_helper {
         // assert!(token_name == token_name, 22);
 
         // Assert events have been correctly emmitted
-        let register_name_event_num_emitted =
-            v2_1_domains::get_register_name_event_count() - register_name_event_event_count_before;
-        let set_target_address_event_num_emitted =
-            v2_1_domains::get_set_target_address_event_count() - set_target_address_event_event_count_before;
+        let register_name_event_num_emitted = v2_1_domains::get_register_name_event_count(
+        ) - register_name_event_event_count_before;
+        let set_target_address_event_num_emitted = v2_1_domains::get_set_target_address_event_count(
+        ) - set_target_address_event_event_count_before;
 
-        v2_1_test_utils::print_actual_expected(b"register_name_event_num_emitted: ",
-            register_name_event_num_emitted, 1, false);
+        v2_1_test_utils::print_actual_expected(
+            b"register_name_event_num_emitted: ",
+            register_name_event_num_emitted,
+            1,
+            false
+        );
         assert!(register_name_event_num_emitted == 1, register_name_event_num_emitted);
 
-        v2_1_test_utils::print_actual_expected(b"set_target_address_event_num_emitted: ",
-            set_target_address_event_num_emitted, 1, false);
+        v2_1_test_utils::print_actual_expected(
+            b"set_target_address_event_num_emitted: ",
+            set_target_address_event_num_emitted,
+            1,
+            false
+        );
     }
 
     /// Set the domain address, and verify the address was set correctly
@@ -168,11 +181,14 @@ module aptos_names_v2_1::v2_1_test_helper {
         let set_reverse_lookup_event_event_count_before = v2_1_domains::get_set_reverse_lookup_event_count();
         let maybe_reverse_lookup_before = v2_1_domains::get_reverse_lookup(user_addr);
 
-        v2_1_domains::set_target_address(user, domain_name, subdomain_name,
-            expected_target_address);
+        v2_1_domains::set_target_address(user, domain_name, subdomain_name, expected_target_address);
         let target_address = v2_1_domains::get_target_address(domain_name, subdomain_name);
-        v2_1_test_utils::print_actual_expected(b"set_domain_address: ", target_address,
-            option::some(expected_target_address), false);
+        v2_1_test_utils::print_actual_expected(
+            b"set_domain_address: ",
+            target_address,
+            option::some(expected_target_address),
+            false
+        );
         assert!(target_address == option::some(expected_target_address), 33);
 
         // When setting the target address to an address that is *not* the owner's, the reverse lookup should also be cleared
@@ -182,39 +198,44 @@ module aptos_names_v2_1::v2_1_test_helper {
         };
 
         // Assert events have been correctly emmitted
-        let register_name_event_num_emitted =
-            v2_1_domains::get_register_name_event_count() - register_name_event_event_count_before;
-        let set_target_address_event_num_emitted =
-            v2_1_domains::get_set_target_address_event_count() - set_target_address_event_event_count_before;
-        let set_reverse_lookup_event_num_emitted =
-            v2_1_domains::get_set_reverse_lookup_event_count() - set_reverse_lookup_event_event_count_before;
+        let register_name_event_num_emitted = v2_1_domains::get_register_name_event_count(
+        ) - register_name_event_event_count_before;
+        let set_target_address_event_num_emitted = v2_1_domains::get_set_target_address_event_count(
+        ) - set_target_address_event_event_count_before;
+        let set_reverse_lookup_event_num_emitted = v2_1_domains::get_set_reverse_lookup_event_count(
+        ) - set_reverse_lookup_event_event_count_before;
 
-        v2_1_test_utils::print_actual_expected(b"register_name_event_num_emitted: ",
-            register_name_event_num_emitted, 0, false);
+        v2_1_test_utils::print_actual_expected(
+            b"register_name_event_num_emitted: ",
+            register_name_event_num_emitted,
+            0,
+            false
+        );
         assert!(register_name_event_num_emitted == 0, register_name_event_num_emitted);
 
-        v2_1_test_utils::print_actual_expected(b"set_target_address_event_num_emitted: ",
-            set_target_address_event_num_emitted, 1, false);
-        assert!(set_target_address_event_num_emitted == 1,
-            set_target_address_event_num_emitted);
+        v2_1_test_utils::print_actual_expected(
+            b"set_target_address_event_num_emitted: ",
+            set_target_address_event_num_emitted,
+            1,
+            false
+        );
+        assert!(set_target_address_event_num_emitted == 1, set_target_address_event_num_emitted);
 
         // If the signer had a reverse lookup before, and set his reverse lookup name to a different address, it should be cleared
         if (option::is_some(&maybe_reverse_lookup_before)) {
-            let (maybe_reverse_subdomain, reverse_domain) =
-                v2_1_domains::get_name_props_from_token_addr(*option::borrow(&maybe_reverse_lookup_before));
-            if (maybe_reverse_subdomain == subdomain_name
-                && reverse_domain == domain_name
-                && signer::address_of(user) != expected_target_address) {
-                assert!(set_reverse_lookup_event_num_emitted == 1,
-                    set_reverse_lookup_event_num_emitted);
+            let (maybe_reverse_subdomain, reverse_domain) = v2_1_domains::get_name_props_from_token_addr(
+                *option::borrow(&maybe_reverse_lookup_before)
+            );
+            if (maybe_reverse_subdomain == subdomain_name && reverse_domain == domain_name && signer::address_of(
+                user
+            ) != expected_target_address) {
+                assert!(set_reverse_lookup_event_num_emitted == 1, set_reverse_lookup_event_num_emitted);
             };
         };
     }
 
     /// Clear the domain address, and verify the address was cleared
-    public fun clear_target_address(
-        user: &signer, subdomain_name: Option<String>, domain_name: String
-    ) {
+    public fun clear_target_address(user: &signer, subdomain_name: Option<String>, domain_name: String) {
         let user_addr = signer::address_of(user);
         let register_name_event_event_count_before = v2_1_domains::get_register_name_event_count();
         let set_target_address_event_event_count_before = v2_1_domains::get_set_target_address_event_count();
@@ -223,43 +244,45 @@ module aptos_names_v2_1::v2_1_test_helper {
 
         v2_1_domains::clear_target_address(user, subdomain_name, domain_name);
         let target_address = v2_1_domains::get_target_address(domain_name, subdomain_name);
-        v2_1_test_utils::print_actual_expected(b"clear_domain_address: ", target_address,
-            option::none(), false);
+        v2_1_test_utils::print_actual_expected(b"clear_domain_address: ", target_address, option::none(), false);
         assert!(target_address == option::none(), 32);
 
         if (option::is_some(&maybe_reverse_lookup_before)) {
             let reverse_lookup_before = option::borrow(&maybe_reverse_lookup_before);
-            if (*reverse_lookup_before
-                == v2_1_domains::get_token_addr(domain_name, subdomain_name)) {
+            if (*reverse_lookup_before == v2_1_domains::get_token_addr(domain_name, subdomain_name)) {
                 let reverse_lookup_after = v2_1_domains::get_reverse_lookup(user_addr);
                 assert!(option::is_none(&reverse_lookup_after), 35);
 
-                let set_reverse_lookup_event_num_emitted =
-                    v2_1_domains::get_set_reverse_lookup_event_count() - set_reverse_lookup_event_event_count_before;
-                assert!(set_reverse_lookup_event_num_emitted == 1,
-                    set_reverse_lookup_event_num_emitted);
+                let set_reverse_lookup_event_num_emitted = v2_1_domains::get_set_reverse_lookup_event_count(
+                ) - set_reverse_lookup_event_event_count_before;
+                assert!(set_reverse_lookup_event_num_emitted == 1, set_reverse_lookup_event_num_emitted);
             };
         };
 
         // Assert events have been correctly emmitted
-        let register_name_event_num_emitted =
-            v2_1_domains::get_register_name_event_count() - register_name_event_event_count_before;
-        let set_target_address_event_num_emitted =
-            v2_1_domains::get_set_target_address_event_count() - set_target_address_event_event_count_before;
+        let register_name_event_num_emitted = v2_1_domains::get_register_name_event_count(
+        ) - register_name_event_event_count_before;
+        let set_target_address_event_num_emitted = v2_1_domains::get_set_target_address_event_count(
+        ) - set_target_address_event_event_count_before;
 
-        v2_1_test_utils::print_actual_expected(b"register_name_event_num_emitted: ",
-            register_name_event_num_emitted, 0, false);
+        v2_1_test_utils::print_actual_expected(
+            b"register_name_event_num_emitted: ",
+            register_name_event_num_emitted,
+            0,
+            false
+        );
         assert!(register_name_event_num_emitted == 0, register_name_event_num_emitted);
 
-        v2_1_test_utils::print_actual_expected(b"set_target_address_event_num_emitted: ",
-            set_target_address_event_num_emitted, 1, false);
-        assert!(set_target_address_event_num_emitted == 1,
-            set_target_address_event_num_emitted);
+        v2_1_test_utils::print_actual_expected(
+            b"set_target_address_event_num_emitted: ",
+            set_target_address_event_num_emitted,
+            1,
+            false
+        );
+        assert!(set_target_address_event_num_emitted == 1, set_target_address_event_num_emitted);
     }
 
-    public fun setup_and_fund_accounts(
-        aptos: &signer, foundation: &signer, users: vector<signer>
-    ): vector<signer> {
+    public fun setup_and_fund_accounts(aptos: &signer, foundation: &signer, users: vector<signer>): vector<signer> {
         let (burn_cap, mint_cap) = aptos_framework::aptos_coin::initialize_for_test(aptos);
 
         let len = vector::length(&users);
