@@ -289,6 +289,8 @@ module aptos_names_v2_1::v2_1_domains {
         domain_name: String,
         registration_duration_secs: u64,
     ) acquires DomainObject, NameRecord, SubdomainExt, RegisterNameEvents, ReverseRecord, SetReverseLookupEvents {
+        assert!(v2_1_config::is_enabled(), error::unavailable(ENOT_ENABLED));
+
         assert!(address_of(router_signer) == @router_signer, error::permission_denied(ENOT_ROUTER));
 
         validate_registration_duration(registration_duration_secs);
@@ -354,6 +356,7 @@ module aptos_names_v2_1::v2_1_domains {
         subdomain_name: Option<String>,
         registration_duration_secs: u64,
     ) acquires DomainObject, NameRecord, SubdomainExt, RegisterNameEvents, ReverseRecord, SetReverseLookupEvents {
+        assert!(v2_1_config::is_enabled(), error::unavailable(ENOT_ENABLED));
         assert!(address_of(router_signer) == @router_signer, error::permission_denied(ENOT_ROUTER));
         // For subdomains, this will check that the domain exists first
         assert!(is_name_registerable(domain_name, subdomain_name), error::invalid_state(ENAME_NOT_AVAILABLE));
@@ -432,6 +435,7 @@ module aptos_names_v2_1::v2_1_domains {
         domain_name: String,
         renewal_duration_secs: u64,
     ) acquires NameRecord, SubdomainExt, RenewNameEvents, ReverseRecord {
+        assert!(v2_1_config::is_enabled(), error::unavailable(ENOT_ENABLED));
         // check the domain eligibility
         let length = validate_name_string(domain_name);
 
@@ -485,6 +489,7 @@ module aptos_names_v2_1::v2_1_domains {
         subdomain_name: String,
         transferrable: bool
     ) acquires NameRecord, SubdomainExt {
+        assert!(v2_1_config::is_enabled(), error::unavailable(ENOT_ENABLED));
         assert!(address_of(router_signer) == @router_signer, error::permission_denied(ENOT_ROUTER));
         validate_subdomain_registered_and_domain_owned_by_signer(sign, domain_name, subdomain_name);
         let name_record_address = get_token_addr(domain_name, option::some(subdomain_name));
@@ -503,6 +508,7 @@ module aptos_names_v2_1::v2_1_domains {
         new_owner_address: address,
         new_target_address: Option<address>,
     ) acquires NameRecord, SubdomainExt, ReverseRecord, SetReverseLookupEvents {
+        assert!(v2_1_config::is_enabled(), error::unavailable(ENOT_ENABLED));
         // validate user own the domain
         let signer_addr = signer::address_of(sign);
         assert!(
@@ -529,6 +535,7 @@ module aptos_names_v2_1::v2_1_domains {
         subdomain_name: String,
         expiration_time_sec: u64,
     ) acquires NameRecord, SubdomainExt {
+        assert!(v2_1_config::is_enabled(), error::unavailable(ENOT_ENABLED));
         validate_subdomain_registered_and_domain_owned_by_signer(domain_admin, domain_name, subdomain_name);
         // check if the expiration time is valid
         let domain_record = get_record(domain_name, option::none());
@@ -558,6 +565,7 @@ module aptos_names_v2_1::v2_1_domains {
         subdomain_name: String,
         subdomain_expiration_policy: u8,
     ) acquires NameRecord, SubdomainExt {
+        assert!(v2_1_config::is_enabled(), error::unavailable(ENOT_ENABLED));
         validate_subdomain_registered_and_domain_owned_by_signer(domain_admin, domain_name, subdomain_name);
         validate_subdomain_expiration_policy(subdomain_expiration_policy);
         // if manually set the expiration date
@@ -585,6 +593,7 @@ module aptos_names_v2_1::v2_1_domains {
         subdomain_name: Option<String>,
         new_address: address
     ) acquires NameRecord, SubdomainExt, ReverseRecord, SetTargetAddressEvents, SetReverseLookupEvents {
+        assert!(v2_1_config::is_enabled(), error::unavailable(ENOT_ENABLED));
         // If the domain name is a primary name, clear it.
         clear_reverse_lookup_for_name(subdomain_name, domain_name);
 
@@ -644,6 +653,7 @@ module aptos_names_v2_1::v2_1_domains {
         subdomain_name: Option<String>,
         domain_name: String
     ) acquires NameRecord, SubdomainExt, ReverseRecord, SetTargetAddressEvents, SetReverseLookupEvents {
+        assert!(v2_1_config::is_enabled(), error::unavailable(ENOT_ENABLED));
         assert!(is_name_registered(domain_name, subdomain_name), error::not_found(ENAME_NOT_EXIST));
 
         let signer_addr = signer::address_of(sign);
@@ -685,6 +695,7 @@ module aptos_names_v2_1::v2_1_domains {
         subdomain_name: Option<String>,
         domain_name: String
     ) acquires NameRecord, SubdomainExt, ReverseRecord, SetTargetAddressEvents, SetReverseLookupEvents {
+        assert!(v2_1_config::is_enabled(), error::unavailable(ENOT_ENABLED));
         // Name must be registered before assigning reverse lookup
         assert!(is_name_registered(domain_name, subdomain_name), error::not_found(ENAME_NOT_EXIST));
         let token_addr = get_token_addr_inline(domain_name, subdomain_name);
@@ -696,6 +707,7 @@ module aptos_names_v2_1::v2_1_domains {
     public fun clear_reverse_lookup(
         account: &signer
     ) acquires NameRecord, SubdomainExt, ReverseRecord, SetReverseLookupEvents {
+        assert!(v2_1_config::is_enabled(), error::unavailable(ENOT_ENABLED));
         let account_addr = signer::address_of(account);
         clear_reverse_lookup_internal(account_addr);
     }
@@ -984,6 +996,7 @@ module aptos_names_v2_1::v2_1_domains {
     fun validate_registration_duration(
         registration_duration_secs: u64,
     ) {
+        assert!(registration_duration_secs != 0, error::invalid_argument(EDURATION_MUST_BE_WHOLE_YEARS));
         assert!(
             registration_duration_secs % SECONDS_PER_YEAR == 0,
             error::invalid_argument(EDURATION_MUST_BE_WHOLE_YEARS)
