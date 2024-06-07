@@ -3,7 +3,6 @@ module aptos_names_v2_1::v2_1_price_model {
     use aptos_std::math64;
     use std::error;
 
-
     /// The domain length is too short- currently the minimum is 2 characters
     const EDOMAIN_TOO_SHORT: u64 = 1;
     const SECONDS_PER_YEAR: u64 = 60 * 60 * 24 * 365;
@@ -65,7 +64,8 @@ module aptos_names_v2_1::v2_1_price_model {
         let price = price_for_domain(15, SECONDS_PER_YEAR) / v2_1_config::octas();
         assert!(price == 5, price);
 
-        let price = price_for_domain(15, 10 * SECONDS_PER_YEAR) / v2_1_config::octas();
+        let price =
+            price_for_domain(15, 10 * SECONDS_PER_YEAR) / v2_1_config::octas();
         assert!(price == 50, price);
     }
 

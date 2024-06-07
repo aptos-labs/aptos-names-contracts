@@ -12,45 +12,37 @@ module router::target_address_tests {
     const SECONDS_PER_YEAR: u64 = 60 * 60 * 24 * 365;
 
     inline fun get_v1_target_addr(
-        domain_name: String,
-        subdomain_name: Option<String>
+        domain_name: String, subdomain_name: Option<String>
     ): Option<address> {
         if (!aptos_names::domains::name_is_registered(subdomain_name, domain_name)) {
             option::none()
         } else {
-            let (_property_version, _expiration_time_sec, target_addr) = aptos_names::domains::get_name_record_v1_props_for_name(
-                subdomain_name,
-                domain_name,
-            );
+            let (_property_version, _expiration_time_sec, target_addr) =
+                aptos_names::domains::get_name_record_v1_props_for_name(subdomain_name,
+                    domain_name,);
             target_addr
         }
     }
 
     /// Returns true if the name is tracked in v2
-    inline fun exists_in_v2(domain_name: String, subdomain_name: Option<String>): bool {
-        object::is_object(aptos_names_v2_1::v2_1_domains::get_token_addr(domain_name, subdomain_name))
+    inline fun exists_in_v2(
+        domain_name: String, subdomain_name: Option<String>
+    ): bool {
+        object::is_object(aptos_names_v2_1::v2_1_domains::get_token_addr(domain_name,
+                subdomain_name))
     }
 
     inline fun get_v2_target_addr(
-        domain_name: String,
-        subdomain_name: Option<String>
+        domain_name: String, subdomain_name: Option<String>
     ): Option<address> {
         if (!exists_in_v2(domain_name, subdomain_name)) {
             option::none()
-        }else {
+        } else {
             aptos_names_v2_1::v2_1_domains::get_target_address(domain_name, subdomain_name)
         }
     }
 
-    #[test(
-        router = @router,
-        aptos_names = @aptos_names,
-        aptos_names_v2_1 = @aptos_names_v2_1,
-        user1 = @0x077,
-        user2 = @0x266f,
-        aptos = @0x1,
-        foundation = @0xf01d
-    )]
+    #[test(router = @router, aptos_names = @aptos_names, aptos_names_v2_1 = @aptos_names_v2_1, user1 = @0x077, user2 = @0x266f, aptos = @0x1, foundation = @0xf01d)]
     fun test_set_target_address(
         router: &signer,
         aptos_names: &signer,
@@ -61,7 +53,9 @@ module router::target_address_tests {
         foundation: signer
     ) {
         router::init_module_for_test(router);
-        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
+        let users =
+            router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos,
+                user2, &foundation);
         let user = vector::borrow(&users, 0);
         let user2 = vector::borrow(&users, 1);
         let user_addr = address_of(user);
@@ -71,17 +65,16 @@ module router::target_address_tests {
         let subdomain_name_opt = option::some(subdomain_name);
 
         // Register with v1
-        router::register_domain(user, domain_name, SECONDS_PER_YEAR, option::none(), option::none());
-        router::register_subdomain(
-            user,
+        router::register_domain(user, domain_name, SECONDS_PER_YEAR, option::none(),
+            option::none());
+        router::register_subdomain(user,
             domain_name,
             subdomain_name,
             SECONDS_PER_YEAR,
             0,
             false,
             option::none(),
-            option::none(),
-        );
+            option::none(),);
 
         // Domain target address should be default to user_addr
         {
@@ -166,15 +159,7 @@ module router::target_address_tests {
         assert!(option::is_none(&aptos_names::domains::get_reverse_lookup(user_addr)), 7);
     }
 
-    #[test(
-        router = @router,
-        aptos_names = @aptos_names,
-        aptos_names_v2_1 = @aptos_names_v2_1,
-        user1 = @0x077,
-        user2 = @0x266f,
-        aptos = @0x1,
-        foundation = @0xf01d
-    )]
+    #[test(router = @router, aptos_names = @aptos_names, aptos_names_v2_1 = @aptos_names_v2_1, user1 = @0x077, user2 = @0x266f, aptos = @0x1, foundation = @0xf01d)]
     #[expected_failure(abort_code = 65545, location = router::router)]
     fun test_set_target_address_should_trigger_auto_migration(
         router: &signer,
@@ -186,7 +171,9 @@ module router::target_address_tests {
         foundation: signer
     ) {
         router::init_module_for_test(router);
-        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
+        let users =
+            router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos,
+                user2, &foundation);
         let user = vector::borrow(&users, 0);
         let user_addr = address_of(user);
         let user2 = vector::borrow(&users, 1);
@@ -196,17 +183,16 @@ module router::target_address_tests {
         let subdomain_name_opt = option::some(subdomain_name);
 
         // Register with v1
-        router::register_domain(user, domain_name, SECONDS_PER_YEAR, option::none(), option::none());
-        router::register_subdomain(
-            user,
+        router::register_domain(user, domain_name, SECONDS_PER_YEAR, option::none(),
+            option::none());
+        router::register_subdomain(user,
             domain_name,
             subdomain_name,
             SECONDS_PER_YEAR,
             0,
             false,
             option::none(),
-            option::none(),
-        );
+            option::none(),);
 
         // Bump mode
         router::set_mode(router, 1);
@@ -214,8 +200,10 @@ module router::target_address_tests {
         // Set domain target address to user2_addr, this should trigger auto migration
         router::set_target_addr(user, domain_name, option::none(), user2_addr);
         {
-            assert!(aptos_names_v2_1::v2_1_domains::is_token_owner(user_addr, domain_name, option::none()), 1);
-            assert!(!aptos_names_v2_1::v2_1_domains::is_name_expired(domain_name, option::none()), 1);
+            assert!(aptos_names_v2_1::v2_1_domains::is_token_owner(user_addr, domain_name,
+                    option::none()), 1);
+            assert!(!aptos_names_v2_1::v2_1_domains::is_name_expired(domain_name,
+                    option::none()), 1);
             let v1_target_address = get_v1_target_addr(domain_name, option::none());
             assert!(option::is_none(&v1_target_address), 2);
             let v2_target_address = get_v2_target_addr(domain_name, option::none());
@@ -227,15 +215,7 @@ module router::target_address_tests {
         router::set_target_addr(user, domain_name, subdomain_name_opt, user2_addr);
     }
 
-    #[test(
-        router = @router,
-        aptos_names = @aptos_names,
-        aptos_names_v2_1 = @aptos_names_v2_1,
-        user1 = @0x077,
-        user2 = @0x266f,
-        aptos = @0x1,
-        foundation = @0xf01d
-    )]
+    #[test(router = @router, aptos_names = @aptos_names, aptos_names_v2_1 = @aptos_names_v2_1, user1 = @0x077, user2 = @0x266f, aptos = @0x1, foundation = @0xf01d)]
     #[expected_failure(abort_code = 65545, location = router::router)]
     fun test_clear_target_address_should_trigger_auto_migration(
         router: &signer,
@@ -247,7 +227,9 @@ module router::target_address_tests {
         foundation: signer
     ) {
         router::init_module_for_test(router);
-        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
+        let users =
+            router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos,
+                user2, &foundation);
         let user = vector::borrow(&users, 0);
         let user_addr = address_of(user);
         let domain_name = utf8(b"test");
@@ -255,17 +237,16 @@ module router::target_address_tests {
         let subdomain_name_opt = option::some(subdomain_name);
 
         // Register with v1
-        router::register_domain(user, domain_name, SECONDS_PER_YEAR, option::none(), option::none());
-        router::register_subdomain(
-            user,
+        router::register_domain(user, domain_name, SECONDS_PER_YEAR, option::none(),
+            option::none());
+        router::register_subdomain(user,
             domain_name,
             subdomain_name,
             SECONDS_PER_YEAR,
             0,
             false,
             option::none(),
-            option::none(),
-        );
+            option::none(),);
 
         // Bump mode
         router::set_mode(router, 1);
@@ -273,8 +254,10 @@ module router::target_address_tests {
         // Clear domain target address, this should trigger auto migration
         router::clear_target_addr(user, domain_name, option::none());
         {
-            assert!(aptos_names_v2_1::v2_1_domains::is_token_owner(user_addr, domain_name, option::none()), 1);
-            assert!(!aptos_names_v2_1::v2_1_domains::is_name_expired(domain_name, option::none()), 1);
+            assert!(aptos_names_v2_1::v2_1_domains::is_token_owner(user_addr, domain_name,
+                    option::none()), 1);
+            assert!(!aptos_names_v2_1::v2_1_domains::is_name_expired(domain_name,
+                    option::none()), 1);
             let v1_target_address = get_v1_target_addr(domain_name, option::none());
             assert!(option::is_none(&v1_target_address), 1);
             let v2_target_address = get_v2_target_addr(domain_name, option::none());

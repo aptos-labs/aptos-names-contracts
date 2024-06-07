@@ -49,28 +49,29 @@ module aptos_names_v2_1::v2_1_config {
     }
 
     public(friend) fun initialize_config(
-        deployer: &signer,
-        admin_address: address,
-        fund_destination_address: address
+        deployer: &signer, admin_address: address, fund_destination_address: address
     ) {
-        move_to(deployer, Config {
-            enabled: true,
-            admin_address,
-            fund_destination_address,
-            max_number_of_seconds_registered: SECONDS_PER_YEAR,
-            max_domain_length: 63,
-            min_domain_length: 3,
-            tokendata_description: string::utf8(b"This is an official Aptos Labs Name Service Name"),
-            tokendata_url_prefix: string::utf8(b"https://www.aptosnames.com/api/mainnet/v2/metadata/"),
-            domain_price_length_3: 20 * octas(),
-            domain_price_length_4: 10 * octas(),
-            domain_price_length_5: 5 * octas(),
-            domain_price_length_6_and_above: octas(),
-            // 0.2 APT
-            subdomain_price: 0,
-            // The number of seconds after a name expires that it can be re-registered
-            reregistration_grace_sec: 30 * SECONDS_PER_DAY,
-        })
+        move_to(deployer,
+            Config {
+                enabled: true,
+                admin_address,
+                fund_destination_address,
+                max_number_of_seconds_registered: SECONDS_PER_YEAR,
+                max_domain_length: 63,
+                min_domain_length: 3,
+                tokendata_description: string::utf8(
+                    b"This is an official Aptos Labs Name Service Name"),
+                tokendata_url_prefix: string::utf8(
+                    b"https://www.aptosnames.com/api/mainnet/v2/metadata/"),
+                domain_price_length_3: 20 * octas(),
+                domain_price_length_4: 10 * octas(),
+                domain_price_length_5: 5 * octas(),
+                domain_price_length_6_and_above: octas(),
+                // 0.2 APT
+                subdomain_price: 0,
+                // The number of seconds after a name expires that it can be re-registered
+                reregistration_grace_sec: 30 * SECONDS_PER_DAY,
+            })
     }
 
     //
@@ -159,7 +160,8 @@ module aptos_names_v2_1::v2_1_config {
     /// The account will be used to manage names that are being used in a way that is harmful to others.
     /// Alternatively, the deployer can be used to perform admin actions.
     public fun signer_is_admin(sign: &signer): bool acquires Config {
-        signer::address_of(sign) == admin_address() || signer::address_of(sign) == @aptos_names_v2_1
+        signer::address_of(sign) == admin_address() || signer::address_of(sign) ==
+            @aptos_names_v2_1
     }
 
     public fun assert_signer_is_admin(sign: &signer) acquires Config {
@@ -187,7 +189,9 @@ module aptos_names_v2_1::v2_1_config {
         borrow_global_mut<Config>(@aptos_names_v2_1).admin_address = addr
     }
 
-    public entry fun set_max_number_of_seconds_registered(sign: &signer, max_seconds_registered: u64) acquires Config {
+    public entry fun set_max_number_of_seconds_registered(
+        sign: &signer, max_seconds_registered: u64
+    ) acquires Config {
         assert_signer_is_admin(sign);
         assert!(max_seconds_registered > 0, error::invalid_argument(EINVALID_VALUE));
         borrow_global_mut<Config>(@aptos_names_v2_1).max_number_of_seconds_registered = max_seconds_registered
@@ -205,12 +209,16 @@ module aptos_names_v2_1::v2_1_config {
         borrow_global_mut<Config>(@aptos_names_v2_1).min_domain_length = domain_length
     }
 
-    public entry fun set_tokendata_description(sign: &signer, description: String) acquires Config {
+    public entry fun set_tokendata_description(
+        sign: &signer, description: String
+    ) acquires Config {
         assert_signer_is_admin(sign);
         borrow_global_mut<Config>(@aptos_names_v2_1).tokendata_description = description
     }
 
-    public entry fun set_tokendata_url_prefix(sign: &signer, url_prefix: String) acquires Config {
+    public entry fun set_tokendata_url_prefix(
+        sign: &signer, url_prefix: String
+    ) acquires Config {
         assert_signer_is_admin(sign);
         borrow_global_mut<Config>(@aptos_names_v2_1).tokendata_url_prefix = url_prefix
     }
@@ -220,7 +228,9 @@ module aptos_names_v2_1::v2_1_config {
         borrow_global_mut<Config>(@aptos_names_v2_1).subdomain_price = price
     }
 
-    public entry fun set_domain_price_for_length(sign: &signer, price: u64, length: u64) acquires Config {
+    public entry fun set_domain_price_for_length(
+        sign: &signer, price: u64, length: u64
+    ) acquires Config {
         assert_signer_is_admin(sign);
         assert!(length >= 3, error::invalid_argument(EINVALID_DOMAIN_LENGTH));
         assert!(length >= 3, length);
@@ -235,7 +245,9 @@ module aptos_names_v2_1::v2_1_config {
         }
     }
 
-    public entry fun set_reregistration_grace_sec(sign: &signer, reregistration_grace_sec: u64) acquires Config {
+    public entry fun set_reregistration_grace_sec(
+        sign: &signer, reregistration_grace_sec: u64
+    ) acquires Config {
         assert_signer_is_admin(sign);
         borrow_global_mut<Config>(@aptos_names_v2_1).reregistration_grace_sec = reregistration_grace_sec
     }
@@ -339,10 +351,11 @@ module aptos_names_v2_1::v2_1_config {
         assert!(admin_address() == signer::address_of(rando), 6);
     }
 
-
     #[test(myself = @aptos_names_v2_1, rando = @0x266f, aptos = @0x1)]
     #[expected_failure(abort_code = 393218, location = aptos_framework::aptos_account)]
-    fun test_cant_set_foundation_address_without_coin(myself: &signer, rando: &signer, aptos: &signer) acquires Config {
+    fun test_cant_set_foundation_address_without_coin(
+        myself: &signer, rando: &signer, aptos: &signer
+    ) acquires Config {
         account::create_account_for_test(signer::address_of(myself));
         account::create_account_for_test(signer::address_of(rando));
         account::create_account_for_test(signer::address_of(aptos));
@@ -358,7 +371,9 @@ module aptos_names_v2_1::v2_1_config {
 
     #[test(myself = @aptos_names_v2_1, rando = @0x266f, aptos = @0x1)]
     #[expected_failure(abort_code = 327681, location = aptos_names_v2_1::v2_1_config)]
-    fun test_foundation_config_requires_admin(myself: &signer, rando: &signer, aptos: &signer) acquires Config {
+    fun test_foundation_config_requires_admin(
+        myself: &signer, rando: &signer, aptos: &signer
+    ) acquires Config {
         account::create_account_for_test(signer::address_of(myself));
         account::create_account_for_test(signer::address_of(rando));
         account::create_account_for_test(signer::address_of(aptos));
@@ -372,7 +387,9 @@ module aptos_names_v2_1::v2_1_config {
 
     #[test(myself = @aptos_names_v2_1, rando = @0x266f, aptos = @0x1)]
     #[expected_failure(abort_code = 327681, location = aptos_names_v2_1::v2_1_config)]
-    fun test_admin_config_requires_admin(myself: &signer, rando: &signer, aptos: &signer) acquires Config {
+    fun test_admin_config_requires_admin(
+        myself: &signer, rando: &signer, aptos: &signer
+    ) acquires Config {
         account::create_account_for_test(signer::address_of(myself));
         account::create_account_for_test(signer::address_of(rando));
         account::create_account_for_test(signer::address_of(aptos));
