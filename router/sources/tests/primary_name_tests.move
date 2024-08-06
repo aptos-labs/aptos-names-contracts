@@ -403,103 +403,104 @@ module router::primary_name_tests {
         };
     }
 
-#[test(
-    router = @router,
-    aptos_names = @aptos_names,
-    aptos_names_v2_1 = @aptos_names_v2_1,
-    user1 = @0x077,
-    user2 = @0x266f,
-    aptos = @0x1,
-    foundation = @0xf01d
-)]
-fun test_primary_name_expiration_and_reassignment(
-    router: &signer,
-    aptos_names: &signer,
-    aptos_names_v2_1: &signer,
-    user1: signer,
-    user2: signer,
-    aptos: signer,
-    foundation: signer
-) {
-    router::init_module_for_test(router);
+    #[test(
+        router = @router,
+        aptos_names = @aptos_names,
+        aptos_names_v2_1 = @aptos_names_v2_1,
+        user1 = @0x077,
+        user2 = @0x266f,
+        aptos = @0x1,
+        foundation = @0xf01d
+    )]
+    fun test_primary_name_expiration_and_reassignment(
+        router: &signer,
+        aptos_names: &signer,
+        aptos_names_v2_1: &signer,
+        user1: signer,
+        user2: signer,
+        aptos: signer,
+        foundation: signer
+    ) {
+        router::init_module_for_test(router);
 
-    // Bump mode
-    router::set_mode(router, 1);
+        // Bump mode
+        router::set_mode(router, 1);
 
-    let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
-    let user1 = vector::borrow(&users, 0);
-    let user2 = vector::borrow(&users, 1);
-    let user1_addr = address_of(user1);
-    let user2_addr = address_of(user2);
-    let domain_name = utf8(b"test");
-    let subdomain_name = utf8(b"test");
-    let subdomain_name_opt = option::some(subdomain_name);
+        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
+        let user1 = vector::borrow(&users, 0);
+        let user2 = vector::borrow(&users, 1);
+        let user1_addr = address_of(user1);
+        let user2_addr = address_of(user2);
+        let domain_name = utf8(b"test");
+        let subdomain_name = utf8(b"test");
+        let subdomain_name_opt = option::some(subdomain_name);
 
-    // Register with v1
-    router::register_domain(user1, domain_name, SECONDS_PER_YEAR, option::none(), option::none());
+        // Register with v1
+        router::register_domain(user1, domain_name, SECONDS_PER_YEAR, option::none(), option::none());
 
-    router::register_subdomain(
-        user1,
-        domain_name,
-        subdomain_name,
-        SECONDS_PER_YEAR,
-        0,
-        false,
-        option::none(),
-        option::none(),
-    );
+        router::register_subdomain(
+            user1,
+            domain_name,
+            subdomain_name,
+            SECONDS_PER_YEAR,
+            0,
+            false,
+            option::none(),
+            option::none(),
+        );
 
-    router::set_primary_name(user1, domain_name, subdomain_name_opt);
+        router::set_primary_name(user1, domain_name, subdomain_name_opt);
 
-    // Check that primary name is set properly
-    {
-        let (user1_primary_subdomain_name, user1_primary_domain_name) = get_v2_primary_name(user1_addr);
-        assert!(option::some(domain_name) == user1_primary_domain_name, 3);
-        assert!(option::some(subdomain_name) == user1_primary_subdomain_name, 4);
-    }
+        // Check that primary name is set properly
+        {
+            let (user1_primary_subdomain_name, user1_primary_domain_name) = get_v2_primary_name(user1_addr);
+            assert!(option::some(domain_name) == user1_primary_domain_name, 3);
+            assert!(option::some(subdomain_name) == user1_primary_subdomain_name, 4);
+        };
 
-    // Expire the primary name
-    v2_1_config::set_reregistration_grace_sec(aptos_names_v2_1, 0);
-    timestamp::update_global_time_for_test_secs(SECONDS_PER_YEAR + 1);
+        // Expire the primary name
+        v2_1_config::set_reregistration_grace_sec(aptos_names_v2_1, 0);
+        timestamp::update_global_time_for_test_secs(SECONDS_PER_YEAR + 1);
 
-    // Check that the primary name is no longer set
-    {
-        let (user1_primary_subdomain_name, user1_primary_domain_name) = get_v2_primary_name(user1_addr);
+        // Check that the primary name is no longer set
+        {
+            let (user1_primary_subdomain_name, user1_primary_domain_name) = get_v2_primary_name(user1_addr);
+            assert!(option::is_none(&user1_primary_domain_name), 1);
+            assert!(option::is_none(&user1_primary_subdomain_name), 2);
+        };
+
+        // Check that user1 no longer has a primary name
+        let (user1_primary_subdomain_name, user1_primary_domain_name) = get_v1_primary_name(user1_addr);
         assert!(option::is_none(&user1_primary_domain_name), 1);
         assert!(option::is_none(&user1_primary_subdomain_name), 2);
+
+        // Register with user2
+        router::register_domain(user2, domain_name, SECONDS_PER_YEAR, option::none(), option::none());
+
+        router::register_subdomain(
+            user2,
+            domain_name,
+            subdomain_name,
+            SECONDS_PER_YEAR * 2,
+            0,
+            false,
+            option::none(),
+            option::none(),
+        );
+
+        router::set_primary_name(user2, domain_name, subdomain_name_opt);
+
+        // The primary name is no longer expired, so check again that user1 no
+        // longer has a primary name
+        {
+            let (user1_primary_subdomain_name, user1_primary_domain_name) = get_v2_primary_name(user1_addr);
+            assert!(option::is_none(&user1_primary_domain_name), 1);
+            assert!(option::is_none(&user1_primary_subdomain_name), 2);
+        };
+
+        // Check that user2 has the primary name
+        let (user2_primary_subdomain_name, user2_primary_domain_name) = get_v2_primary_name(user2_addr);
+        assert!(option::some(domain_name) == user2_primary_domain_name, 3);
+        assert!(option::some(subdomain_name) == user2_primary_subdomain_name, 4);
     }
-
-    // Check that user1 no longer has a primary name
-    let (user1_primary_subdomain_name, user1_primary_domain_name) = get_v1_primary_name(user1_addr);
-    assert!(option::is_none(&user1_primary_domain_name), 1);
-    assert!(option::is_none(&user1_primary_subdomain_name), 2);
-
-    // Register with user2
-    router::register_domain(user2, domain_name, SECONDS_PER_YEAR, option::none(), option::none());
-
-    router::register_subdomain(
-        user2,
-        domain_name,
-        subdomain_name,
-        SECONDS_PER_YEAR * 2,
-        0,
-        false,
-        option::none(),
-        option::none(),
-    );
-
-    router::set_primary_name(user2, domain_name, subdomain_name_opt);
-
-    // The primary name is no longer expired, so check again that user1 no
-    // longer has a primary name
-    {
-        let (user1_primary_subdomain_name, user1_primary_domain_name) = get_v2_primary_name(user1_addr);
-        assert!(option::is_none(&user1_primary_domain_name), 1);
-        assert!(option::is_none(&user1_primary_subdomain_name), 2);
-    }
-
-    // Check that user2 has the primary name
-    let (user2_primary_subdomain_name, user2_primary_domain_name) = get_v2_primary_name(user2_addr);
-    assert!(option::some(domain_name) == user2_primary_domain_name, 3);
-    assert!(option::some(subdomain_name) == user2_primary_subdomain_name, 4);
 }
