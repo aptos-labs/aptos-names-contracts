@@ -462,6 +462,13 @@ fun test_primary_name_expiration_and_reassignment(
     v2_1_config::set_reregistration_grace_sec(aptos_names_v2_1, 0);
     timestamp::update_global_time_for_test_secs(SECONDS_PER_YEAR + 1);
 
+    // Check that the primary name is no longer set
+    {
+        let (user1_primary_subdomain_name, user1_primary_domain_name) = get_v2_primary_name(user1_addr);
+        assert!(option::is_none(&user1_primary_domain_name), 1);
+        assert!(option::is_none(&user1_primary_subdomain_name), 2);
+    }
+
     // Check that user1 no longer has a primary name
     let (user1_primary_subdomain_name, user1_primary_domain_name) = get_v1_primary_name(user1_addr);
     assert!(option::is_none(&user1_primary_domain_name), 1);
