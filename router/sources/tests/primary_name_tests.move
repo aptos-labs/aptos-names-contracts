@@ -1,13 +1,15 @@
 #[test_only]
 module router::primary_name_tests {
+    use aptos_framework::object;
+    use aptos_framework::timestamp;
+    use aptos_names_v2_1::v2_1_config;
     use router::router;
     use router::router_test_helper;
-    use std::option;
     use std::option::Option;
+    use std::option;
     use std::signer::address_of;
     use std::string::{utf8, String};
     use std::vector;
-    use aptos_framework::object;
 
     const SECONDS_PER_YEAR: u64 = 60 * 60 * 24 * 365;
 
@@ -449,7 +451,15 @@ fun test_primary_name_expiration_and_reassignment(
 
     router::set_primary_name(user1, domain_name, subdomain_name_opt);
 
+    // Check that primary name is set properly
+    {
+        let (user1_primary_subdomain_name, user1_primary_domain_name) = get_v2_primary_name(user1_addr);
+        assert!(option::some(domain_name) == user1_primary_domain_name, 3);
+        assert!(option::some(subdomain_name) == user1_primary_subdomain_name, 4);
+    }
+
     // Expire the primary name
+    v2_1_config::set_reregistration_grace_sec(aptos_names_v2_1, 0);
     timestamp::update_global_time_for_test_secs(SECONDS_PER_YEAR + 1);
 
     // Check that user1 no longer has a primary name
@@ -464,25 +474,25 @@ fun test_primary_name_expiration_and_reassignment(
         user2,
         domain_name,
         subdomain_name,
-        SECONDS_PER_YEAR,
+        SECONDS_PER_YEAR * 2,
         0,
         false,
         option::none(),
         option::none(),
     );
 
-    router:set_primary_name(user2, domain_name, subdomain_name_opt);
+    router::set_primary_name(user2, domain_name, subdomain_name_opt);
 
     // The primary name is no longer expired, so check again that user1 no
     // longer has a primary name
-    let (user1_primary_subdomain_name, user1_primary_domain_name) =
-    get_v1_primary_name(user1_addr);
-    assert!(option::is_none(&user1_primary_domain_name), 1);
-    assert!(option::is_none(&user1_primary_subdomain_name), 2);
+    {
+        let (user1_primary_subdomain_name, user1_primary_domain_name) = get_v2_primary_name(user1_addr);
+        assert!(option::is_none(&user1_primary_domain_name), 1);
+        assert!(option::is_none(&user1_primary_subdomain_name), 2);
+    }
 
     // Check that user2 has the primary name
-    let (user2_primary_subdomain_name, user2_primary_domain_name) = get_v1_primary_name(user2_addr);
+    let (user2_primary_subdomain_name, user2_primary_domain_name) = get_v2_primary_name(user2_addr);
     assert!(option::some(domain_name) == user2_primary_domain_name, 3);
     assert!(option::some(subdomain_name) == user2_primary_subdomain_name, 4);
-}
 }
