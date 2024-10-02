@@ -723,6 +723,10 @@ module aptos_names_v2_1::v2_1_domains {
         if (option::is_none(&reverse_record.token_addr)) {
             return option::none()
         };
+        let record_obj = object::address_to_object<NameRecord>(*option::borrow(&reverse_record.token_addr));
+        if (!object::owns(record_obj, account_addr)) {
+            return option::none()
+        };
         let token_addr = *option::borrow(&reverse_record.token_addr);
         let record = borrow_global<NameRecord>(token_addr);
 

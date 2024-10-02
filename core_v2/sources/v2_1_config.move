@@ -314,8 +314,8 @@ module aptos_names_v2_1::v2_1_config {
         account::create_account_for_test(signer::address_of(aptos));
 
         // initializes coin, which is required for transfers
-        coin::register<AptosCoin>(myself);
         initialize_for_test(myself, aptos);
+        coin::register<AptosCoin>(myself);
 
         assert!(is_enabled(), 0);
         set_is_enabled(myself, false);
@@ -348,8 +348,8 @@ module aptos_names_v2_1::v2_1_config {
         account::create_account_for_test(signer::address_of(aptos));
 
         // initializes coin, which is required for transfers
-        coin::register<AptosCoin>(myself);
         initialize_for_test(myself, aptos);
+        coin::register<AptosCoin>(myself);
 
         assert!(fund_destination_address() == signer::address_of(myself), 5);
         set_fund_destination_address(myself, signer::address_of(rando));
@@ -363,8 +363,8 @@ module aptos_names_v2_1::v2_1_config {
         account::create_account_for_test(signer::address_of(rando));
         account::create_account_for_test(signer::address_of(aptos));
 
-        coin::register<AptosCoin>(myself);
         initialize_for_test(myself, aptos);
+        coin::register<AptosCoin>(myself);
 
         assert!(fund_destination_address() == signer::address_of(myself), 5);
         set_fund_destination_address(rando, signer::address_of(rando));
