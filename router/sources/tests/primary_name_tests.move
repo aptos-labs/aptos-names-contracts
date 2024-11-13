@@ -503,4 +503,82 @@ module router::primary_name_tests {
         assert!(option::some(domain_name) == user2_primary_domain_name, 3);
         assert!(option::some(subdomain_name) == user2_primary_subdomain_name, 4);
     }
+
+    #[test(
+        router = @router,
+        aptos_names = @aptos_names,
+        aptos_names_v2_1 = @aptos_names_v2_1,
+        user1 = @0x077,
+        user2 = @0x266f,
+        aptos = @0x1,
+        foundation = @0xf01d
+    )]
+    fun test_expiring_subdomain_name(
+        router: &signer,
+        aptos_names: &signer,
+        aptos_names_v2_1: &signer,
+        user1: signer,
+        user2: signer,
+        aptos: signer,
+        foundation: signer
+    ) {
+        router::init_module_for_test(router);
+
+        // Bump mode
+        router::set_mode(router, 1);
+
+        let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
+        let user = vector::borrow(&users, 0);
+        let user_addr = address_of(user);
+        let domain_name = utf8(b"test");
+        let subdomain_name = utf8(b"subtest");
+        let subdomain_name_opt = option::some(subdomain_name);
+
+        // Register domain and subdomain
+        router::register_domain(user, domain_name, SECONDS_PER_YEAR, option::none(), option::none());
+        router::register_subdomain(
+            user,
+            domain_name,
+            subdomain_name,
+            SECONDS_PER_YEAR - 2,
+            0,
+            false,
+            option::none(),
+            option::none(),
+        );
+
+        // Set subdomain as primary
+        router::set_primary_name(user, domain_name, subdomain_name_opt);
+        {
+            let (primary_subdomain_name, primary_domain_name) = router::get_primary_name(user_addr);
+            assert!(*option::borrow(&primary_domain_name) == domain_name, 1);
+            assert!(*option::borrow(&primary_subdomain_name) == subdomain_name, 2);
+        };
+
+        // Expire the subdomain name
+        v2_1_config::set_reregistration_grace_sec(aptos_names_v2_1, 0);
+        timestamp::update_global_time_for_test_secs(SECONDS_PER_YEAR - 1);
+
+        // Check that the reverse record is none
+        {
+            let (primary_subdomain_name, primary_domain_name) = router::get_primary_name(user_addr);
+            assert!(option::is_none(&primary_domain_name), 1);
+            assert!(option::is_none(&primary_subdomain_name), 2);
+        };
+
+        // Test for expiration policy 1
+        router::domain_admin_set_subdomain_expiration_policy(
+            user,
+            domain_name,
+            subdomain_name,
+            1
+        );
+
+        // Check that the reverse record is still set because the domain is not expired
+        {
+            let (primary_subdomain_name, primary_domain_name) = router::get_primary_name(user_addr);
+            assert!(*option::borrow(&primary_domain_name) == domain_name, 5);
+            assert!(*option::borrow(&primary_subdomain_name) == subdomain_name, 6);
+        };
+    }
 }

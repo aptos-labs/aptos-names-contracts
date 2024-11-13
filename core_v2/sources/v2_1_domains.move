@@ -715,7 +715,7 @@ module aptos_names_v2_1::v2_1_domains {
     /// Returns the reverse lookup (the token addr) for an address if any.
     public fun get_reverse_lookup(
         account_addr: address
-    ): Option<address> acquires ReverseRecord, NameRecord {
+    ): Option<address> acquires ReverseRecord, NameRecord, SubdomainExt {
         if (!exists<ReverseRecord>(account_addr)) {
             return option::none()
         };
@@ -728,10 +728,16 @@ module aptos_names_v2_1::v2_1_domains {
             return option::none()
         };
         let token_addr = *option::borrow(&reverse_record.token_addr);
-        let record = borrow_global<NameRecord>(token_addr);
+        let domain_name = borrow_global<NameRecord>(token_addr).domain_name;
+        let subdomain_name = if (exists<SubdomainExt>(token_addr)) {
+            option::some(borrow_global<SubdomainExt>(token_addr).subdomain_name)
+        } else {
+            option::none()
+        };
 
         // check if record is expired
-        if (is_time_expired(record.expiration_time_sec)) {
+        let expiration_sec = get_expiration(domain_name, subdomain_name);
+        if (is_time_expired(expiration_sec)) {
             return option::none()
         };
         return reverse_record.token_addr
