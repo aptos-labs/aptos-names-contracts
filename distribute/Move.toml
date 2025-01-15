@@ -2,10 +2,22 @@
 name = 'aptos_names_distribute'
 version = '1.0.0'
 
+[addresses]
+aptos_names = "_"
+aptos_names_admin = "_"
+aptos_names_funds = "_"
+router_signer = "_"
+
+[dev-addresses]
+aptos_names = "0x5555000"
+aptos_names_admin = "0x5555002"
+aptos_names_funds = "0x5555003"
+router_signer = "0x5555004"
+
 [dependencies.aptos_names]
 local = "../core"
 
 [dependencies.AptosToken]
-git = 'https://github.com/aptos-labs/aptos-core.git'
+git = 'https://github.com/aptos-labs/aptos-framework.git'
 rev = 'mainnet'
-subdir = 'aptos-move/framework/aptos-token'
+subdir = 'aptos-token'

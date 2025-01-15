@@ -5,5 +5,13 @@ version = '1.0.0'
 [addresses]
 bulk = "_"
 
+[dev-addresses]
+aptos_names = "0x5555000"
+aptos_names_v2_1 = "0x5555001"
+aptos_names_admin = "0x5555002"
+aptos_names_funds = "0x5555003"
+router_signer = "0x5555004"
+bulk = "0x5555005"
+
 [dependencies.router]
 local = "../router"
