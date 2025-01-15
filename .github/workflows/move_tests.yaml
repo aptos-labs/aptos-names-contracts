@@ -11,8 +11,9 @@ jobs:
   move-tests:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: Install dev dependencies.
-        run: ./sh_scripts/dev_setup.sh
+      - name: Install Aptos CLI
+        run: curl -fsSL "https://aptos.dev/scripts/install_cli.py" | python3
+        shell: bash
+      - uses: actions/checkout@v4
       - name: Runs move tests.
         run: ./sh_scripts/move_tests.sh
