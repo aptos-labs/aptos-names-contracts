@@ -1056,7 +1056,7 @@ module aptos_names_v2_1::v2_1_domains {
     public fun is_name_registerable(
         domain_name: String,
         subdomain_name: Option<String>,
-    ): bool acquires DomainObject, NameRecord, SubdomainExt {
+    ): bool acquires NameRecord, SubdomainExt {
         // If this is a subdomain, ensure the domain also exists, and is not expired: i.e not registerable
         // So if the domain name is registerable, we return false, as the subdomain is not registerable
         if (is_subdomain(subdomain_name) && is_name_registerable(domain_name, option::none())) {

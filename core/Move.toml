@@ -9,11 +9,11 @@ aptos_names_funds = "_"
 router_signer = "_"
 
 [dependencies.AptosFramework]
-git = 'https://github.com/aptos-labs/aptos-core.git'
+git = 'https://github.com/aptos-labs/aptos-framework.git'
 rev = 'mainnet'
-subdir = 'aptos-move/framework/aptos-framework'
+subdir = 'aptos-framework'
 
 [dependencies.AptosToken]
-git = 'https://github.com/aptos-labs/aptos-core.git'
+git = 'https://github.com/aptos-labs/aptos-framework.git'
 rev = 'mainnet'
-subdir = 'aptos-move/framework/aptos-token'
+subdir = 'aptos-token'
