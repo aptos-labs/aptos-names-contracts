@@ -8,10 +8,21 @@ aptos_names_admin = "_"
 aptos_names_funds = "_"
 router_signer = "_"
 
-[dependencies.aptos_names]
-local = "../core"
+[dev-addresses]
+aptos_names = "0x1FF"
+aptos_names_admin = "0x3FF"
+aptos_names_funds = "0x4FF"
+router_signer = "0x2FF"
+
+[dependencies.AptosFramework]
+git = 'https://github.com/aptos-labs/aptos-framework.git'
+rev = 'mainnet'
+subdir = 'aptos-framework'
 
 [dependencies.AptosToken]
 git = 'https://github.com/aptos-labs/aptos-framework.git'
 rev = 'mainnet'
 subdir = 'aptos-token'
+
+[dependencies.aptos_names]
+local = "../core"

@@ -8,6 +8,12 @@ aptos_names_admin = "_"
 aptos_names_funds = "_"
 router_signer = "_"
 
+[dev-addresses]
+aptos_names_v2_1 = "0x2FF"
+aptos_names_admin = "0x3FF"
+aptos_names_funds = "0x4FF"
+router_signer = "0x5FF"
+
 [dependencies.AptosFramework]
 git = 'https://github.com/aptos-labs/aptos-framework.git'
 rev = 'mainnet'

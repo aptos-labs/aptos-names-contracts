@@ -4,6 +4,17 @@ version = '1.0.0'
 
 [addresses]
 repository = "_"
+aptos_names_v2_1 = "_"
+aptos_names_admin = "_"
+aptos_names_funds = "_"
+router_signer = "_"
+
+[dev-addresses]
+aptos_names_v2_1 = "0x2FF"
+aptos_names_admin = "0x3FF"
+aptos_names_funds = "0x4FF"
+router_signer = "0x5FF"
+repository = "0xb27f7d329f6d2c8867e5472958c3cfabc781300ca9649f244e267e1d6b966c94"
 
 [dependencies.aptos_names_v2_1]
 local = "../core_v2"
