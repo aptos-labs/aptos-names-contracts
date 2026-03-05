@@ -13,12 +13,12 @@ module aptos_names::price_model {
         // TODO: THIS WHOLE FUNCTION IS A PLACEHOLDER
         let final_price = 0;
         let multiplier = 100;
-        let years = (years as u64);
+        let years = years as u64;
         let i = 1;
         while (i <= years) {
-            final_price = final_price + (price * multiplier) / 100;
+            final_price += (price * multiplier) / 100;
             multiplier = multiplier + 5 + i * 5;
-            i = i + 1;
+            i += 1;
         };
         final_price
     }
@@ -110,8 +110,8 @@ module aptos_names::price_model {
         account::create_account_for_test(signer::address_of(myself));
         account::create_account_for_test(signer::address_of(framework));
 
-        while (vector::length(&prices_and_years) > 0) {
-            let pair = vector::pop_back(&mut prices_and_years);
+        while (prices_and_years.length() > 0) {
+            let pair = prices_and_years.pop_back();
             let price = scale_price_for_years(100 * config::octas(), pair.years) / config::octas();
             assert!(price == pair.expected_price, price);
         };

@@ -79,20 +79,20 @@ module aptos_names_v2_1::v2_1_test_helper {
     ) {
         let user_addr = signer::address_of(user);
 
-        let is_subdomain = option::is_some(&subdomain_name);
+        let is_subdomain = subdomain_name.is_some();
 
         let user_balance_before = coin::balance<AptosCoin>(user_addr);
         let register_name_event_event_count_before = v2_1_domains::get_register_name_event_count();
         let set_target_address_event_event_count_before = v2_1_domains::get_set_target_address_event_count();
 
-        if (option::is_none(&subdomain_name)) {
+        if (subdomain_name.is_none()) {
             v2_1_domains::register_domain(router_signer, user, domain_name, registration_duration_secs);
         } else {
             v2_1_domains::register_subdomain(
                 router_signer,
                 user,
                 domain_name,
-                *option::borrow(&subdomain_name),
+                *subdomain_name.borrow(),
                 timestamp::now_seconds() + registration_duration_secs
             );
         };
@@ -118,7 +118,7 @@ module aptos_names_v2_1::v2_1_test_helper {
             );
         } else {
             let domain_price = v2_1_price_model::price_for_domain(
-                string::length(&domain_name),
+                domain_name.length(),
                 registration_duration_secs
             );
             assert!(domain_price / v2_1_config::octas() == 10, domain_price / v2_1_config::octas());
@@ -194,7 +194,7 @@ module aptos_names_v2_1::v2_1_test_helper {
         // When setting the target address to an address that is *not* the owner's, the reverse lookup should also be cleared
         if (signer::address_of(user) != expected_target_address) {
             let maybe_reverse_lookup = v2_1_domains::get_reverse_lookup(user_addr);
-            assert!(option::is_none(&maybe_reverse_lookup), 33);
+            assert!(maybe_reverse_lookup.is_none(), 33);
         };
 
         // Assert events have been correctly emmitted
@@ -222,9 +222,9 @@ module aptos_names_v2_1::v2_1_test_helper {
         assert!(set_target_address_event_num_emitted == 1, set_target_address_event_num_emitted);
 
         // If the signer had a reverse lookup before, and set his reverse lookup name to a different address, it should be cleared
-        if (option::is_some(&maybe_reverse_lookup_before)) {
+        if (maybe_reverse_lookup_before.is_some()) {
             let (maybe_reverse_subdomain, reverse_domain) = v2_1_domains::get_name_props_from_token_addr(
-                *option::borrow(&maybe_reverse_lookup_before)
+                *maybe_reverse_lookup_before.borrow()
             );
             if (maybe_reverse_subdomain == subdomain_name && reverse_domain == domain_name && signer::address_of(
                 user
@@ -247,11 +247,11 @@ module aptos_names_v2_1::v2_1_test_helper {
         v2_1_test_utils::print_actual_expected(b"clear_domain_address: ", target_address, option::none(), false);
         assert!(target_address == option::none(), 32);
 
-        if (option::is_some(&maybe_reverse_lookup_before)) {
-            let reverse_lookup_before = option::borrow(&maybe_reverse_lookup_before);
+        if (maybe_reverse_lookup_before.is_some()) {
+            let reverse_lookup_before = maybe_reverse_lookup_before.borrow();
             if (*reverse_lookup_before == v2_1_domains::get_token_addr(domain_name, subdomain_name)) {
                 let reverse_lookup_after = v2_1_domains::get_reverse_lookup(user_addr);
-                assert!(option::is_none(&reverse_lookup_after), 35);
+                assert!(reverse_lookup_after.is_none(), 35);
 
                 let set_reverse_lookup_event_num_emitted = v2_1_domains::get_set_reverse_lookup_event_count(
                 ) - set_reverse_lookup_event_event_count_before;
@@ -285,16 +285,14 @@ module aptos_names_v2_1::v2_1_test_helper {
     public fun setup_and_fund_accounts(aptos: &signer, foundation: &signer, users: vector<signer>): vector<signer> {
         let (burn_cap, mint_cap) = aptos_framework::aptos_coin::initialize_for_test(aptos);
 
-        let len = vector::length(&users);
-        let i = 0;
-        while (i < len) {
-            let user = vector::borrow(&users, i);
+        let len = users.length();
+        for (i in 0..len) {
+            let user = &users[i];
             let user_addr = signer::address_of(user);
             account::create_account_for_test(user_addr);
             coin::register<AptosCoin>(user);
             coin::deposit(user_addr, coin::mint<AptosCoin>(mint_amount(), &mint_cap));
             assert!(coin::balance<AptosCoin>(user_addr) == mint_amount(), 1);
-            i = i + 1;
         };
 
         account::create_account_for_test(signer::address_of(foundation));

@@ -3,7 +3,11 @@ name = 'aptos_names_bulk_force_renewal'
 version = '1.0.0'
 
 [addresses]
-repository = "_"
+repository = "0xb27f7d329f6d2c8867e5472958c3cfabc781300ca9649f244e267e1d6b966c94"
+aptos_names_v2_1 = "_"
+aptos_names_admin = "_"
+aptos_names_funds = "_"
+router_signer = "_"
 
 [dependencies.aptos_names_v2_1]
 local = "../core_v2"

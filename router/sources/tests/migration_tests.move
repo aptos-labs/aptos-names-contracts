@@ -31,7 +31,7 @@ module router::migration_tests {
     ) {
         router::init_module_for_test(router);
         let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
         let user_addr = address_of(user);
         let domain_name = utf8(b"test");
 
@@ -39,12 +39,12 @@ module router::migration_tests {
         let now = timestamp::now_seconds();
         router::register_domain(user, domain_name, SECONDS_PER_YEAR, option::none(), option::none());
         assert!(router::is_name_owner(user_addr, domain_name, option::none()), 1);
-        assert!(*option::borrow(&router::get_target_addr(domain_name, option::none())) == user_addr, 2);
+        assert!(*router::get_target_addr(domain_name, option::none()).borrow() == user_addr, 2);
         assert!(router::get_expiration(domain_name, option::none()) == now + SECONDS_PER_YEAR, 3);
         {
             let (primary_subdomain_name, primary_domain_name) = router::get_primary_name(user_addr);
-            assert!(*option::borrow(&primary_domain_name) == domain_name, 4);
-            assert!(option::is_none(&primary_subdomain_name), 5);
+            assert!(*primary_domain_name.borrow() == domain_name, 4);
+            assert!(primary_subdomain_name.is_none(), 5);
         };
 
         // Bump mode
@@ -52,12 +52,12 @@ module router::migration_tests {
 
         // Attributes should still be the same
         assert!(router::is_name_owner(user_addr, domain_name, option::none()), 7);
-        assert!(*option::borrow(&router::get_target_addr(domain_name, option::none())) == user_addr, 8);
+        assert!(*router::get_target_addr(domain_name, option::none()).borrow() == user_addr, 8);
         assert!(router::get_expiration(domain_name, option::none()) == now + SECONDS_PER_YEAR, 9);
         {
             let (primary_subdomain_name, primary_domain_name) = router::get_primary_name(user_addr);
-            assert!(*option::borrow(&primary_domain_name) == domain_name, 10);
-            assert!(option::is_none(&primary_subdomain_name), 11);
+            assert!(*primary_domain_name.borrow() == domain_name, 10);
+            assert!(primary_subdomain_name.is_none(), 11);
         };
 
         // Make v1 read only except for admin
@@ -66,19 +66,19 @@ module router::migration_tests {
         // Migrate to v2
         router::migrate_name(user, domain_name, option::none());
         assert!(router::is_name_owner(user_addr, domain_name, option::none()), 12);
-        assert!(*option::borrow(&router::get_target_addr(domain_name, option::none())) == user_addr, 13);
+        assert!(*router::get_target_addr(domain_name, option::none()).borrow() == user_addr, 13);
         // Auto-renewal is on because the expiration is 2 years from epoch
         assert!(router::get_expiration(domain_name, option::none()) == now + SECONDS_PER_YEAR * 2, 14);
         {
             let (primary_subdomain_name, primary_domain_name) = router::get_primary_name(user_addr);
-            assert!(*option::borrow(&primary_domain_name) == domain_name, 15);
-            assert!(option::is_none(&primary_subdomain_name), 16);
+            assert!(*primary_domain_name.borrow() == domain_name, 15);
+            assert!(primary_subdomain_name.is_none(), 16);
         };
 
         // v1 target is cleared
-        assert!(option::is_none(&aptos_names::domains::name_resolved_address(option::none(), domain_name)), 17);
+        assert!(aptos_names::domains::name_resolved_address(option::none(), domain_name).is_none(), 17);
         // v1 primary name is cleared
-        assert!(option::is_none(&aptos_names::domains::get_reverse_lookup(user_addr)), 17);
+        assert!(aptos_names::domains::get_reverse_lookup(user_addr).is_none(), 17);
         // v1 registration is cleared
         assert!(!aptos_names::domains::name_is_registered(option::none(), domain_name), 18);
     }
@@ -104,8 +104,8 @@ module router::migration_tests {
     ) {
         router::init_module_for_test(router);
         let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
-        let user1 = vector::borrow(&users, 0);
-        let user2 = vector::borrow(&users, 1);
+        let user1 = &users[0];
+        let user2 = &users[1];
         let domain_name = utf8(b"test");
 
         // Register with v1
@@ -138,7 +138,7 @@ module router::migration_tests {
     ) {
         router::init_module_for_test(router);
         let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
         let domain_name = utf8(b"test");
 
         // Set time 1690000000 (2023/07/2023), where our expiration falls past 2024/03/07
@@ -160,9 +160,9 @@ module router::migration_tests {
         assert!(router::get_expiration(domain_name, option::none()) == now + SECONDS_PER_YEAR, 14);
 
         // v1 target is cleared
-        assert!(option::is_none(&aptos_names::domains::name_resolved_address(option::none(), domain_name)), 17);
+        assert!(aptos_names::domains::name_resolved_address(option::none(), domain_name).is_none(), 17);
         // v1 primary name is cleared
-        assert!(option::is_none(&aptos_names::domains::get_reverse_lookup(address_of(user))), 17);
+        assert!(aptos_names::domains::get_reverse_lookup(address_of(user)).is_none(), 17);
         // v1 registration is cleared
         assert!(!aptos_names::domains::name_is_registered(option::none(), domain_name), 18);
     }
@@ -187,7 +187,7 @@ module router::migration_tests {
     ) {
         router::init_module_for_test(router);
         let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
         let user_addr = address_of(user);
         let domain_name = utf8(b"test");
         let subdomain_name = utf8(b"sub");
@@ -208,12 +208,12 @@ module router::migration_tests {
         );
         router::set_primary_name(user, domain_name, subdomain_name_opt);
         assert!(router::is_name_owner(user_addr, domain_name, subdomain_name_opt), 7);
-        assert!(*option::borrow(&router::get_target_addr(domain_name, subdomain_name_opt)) == user_addr, 8);
+        assert!(*router::get_target_addr(domain_name, subdomain_name_opt).borrow() == user_addr, 8);
         assert!(router::get_expiration(domain_name, option::none()) == now + SECONDS_PER_YEAR, 9);
         {
             let (primary_subdomain_name, primary_domain_name) = router::get_primary_name(user_addr);
-            assert!(*option::borrow(&primary_domain_name) == domain_name, 10);
-            assert!(*option::borrow(&primary_subdomain_name) == subdomain_name, 11);
+            assert!(*primary_domain_name.borrow() == domain_name, 10);
+            assert!(*primary_subdomain_name.borrow() == subdomain_name, 11);
         };
 
         // Bump mode
@@ -224,20 +224,20 @@ module router::migration_tests {
 
         // Attribtes should be the same
         assert!(router::is_name_owner(user_addr, domain_name, subdomain_name_opt), 7);
-        assert!(*option::borrow(&router::get_target_addr(domain_name, subdomain_name_opt)) == user_addr, 8);
+        assert!(*router::get_target_addr(domain_name, subdomain_name_opt).borrow() == user_addr, 8);
         assert!(router::get_expiration(domain_name, option::none()) == now + SECONDS_PER_YEAR, 9);
         assert!(router::get_expiration(domain_name, subdomain_name_opt) == now + SECONDS_PER_YEAR, 9);
         {
             let (primary_subdomain_name, primary_domain_name) = router::get_primary_name(user_addr);
-            assert!(*option::borrow(&primary_domain_name) == domain_name, 10);
-            assert!(*option::borrow(&primary_subdomain_name) == subdomain_name, 11);
+            assert!(*primary_domain_name.borrow() == domain_name, 10);
+            assert!(*primary_subdomain_name.borrow() == subdomain_name, 11);
         };
 
         // Migrate to v2
         router::migrate_name(user, domain_name, option::none());
         router::migrate_name(user, domain_name, subdomain_name_opt);
         assert!(router::is_name_owner(user_addr, domain_name, subdomain_name_opt), 7);
-        assert!(*option::borrow(&router::get_target_addr(domain_name, subdomain_name_opt)) == user_addr, 8);
+        assert!(*router::get_target_addr(domain_name, subdomain_name_opt).borrow() == user_addr, 8);
         // Auto-renewal will not happen for subdomain. Its expiration remains the same
         assert!(
             router::get_expiration(domain_name, subdomain_name_opt) == now + SECONDS_PER_YEAR,
@@ -245,15 +245,15 @@ module router::migration_tests {
         );
         {
             let (primary_subdomain_name, primary_domain_name) = router::get_primary_name(user_addr);
-            assert!(*option::borrow(&primary_domain_name) == domain_name, 10);
-            assert!(*option::borrow(&primary_subdomain_name) == subdomain_name, 11);
+            assert!(*primary_domain_name.borrow() == domain_name, 10);
+            assert!(*primary_subdomain_name.borrow() == subdomain_name, 11);
         };
 
         // v1 target is cleared
-        assert!(option::is_none(&aptos_names::domains::name_resolved_address(option::none(), domain_name)), 12);
-        assert!(option::is_none(&aptos_names::domains::name_resolved_address(subdomain_name_opt, domain_name)), 13);
+        assert!(aptos_names::domains::name_resolved_address(option::none(), domain_name).is_none(), 12);
+        assert!(aptos_names::domains::name_resolved_address(subdomain_name_opt, domain_name).is_none(), 13);
         // v1 primary name is cleared
-        assert!(option::is_none(&aptos_names::domains::get_reverse_lookup(address_of(user))), 14);
+        assert!(aptos_names::domains::get_reverse_lookup(address_of(user)).is_none(), 14);
         // v1 registration is cleared
         assert!(!aptos_names::domains::name_is_registered(option::none(), domain_name), 15);
         assert!(!aptos_names::domains::name_is_registered(subdomain_name_opt, domain_name), 16);
@@ -280,8 +280,8 @@ module router::migration_tests {
     ) {
         router::init_module_for_test(router);
         let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
-        let user1 = vector::borrow(&users, 0);
-        let user2 = vector::borrow(&users, 1);
+        let user1 = &users[0];
+        let user2 = &users[1];
         let domain_name = utf8(b"test");
         let subdomain_name = utf8(b"sub");
         let subdomain_name_opt = option::some(subdomain_name);
@@ -330,7 +330,7 @@ module router::migration_tests {
     ) {
         router::init_module_for_test(router);
         let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
         let domain_name = utf8(b"test");
         let subdomain_name = utf8(b"sub");
         let subdomain_name_opt = option::some(subdomain_name);
@@ -376,7 +376,7 @@ module router::migration_tests {
     ) {
         router::init_module_for_test(router);
         let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
         let domain_name = utf8(b"test");
 
         // Register with v1
@@ -410,7 +410,7 @@ module router::migration_tests {
     ) {
         router::init_module_for_test(router);
         let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
         let domain_name = utf8(b"test");
 
         // Register with v1
@@ -430,9 +430,9 @@ module router::migration_tests {
         assert!(router::get_expiration(domain_name, option::none()) == SECONDS_PER_YEAR * 2, 2);
 
         // v1 target is cleared
-        assert!(option::is_none(&aptos_names::domains::name_resolved_address(option::none(), domain_name)), 12);
+        assert!(aptos_names::domains::name_resolved_address(option::none(), domain_name).is_none(), 12);
         // v1 primary name is cleared
-        assert!(option::is_none(&aptos_names::domains::get_reverse_lookup(address_of(user))), 14);
+        assert!(aptos_names::domains::get_reverse_lookup(address_of(user)).is_none(), 14);
         // v1 registration is cleared
         assert!(!aptos_names::domains::name_is_registered(option::none(), domain_name), 15);
     }
@@ -458,7 +458,7 @@ module router::migration_tests {
     ) {
         router::init_module_for_test(router);
         let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
         let domain_name = utf8(b"test");
 
         // Register with v1

@@ -3,7 +3,6 @@ module bulk::bulk {
     use std::option;
     use std::option::Option;
     use std::string::String;
-    use std::vector;
     use router::router;
 
     /// For bulk migrate endpoint, domain names vector must have same length as subdomain names vector
@@ -18,11 +17,9 @@ module bulk::bulk {
         user: &signer,
         domain_names: vector<String>
     ) {
-        let idx = 0;
-        while (idx < vector::length(&domain_names)) {
-            let domain_name = *vector::borrow(&domain_names, idx);
+        for (idx in 0..domain_names.length()) {
+            let domain_name = domain_names[idx];
             router::migrate_name(user, domain_name, option::none());
-            idx = idx + 1
         }
     }
 
@@ -33,15 +30,13 @@ module bulk::bulk {
         subdomain_names: vector<Option<String>>,
     ) {
         assert!(
-            vector::length(&domain_names) == vector::length(&subdomain_names),
+            domain_names.length() == subdomain_names.length(),
             error::invalid_argument(EDOMAIN_AND_SUBDOMAIN_MUST_HAVE_SAME_LENGTH)
         );
-        let idx = 0;
-        while (idx < vector::length(&domain_names)) {
-            let domain_name = *vector::borrow(&domain_names, idx);
-            let subdomain_name = *vector::borrow(&subdomain_names, idx);
+        for (idx in 0..domain_names.length()) {
+            let domain_name = domain_names[idx];
+            let subdomain_name = subdomain_names[idx];
             router::migrate_name(user, domain_name, subdomain_name);
-            idx = idx + 1
         }
     }
 
@@ -54,15 +49,13 @@ module bulk::bulk {
         renewal_duration_secs: vector<u64>,
     ) {
         assert!(
-            vector::length(&domain_names) == vector::length(&renewal_duration_secs),
+            domain_names.length() == renewal_duration_secs.length(),
             error::invalid_argument(EDOMAIN_AND_RENEWAL_DURATION_MUST_HAVE_SAME_LENGTH)
         );
-        let idx = 0;
-        while (idx < vector::length(&domain_names)) {
-            let domain_name = *vector::borrow(&domain_names, idx);
-            let renewal_duration_sec = *vector::borrow(&renewal_duration_secs, idx);
+        for (idx in 0..domain_names.length()) {
+            let domain_name = domain_names[idx];
+            let renewal_duration_sec = renewal_duration_secs[idx];
             router::renew_domain(user, domain_name, renewal_duration_sec);
-            idx = idx + 1
         }
     }
 
@@ -92,19 +85,17 @@ module bulk::bulk {
         target_addrs: vector<address>,
         to_addrs: vector<address>,
     ) {
-        let idx = 0;
-        while (idx < vector::length(&domain_names)) {
+        for (idx in 0..domain_names.length()) {
             router::register_subdomain(
                 domain_admin,
-                *vector::borrow(&domain_names, idx),
-                *vector::borrow(&subdomain_names, idx),
-                *vector::borrow(&expiration_time_secs, idx),
-                *vector::borrow(&expiration_policies, idx),
-                *vector::borrow(&transferrable, idx),
-                option::some(*vector::borrow(&target_addrs, idx)),
-                option::some(*vector::borrow(&to_addrs, idx)),
+                domain_names[idx],
+                subdomain_names[idx],
+                expiration_time_secs[idx],
+                expiration_policies[idx],
+                transferrable[idx],
+                option::some(target_addrs[idx]),
+                option::some(to_addrs[idx]),
             );
-            idx = idx + 1
         }
     }
 }

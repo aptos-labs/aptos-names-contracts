@@ -32,8 +32,8 @@ module aptos_names_v2_1::v2_1_domain_e2e_tests {
         foundation: signer,
     ) {
         let users = v2_1_test_helper::e2e_test_setup(aptos_names_v2_1, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
-        let rando = vector::borrow(&users, 1);
+        let user = &users[0];
+        let rando = &users[1];
 
         let user_addr = signer::address_of(user);
 
@@ -71,7 +71,7 @@ module aptos_names_v2_1::v2_1_domain_e2e_tests {
         foundation: signer
     ) {
         let users = v2_1_test_helper::e2e_test_setup(aptos_names_v2_1, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
 
         // Register the domain
         v2_1_test_helper::register_name(router_signer, user, option::none(), v2_1_test_helper::domain_name(), v2_1_test_helper::one_year_secs(), v2_1_test_helper::fq_domain_name(), 1);
@@ -114,8 +114,8 @@ module aptos_names_v2_1::v2_1_domain_e2e_tests {
         foundation: signer,
     ) {
         let users = v2_1_test_helper::e2e_test_setup(aptos_names_v2_1, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
-        let rando = vector::borrow(&users, 1);
+        let user = &users[0];
+        let rando = &users[1];
 
         // Register the domain
         v2_1_test_helper::register_name(router_signer, user, option::none(), v2_1_test_helper::domain_name(), v2_1_test_helper::one_year_secs(), v2_1_test_helper::fq_domain_name(), 1);
@@ -133,7 +133,7 @@ module aptos_names_v2_1::v2_1_domain_e2e_tests {
         v2_1_test_helper::register_name(router_signer, rando, option::none(), v2_1_test_helper::domain_name(), v2_1_test_helper::one_year_secs(), v2_1_test_helper::fq_domain_name(), 2);
 
         // Reverse lookup for |user| should be none.
-        assert!(option::is_none(&v2_1_domains::get_reverse_lookup(signer::address_of(user))), 85);
+        assert!(v2_1_domains::get_reverse_lookup(signer::address_of(user)).is_none(), 85);
 
         // And again!
         let expiration_time_sec = v2_1_domains::get_expiration(v2_1_test_helper::domain_name(), option::none());
@@ -166,7 +166,7 @@ module aptos_names_v2_1::v2_1_domain_e2e_tests {
         foundation: signer,
     ) {
         let users = v2_1_test_helper::e2e_test_setup(aptos_names_v2_1, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
 
         // Register the domain
         v2_1_test_helper::register_name(router_signer, user, option::none(), v2_1_test_helper::domain_name(), v2_1_test_helper::one_year_secs(), v2_1_test_helper::fq_domain_name(), 1);
@@ -192,8 +192,8 @@ module aptos_names_v2_1::v2_1_domain_e2e_tests {
         foundation: signer,
     ) {
         let users = v2_1_test_helper::e2e_test_setup(aptos_names_v2_1, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
-        let rando = vector::borrow(&users, 1);
+        let user = &users[0];
+        let rando = &users[1];
 
         // Register the domain
         v2_1_test_helper::register_name(router_signer, user, option::none(), v2_1_test_helper::domain_name(), v2_1_test_helper::one_year_secs(), v2_1_test_helper::fq_domain_name(), 1);
@@ -219,8 +219,8 @@ module aptos_names_v2_1::v2_1_domain_e2e_tests {
         foundation: signer,
     ) {
         let users = v2_1_test_helper::e2e_test_setup(aptos_names_v2_1, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
-        let rando = vector::borrow(&users, 1);
+        let user = &users[0];
+        let rando = &users[1];
 
         // Register the domain, and set its address
         v2_1_test_helper::register_name(router_signer, user, option::none(), v2_1_test_helper::domain_name(), v2_1_test_helper::one_year_secs(), v2_1_test_helper::fq_domain_name(), 1);
@@ -247,8 +247,8 @@ module aptos_names_v2_1::v2_1_domain_e2e_tests {
         foundation: signer,
     ) {
         let users = v2_1_test_helper::e2e_test_setup(aptos_names_v2_1, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
-        let rando = vector::borrow(&users, 1);
+        let user = &users[0];
+        let rando = &users[1];
 
         // Register the domain, and set its address
         v2_1_test_helper::register_name(router_signer, user, option::none(), v2_1_test_helper::domain_name(), v2_1_test_helper::one_year_secs(), v2_1_test_helper::fq_domain_name(), 1);
@@ -275,8 +275,8 @@ module aptos_names_v2_1::v2_1_domain_e2e_tests {
         foundation: signer,
     ) {
         let users = v2_1_test_helper::e2e_test_setup(aptos_names_v2_1, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
-        let rando = vector::borrow(&users, 1);
+        let user = &users[0];
+        let rando = &users[1];
 
         // Register the domain, and set its address
         v2_1_test_helper::register_name(router_signer, user, option::none(), v2_1_test_helper::domain_name(), v2_1_test_helper::one_year_secs(), v2_1_test_helper::fq_domain_name(), 1);
@@ -303,7 +303,7 @@ module aptos_names_v2_1::v2_1_domain_e2e_tests {
         foundation: signer,
     ) {
         let users = v2_1_test_helper::e2e_test_setup(aptos_names_v2_1, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
         let user_addr = signer::address_of(user);
 
         // Register the domain
@@ -314,7 +314,7 @@ module aptos_names_v2_1::v2_1_domain_e2e_tests {
 
         timestamp::update_global_time_for_test_secs(v2_1_test_helper::one_year_secs() + 5);
         let target_address = v2_1_domains::get_target_address(v2_1_test_helper::domain_name(), option::none());
-        assert!(option::is_none(&target_address), 3);
+        assert!(target_address.is_none(), 3);
     }
 
     #[test(
@@ -334,7 +334,7 @@ module aptos_names_v2_1::v2_1_domain_e2e_tests {
         foundation: signer,
     ) {
         let users = v2_1_test_helper::e2e_test_setup(aptos_names_v2_1, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
         let user_addr = signer::address_of(user);
 
         // Register the domain
@@ -362,7 +362,7 @@ module aptos_names_v2_1::v2_1_domain_e2e_tests {
         foundation: signer,
     ) {
         let users = v2_1_test_helper::e2e_test_setup(aptos_names_v2_1, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
         let user_addr = signer::address_of(user);
 
         // Register the domain
@@ -372,7 +372,7 @@ module aptos_names_v2_1::v2_1_domain_e2e_tests {
         assert!(v2_1_domains::get_reverse_lookup(user_addr) == option::some(token_addr), 1);
 
         timestamp::update_global_time_for_test_secs(v2_1_test_helper::one_year_secs() + 5);
-        assert!(option::is_none(&v2_1_domains::get_reverse_lookup(user_addr)), 1);
+        assert!(v2_1_domains::get_reverse_lookup(user_addr).is_none(), 1);
     }
 
     #[test(
@@ -392,8 +392,8 @@ module aptos_names_v2_1::v2_1_domain_e2e_tests {
         foundation: signer,
     ) {
         let users = v2_1_test_helper::e2e_test_setup(aptos_names_v2_1, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
-        let rando = vector::borrow(&users, 1);
+        let user = &users[0];
+        let rando = &users[1];
 
         let rando_addr = signer::address_of(rando);
 
@@ -431,8 +431,8 @@ module aptos_names_v2_1::v2_1_domain_e2e_tests {
         foundation: signer,
     ) {
         let users = v2_1_test_helper::e2e_test_setup(aptos_names_v2_1, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
-        let rando = vector::borrow(&users, 1);
+        let user = &users[0];
+        let rando = &users[1];
 
         let rando_addr = signer::address_of(rando);
 
@@ -460,7 +460,7 @@ module aptos_names_v2_1::v2_1_domain_e2e_tests {
         foundation: signer
     ) {
         let users = v2_1_test_helper::e2e_test_setup(aptos_names_v2_1, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
 
         // Register the domain
         v2_1_test_helper::register_name(router_signer, user, option::none(), v2_1_test_helper::domain_name(), v2_1_test_helper::one_year_secs(), v2_1_test_helper::fq_domain_name(), 1);
@@ -498,7 +498,7 @@ module aptos_names_v2_1::v2_1_domain_e2e_tests {
         foundation: signer,
     ) {
         let users = v2_1_test_helper::e2e_test_setup(aptos_names_v2_1, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
         let user_addr = signer::address_of(user);
 
         // Register the domain
@@ -519,7 +519,7 @@ module aptos_names_v2_1::v2_1_domain_e2e_tests {
             expiration_time_sec / SECONDS_PER_YEAR == 200, expiration_time_sec / SECONDS_PER_YEAR);
 
         // Ensure that the user's primary name is no longer set.
-        assert!(option::is_none(&v2_1_domains::get_reverse_lookup(user_addr)), 1);
+        assert!(v2_1_domains::get_reverse_lookup(user_addr).is_none(), 1);
     }
 
     #[test(
@@ -576,8 +576,8 @@ module aptos_names_v2_1::v2_1_domain_e2e_tests {
         foundation: signer,
     ) {
         let users = v2_1_test_helper::e2e_test_setup(aptos_names_v2_1, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
-        let rando = vector::borrow(&users, 1);
+        let user = &users[0];
+        let rando = &users[1];
 
         // Register the domain
         v2_1_test_helper::register_name(router_signer, user, option::none(), v2_1_test_helper::domain_name(), v2_1_test_helper::one_year_secs(), v2_1_test_helper::fq_domain_name(), 1);
@@ -605,7 +605,7 @@ module aptos_names_v2_1::v2_1_domain_e2e_tests {
         foundation: signer,
     ) {
         let users = v2_1_test_helper::e2e_test_setup(aptos_names_v2_1, user, &aptos, rando, &foundation);
-        let rando = vector::borrow(&users, 1);
+        let rando = &users[1];
 
         // No domain is registered yet
         assert!(!v2_1_domains::is_name_registered(v2_1_test_helper::domain_name(), option::none()), 1);
@@ -631,7 +631,7 @@ module aptos_names_v2_1::v2_1_domain_e2e_tests {
         foundation: signer,
     ) {
         let users = v2_1_test_helper::e2e_test_setup(aptos_names_v2_1, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
         let user_addr = signer::address_of(user);
 
         // Register the domain
@@ -640,7 +640,7 @@ module aptos_names_v2_1::v2_1_domain_e2e_tests {
         // Clear my reverse lookup.
         v2_1_domains::clear_reverse_lookup(user);
 
-        assert!(option::is_none(&v2_1_domains::get_reverse_lookup(user_addr)), 1);
+        assert!(v2_1_domains::get_reverse_lookup(user_addr).is_none(), 1);
     }
 
     #[test(
@@ -660,7 +660,7 @@ module aptos_names_v2_1::v2_1_domain_e2e_tests {
         foundation: signer,
     ) {
         let users = v2_1_test_helper::e2e_test_setup(aptos_names_v2_1, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
         let user_addr = signer::address_of(user);
 
         // Register the domain
@@ -695,9 +695,9 @@ module aptos_names_v2_1::v2_1_domain_e2e_tests {
         foundation: signer,
     ) {
         let users = v2_1_test_helper::e2e_test_setup(aptos_names_v2_1, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
         let user_addr = signer::address_of(user);
-        let rando = vector::borrow(&users, 1);
+        let rando = &users[1];
         let rando_addr = signer::address_of(rando);
 
         // Register the domain
@@ -778,7 +778,7 @@ module aptos_names_v2_1::v2_1_domain_e2e_tests {
         foundation: signer,
     ) {
         let users = v2_1_test_helper::e2e_test_setup(aptos_names_v2_1, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
 
         // Register the domain
         v2_1_test_helper::register_name(
@@ -813,7 +813,7 @@ module aptos_names_v2_1::v2_1_domain_e2e_tests {
         foundation: signer,
     ) {
         let users = v2_1_test_helper::e2e_test_setup(aptos_names_v2_1, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
         let user_addr = signer::address_of(user);
 
         // Set the reregistration grace period to 30 days
@@ -872,7 +872,7 @@ module aptos_names_v2_1::v2_1_domain_e2e_tests {
         foundation: signer,
     ) {
         let users = v2_1_test_helper::e2e_test_setup(aptos_names_v2_1, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
         let user_addr = signer::address_of(user);
 
         // Set the reregistration grace period to 30 days

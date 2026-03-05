@@ -6,9 +6,9 @@ module aptos_names::token_helper {
     use aptos_names::utf8_utils;
     use aptos_token::token::{Self, TokenDataId, TokenId};
     use aptos_token::property_map;
-    use std::option::{Self, Option};
     use std::signer;
     use std::string::{Self, String};
+    use std::option::Option;
     use aptos_framework::account::{Self, SignerCapability};
 
     const DOMAIN_SUFFIX: vector<u8> = b".apt";
@@ -22,25 +22,25 @@ module aptos_names::token_helper {
         capability: SignerCapability,
     }
 
-    public fun get_token_signer_address(): address acquires CollectionCapabilityV1 {
-        account::get_signer_capability_address(&borrow_global<CollectionCapabilityV1>(@aptos_names).capability)
+    public fun get_token_signer_address(): address {
+        account::get_signer_capability_address(&CollectionCapabilityV1[@aptos_names].capability)
     }
 
-    fun get_token_signer(): signer acquires CollectionCapabilityV1 {
-        account::create_signer_with_capability(&borrow_global<CollectionCapabilityV1>(@aptos_names).capability)
+    fun get_token_signer(): signer {
+        account::create_signer_with_capability(&CollectionCapabilityV1[@aptos_names].capability)
     }
 
     /// In the event of requiring operations via script, this allows root to get the registry signer
-    public fun break_token_registry_glass(sign: &signer): signer acquires CollectionCapabilityV1 {
+    public fun break_token_registry_glass(sign: &signer): signer {
         config::assert_signer_is_admin(sign);
         get_token_signer()
     }
 
-    public(friend) fun initialize(framework: &signer) {
+    friend fun initialize(framework: &signer) {
         // Create the resource account for token creation, so we can get it as a signer later
-        let registry_seed = utf8_utils::u128_to_string((timestamp::now_microseconds() as u128));
-        string::append(&mut registry_seed, string::utf8(b"registry_seed"));
-        let (token_resource, token_signer_cap) = account::create_resource_account(framework, *string::bytes(&registry_seed));
+        let registry_seed = utf8_utils::u128_to_string(timestamp::now_microseconds() as u128);
+        registry_seed.append(string::utf8(b"registry_seed"));
+        let (token_resource, token_signer_cap) = account::create_resource_account(framework, *registry_seed.bytes());
 
         move_to(framework, CollectionCapabilityV1 {
             capability: token_signer_cap,
@@ -61,15 +61,15 @@ module aptos_names::token_helper {
     public fun get_fully_qualified_domain_name(subdomain_name: Option<String>, domain_name: String): String {
         let (domain_is_allowed, _length) = utf8_utils::string_is_allowed(&domain_name);
         assert!(domain_is_allowed, 1);
-        let subdomain_is_allowed = if (option::is_some(&subdomain_name)) {
-            let (subdomain_is_allowed, _length) = utf8_utils::string_is_allowed(option::borrow(&subdomain_name));
+        let subdomain_is_allowed = if (subdomain_name.is_some()) {
+            let (subdomain_is_allowed, _length) = utf8_utils::string_is_allowed(subdomain_name.borrow());
             subdomain_is_allowed
         } else {
             true
         };
         assert!(subdomain_is_allowed, 2);
         let combined = combine_sub_and_domain_str(subdomain_name, domain_name);
-        string::append_utf8(&mut combined, DOMAIN_SUFFIX);
+        combined.append_utf8(DOMAIN_SUFFIX);
         combined
     }
 
@@ -94,18 +94,18 @@ module aptos_names::token_helper {
     /// Used for building fully qualified domain names (Ex: `{subdomain_name}.{domain_name}.apt`)
     /// If there is no subdomain, just returns the domain name
     public fun combine_sub_and_domain_str(subdomain_name: Option<String>, domain_name: String): String {
-        if (option::is_none(&subdomain_name)) {
+        if (subdomain_name.is_none()) {
             return domain_name
         };
 
-        let combined = option::extract(&mut copy subdomain_name);
-        string::append_utf8(&mut combined, b".");
-        string::append(&mut combined, domain_name);
+        let combined = subdomain_name.extract();
+        combined.append_utf8(b".");
+        combined.append(domain_name);
         combined
     }
 
     /// gets or creates the token data for the given domain name
-    public(friend) fun ensure_token_data(subdomain_name: Option<String>, domain_name: String, type: String): TokenDataId acquires CollectionCapabilityV1 {
+    friend fun ensure_token_data(subdomain_name: Option<String>, domain_name: String, type: String): TokenDataId {
         let token_resource = &get_token_signer();
 
         let token_data_id = build_tokendata_id(signer::address_of(token_resource), subdomain_name, domain_name);
@@ -126,7 +126,7 @@ module aptos_names::token_helper {
         let nft_maximum: u64 = 0;
         let description = config::tokendata_description();
         let token_uri: string::String = config::tokendata_url_prefix();
-        string::append(&mut token_uri, fq_domain_name);
+        token_uri.append(fq_domain_name);
         let royalty_payee_address: address = @aptos_names;
         let royalty_points_denominator: u64 = 0;
         let royalty_points_numerator: u64 = 0;
@@ -161,7 +161,7 @@ module aptos_names::token_helper {
         )
     }
 
-    public(friend) fun create_token(tokendata_id: TokenDataId): TokenId acquires CollectionCapabilityV1 {
+    friend fun create_token(tokendata_id: TokenDataId): TokenId {
         let token_resource = get_token_signer();
 
         // At this point, property_version is 0
@@ -171,7 +171,7 @@ module aptos_names::token_helper {
         token::mint_token(&token_resource, tokendata_id, 1)
     }
 
-    public(friend) fun set_token_props(token_owner: address, property_keys: vector<String>, property_values: vector<vector<u8>>, property_types: vector<String>, token_id: TokenId): TokenId acquires CollectionCapabilityV1 {
+    friend fun set_token_props(token_owner: address, property_keys: vector<String>, property_values: vector<vector<u8>>, property_types: vector<String>, token_id: TokenId): TokenId {
         let token_resource = get_token_signer();
 
         // At this point, property_version is 0
@@ -186,7 +186,7 @@ module aptos_names::token_helper {
         )
     }
 
-    public(friend) fun transfer_token_to(sign: &signer, token_id: TokenId) acquires CollectionCapabilityV1 {
+    friend fun transfer_token_to(sign: &signer, token_id: TokenId) {
         token::initialize_token_store(sign);
         token::opt_in_direct_transfer(sign, true);
 

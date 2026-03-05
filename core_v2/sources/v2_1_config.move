@@ -48,7 +48,7 @@ module aptos_names_v2_1::v2_1_config {
         reregistration_grace_sec: u64,
     }
 
-    public(friend) fun initialize_config(
+    friend fun initialize_config(
         deployer: &signer,
         admin_address: address,
         fund_destination_address: address
@@ -82,43 +82,43 @@ module aptos_names_v2_1::v2_1_config {
     }
 
     #[view]
-    public fun is_enabled(): bool acquires Config {
-        borrow_global<Config>(@aptos_names_v2_1).enabled
+    public fun is_enabled(): bool {
+        Config[@aptos_names_v2_1].enabled
     }
 
     #[view]
-    public fun fund_destination_address(): address acquires Config {
-        borrow_global<Config>(@aptos_names_v2_1).fund_destination_address
+    public fun fund_destination_address(): address {
+        Config[@aptos_names_v2_1].fund_destination_address
     }
 
     #[view]
-    public fun admin_address(): address acquires Config {
-        borrow_global<Config>(@aptos_names_v2_1).admin_address
+    public fun admin_address(): address {
+        Config[@aptos_names_v2_1].admin_address
     }
 
     #[view]
-    public fun max_number_of_seconds_registered(): u64 acquires Config {
-        borrow_global<Config>(@aptos_names_v2_1).max_number_of_seconds_registered
+    public fun max_number_of_seconds_registered(): u64 {
+        Config[@aptos_names_v2_1].max_number_of_seconds_registered
     }
 
     #[view]
-    public fun max_domain_length(): u64 acquires Config {
-        borrow_global<Config>(@aptos_names_v2_1).max_domain_length
+    public fun max_domain_length(): u64 {
+        Config[@aptos_names_v2_1].max_domain_length
     }
 
     #[view]
-    public fun min_domain_length(): u64 acquires Config {
-        borrow_global<Config>(@aptos_names_v2_1).min_domain_length
+    public fun min_domain_length(): u64 {
+        Config[@aptos_names_v2_1].min_domain_length
     }
 
     #[view]
-    public fun tokendata_description(): String acquires Config {
-        borrow_global<Config>(@aptos_names_v2_1).tokendata_description
+    public fun tokendata_description(): String {
+        Config[@aptos_names_v2_1].tokendata_description
     }
 
     #[view]
-    public fun tokendata_url_prefix(): String acquires Config {
-        borrow_global<Config>(@aptos_names_v2_1).tokendata_url_prefix
+    public fun tokendata_url_prefix(): String {
+        Config[@aptos_names_v2_1].tokendata_url_prefix
     }
 
     #[view]
@@ -132,37 +132,37 @@ module aptos_names_v2_1::v2_1_config {
     }
 
     #[view]
-    public fun domain_price_for_length(domain_length: u64): u64 acquires Config {
+    public fun domain_price_for_length(domain_length: u64): u64 {
         assert!(domain_length >= 3, error::invalid_argument(EINVALID_DOMAIN_LENGTH));
         if (domain_length == 3) {
-            borrow_global<Config>(@aptos_names_v2_1).domain_price_length_3
+            Config[@aptos_names_v2_1].domain_price_length_3
         } else if (domain_length == 4) {
-            borrow_global<Config>(@aptos_names_v2_1).domain_price_length_4
+            Config[@aptos_names_v2_1].domain_price_length_4
         } else if (domain_length == 5) {
-            borrow_global<Config>(@aptos_names_v2_1).domain_price_length_5
+            Config[@aptos_names_v2_1].domain_price_length_5
         } else {
-            borrow_global<Config>(@aptos_names_v2_1).domain_price_length_6_and_above
+            Config[@aptos_names_v2_1].domain_price_length_6_and_above
         }
     }
 
     #[view]
-    public fun subdomain_price(): u64 acquires Config {
-        borrow_global<Config>(@aptos_names_v2_1).subdomain_price
+    public fun subdomain_price(): u64 {
+        Config[@aptos_names_v2_1].subdomain_price
     }
 
     #[view]
-    public fun reregistration_grace_sec(): u64 acquires Config {
-        borrow_global<Config>(@aptos_names_v2_1).reregistration_grace_sec
+    public fun reregistration_grace_sec(): u64 {
+        Config[@aptos_names_v2_1].reregistration_grace_sec
     }
 
     /// Admins will be able to intervene when necessary.
     /// The account will be used to manage names that are being used in a way that is harmful to others.
     /// Alternatively, the deployer can be used to perform admin actions.
-    public fun signer_is_admin(sign: &signer): bool acquires Config {
+    public fun signer_is_admin(sign: &signer): bool {
         signer::address_of(sign) == admin_address() || signer::address_of(sign) == @aptos_names_v2_1
     }
 
-    public fun assert_signer_is_admin(sign: &signer) acquires Config {
+    public fun assert_signer_is_admin(sign: &signer) {
         assert!(signer_is_admin(sign), error::permission_denied(ENOT_AUTHORIZED));
     }
 
@@ -170,74 +170,74 @@ module aptos_names_v2_1::v2_1_config {
     // Setters
     //
 
-    public entry fun set_is_enabled(sign: &signer, enabled: bool) acquires Config {
+    public entry fun set_is_enabled(sign: &signer, enabled: bool) {
         assert_signer_is_admin(sign);
-        borrow_global_mut<Config>(@aptos_names_v2_1).enabled = enabled
+        Config[@aptos_names_v2_1].enabled = enabled
     }
 
-    public entry fun set_fund_destination_address(sign: &signer, addr: address) acquires Config {
+    public entry fun set_fund_destination_address(sign: &signer, addr: address) {
         assert_signer_is_admin(sign);
         aptos_account::assert_account_is_registered_for_apt(addr);
-        borrow_global_mut<Config>(@aptos_names_v2_1).fund_destination_address = addr
+        Config[@aptos_names_v2_1].fund_destination_address = addr
     }
 
-    public entry fun set_admin_address(sign: &signer, addr: address) acquires Config {
+    public entry fun set_admin_address(sign: &signer, addr: address) {
         assert_signer_is_admin(sign);
         assert!(account::exists_at(addr), error::invalid_argument(EINVALID_VALUE));
-        borrow_global_mut<Config>(@aptos_names_v2_1).admin_address = addr
+        Config[@aptos_names_v2_1].admin_address = addr
     }
 
-    public entry fun set_max_number_of_seconds_registered(sign: &signer, max_seconds_registered: u64) acquires Config {
+    public entry fun set_max_number_of_seconds_registered(sign: &signer, max_seconds_registered: u64) {
         assert_signer_is_admin(sign);
         assert!(max_seconds_registered > 0, error::invalid_argument(EINVALID_VALUE));
-        borrow_global_mut<Config>(@aptos_names_v2_1).max_number_of_seconds_registered = max_seconds_registered
+        Config[@aptos_names_v2_1].max_number_of_seconds_registered = max_seconds_registered
     }
 
-    public entry fun set_max_domain_length(sign: &signer, domain_length: u64) acquires Config {
+    public entry fun set_max_domain_length(sign: &signer, domain_length: u64) {
         assert_signer_is_admin(sign);
         assert!(domain_length > 0, error::invalid_argument(EINVALID_VALUE));
-        borrow_global_mut<Config>(@aptos_names_v2_1).max_domain_length = domain_length
+        Config[@aptos_names_v2_1].max_domain_length = domain_length
     }
 
-    public entry fun set_min_domain_length(sign: &signer, domain_length: u64) acquires Config {
+    public entry fun set_min_domain_length(sign: &signer, domain_length: u64) {
         assert_signer_is_admin(sign);
         assert!(domain_length > 0, error::invalid_argument(EINVALID_VALUE));
-        borrow_global_mut<Config>(@aptos_names_v2_1).min_domain_length = domain_length
+        Config[@aptos_names_v2_1].min_domain_length = domain_length
     }
 
-    public entry fun set_tokendata_description(sign: &signer, description: String) acquires Config {
+    public entry fun set_tokendata_description(sign: &signer, description: String) {
         assert_signer_is_admin(sign);
-        borrow_global_mut<Config>(@aptos_names_v2_1).tokendata_description = description
+        Config[@aptos_names_v2_1].tokendata_description = description
     }
 
-    public entry fun set_tokendata_url_prefix(sign: &signer, url_prefix: String) acquires Config {
+    public entry fun set_tokendata_url_prefix(sign: &signer, url_prefix: String) {
         assert_signer_is_admin(sign);
-        borrow_global_mut<Config>(@aptos_names_v2_1).tokendata_url_prefix = url_prefix
+        Config[@aptos_names_v2_1].tokendata_url_prefix = url_prefix
     }
 
-    public entry fun set_subdomain_price(sign: &signer, price: u64) acquires Config {
+    public entry fun set_subdomain_price(sign: &signer, price: u64) {
         assert_signer_is_admin(sign);
-        borrow_global_mut<Config>(@aptos_names_v2_1).subdomain_price = price
+        Config[@aptos_names_v2_1].subdomain_price = price
     }
 
-    public entry fun set_domain_price_for_length(sign: &signer, price: u64, length: u64) acquires Config {
+    public entry fun set_domain_price_for_length(sign: &signer, price: u64, length: u64) {
         assert_signer_is_admin(sign);
         assert!(length >= 3, error::invalid_argument(EINVALID_DOMAIN_LENGTH));
         assert!(length >= 3, length);
         if (length == 3) {
-            borrow_global_mut<Config>(@aptos_names_v2_1).domain_price_length_3 = price
+            Config[@aptos_names_v2_1].domain_price_length_3 = price
         } else if (length == 4) {
-            borrow_global_mut<Config>(@aptos_names_v2_1).domain_price_length_4 = price
+            Config[@aptos_names_v2_1].domain_price_length_4 = price
         } else if (length == 5) {
-            borrow_global_mut<Config>(@aptos_names_v2_1).domain_price_length_5 = price
+            Config[@aptos_names_v2_1].domain_price_length_5 = price
         } else {
-            borrow_global_mut<Config>(@aptos_names_v2_1).domain_price_length_6_and_above = price
+            Config[@aptos_names_v2_1].domain_price_length_6_and_above = price
         }
     }
 
-    public entry fun set_reregistration_grace_sec(sign: &signer, reregistration_grace_sec: u64) acquires Config {
+    public entry fun set_reregistration_grace_sec(sign: &signer, reregistration_grace_sec: u64) {
         assert_signer_is_admin(sign);
-        borrow_global_mut<Config>(@aptos_names_v2_1).reregistration_grace_sec = reregistration_grace_sec
+        Config[@aptos_names_v2_1].reregistration_grace_sec = reregistration_grace_sec
     }
 
     //
@@ -262,17 +262,17 @@ module aptos_names_v2_1::v2_1_config {
     }
 
     #[test_only]
-    public fun set_fund_destination_address_test_only(addr: address) acquires Config {
-        borrow_global_mut<Config>(@aptos_names_v2_1).fund_destination_address = addr;
+    public fun set_fund_destination_address_test_only(addr: address) {
+        Config[@aptos_names_v2_1].fund_destination_address = addr;
     }
 
     #[test_only]
-    public fun set_admin_address_test_only(addr: address) acquires Config {
-        borrow_global_mut<Config>(@aptos_names_v2_1).admin_address = addr
+    public fun set_admin_address_test_only(addr: address) {
+        Config[@aptos_names_v2_1].admin_address = addr
     }
 
     #[test_only]
-    public fun initialize_for_test(aptos_names_v2_1: &signer, aptos: &signer) acquires Config {
+    public fun initialize_for_test(aptos_names_v2_1: &signer, aptos: &signer) {
         timestamp::set_time_has_started_for_testing(aptos);
         initialize_aptoscoin_for(aptos);
         initialize_config(aptos_names_v2_1, @aptos_names_v2_1, @aptos_names_v2_1);
@@ -280,7 +280,7 @@ module aptos_names_v2_1::v2_1_config {
     }
 
     #[test(myself = @aptos_names_v2_1)]
-    fun test_default_token_configs_are_set(myself: signer) acquires Config {
+    fun test_default_token_configs_are_set(myself: signer) {
         account::create_account_for_test(signer::address_of(&myself));
 
         initialize_config(&myself, @aptos_names_v2_1, @aptos_names_v2_1);
@@ -294,7 +294,7 @@ module aptos_names_v2_1::v2_1_config {
     }
 
     #[test(myself = @aptos_names_v2_1)]
-    fun test_default_tokens_configs_are_set(myself: signer) acquires Config {
+    fun test_default_tokens_configs_are_set(myself: signer) {
         account::create_account_for_test(signer::address_of(&myself));
 
         initialize_config(&myself, @aptos_names_v2_1, @aptos_names_v2_1);
@@ -308,7 +308,7 @@ module aptos_names_v2_1::v2_1_config {
     }
 
     #[test(myself = @aptos_names_v2_1, rando = @0x266f, aptos = @0x1)]
-    fun test_configs_are_set(myself: &signer, rando: &signer, aptos: &signer) acquires Config {
+    fun test_configs_are_set(myself: &signer, rando: &signer, aptos: &signer) {
         account::create_account_for_test(signer::address_of(myself));
         account::create_account_for_test(signer::address_of(rando));
         account::create_account_for_test(signer::address_of(aptos));
@@ -342,7 +342,7 @@ module aptos_names_v2_1::v2_1_config {
 
     #[test(myself = @aptos_names_v2_1, rando = @0x266f, aptos = @0x1)]
     #[expected_failure(abort_code = 393218, location = aptos_framework::aptos_account)]
-    fun test_cant_set_foundation_address_without_coin(myself: &signer, rando: &signer, aptos: &signer) acquires Config {
+    fun test_cant_set_foundation_address_without_coin(myself: &signer, rando: &signer, aptos: &signer) {
         account::create_account_for_test(signer::address_of(myself));
         account::create_account_for_test(signer::address_of(rando));
         account::create_account_for_test(signer::address_of(aptos));
@@ -358,7 +358,7 @@ module aptos_names_v2_1::v2_1_config {
 
     #[test(myself = @aptos_names_v2_1, rando = @0x266f, aptos = @0x1)]
     #[expected_failure(abort_code = 327681, location = aptos_names_v2_1::v2_1_config)]
-    fun test_foundation_config_requires_admin(myself: &signer, rando: &signer, aptos: &signer) acquires Config {
+    fun test_foundation_config_requires_admin(myself: &signer, rando: &signer, aptos: &signer) {
         account::create_account_for_test(signer::address_of(myself));
         account::create_account_for_test(signer::address_of(rando));
         account::create_account_for_test(signer::address_of(aptos));
@@ -372,7 +372,7 @@ module aptos_names_v2_1::v2_1_config {
 
     #[test(myself = @aptos_names_v2_1, rando = @0x266f, aptos = @0x1)]
     #[expected_failure(abort_code = 327681, location = aptos_names_v2_1::v2_1_config)]
-    fun test_admin_config_requires_admin(myself: &signer, rando: &signer, aptos: &signer) acquires Config {
+    fun test_admin_config_requires_admin(myself: &signer, rando: &signer, aptos: &signer) {
         account::create_account_for_test(signer::address_of(myself));
         account::create_account_for_test(signer::address_of(rando));
         account::create_account_for_test(signer::address_of(aptos));

@@ -17,11 +17,11 @@ module router::primary_name_tests {
         user_addr: address
     ): (Option<String>, Option<String>) {
         let record = aptos_names::domains::get_reverse_lookup(user_addr);
-        if (option::is_none(&record)) {
+        if (record.is_none()) {
             (option::none(), option::none())
         } else {
             let (subdomain_name, domain_name) = aptos_names::domains::get_name_record_key_v1_props(
-                option::borrow(&record)
+                record.borrow()
             );
             (subdomain_name, option::some(domain_name))
         }
@@ -36,11 +36,11 @@ module router::primary_name_tests {
         user_addr: address
     ): (Option<String>, Option<String>) {
         let token_addr = aptos_names_v2_1::v2_1_domains::get_reverse_lookup(user_addr);
-        if (option::is_none(&token_addr)) {
+        if (token_addr.is_none()) {
             (option::none(), option::none())
         } else {
             let (subdomain_name, domain_name) = aptos_names_v2_1::v2_1_domains::get_name_props_from_token_addr(
-                *option::borrow(&token_addr)
+                *token_addr.borrow()
             );
             (subdomain_name, option::some(domain_name))
         }
@@ -66,31 +66,31 @@ module router::primary_name_tests {
     ) {
         router::init_module_for_test(router);
         let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
         let user_addr = address_of(user);
         let domain_name = utf8(b"test");
 
         router::register_domain(user, domain_name, SECONDS_PER_YEAR, option::none(), option::none());
 
         let (primary_subdomain_name, primary_domain_name) = router::get_primary_name(user_addr);
-        assert!(*option::borrow(&primary_domain_name) == domain_name, 1);
-        assert!(option::is_none(&primary_subdomain_name), 2);
+        assert!(*primary_domain_name.borrow() == domain_name, 1);
+        assert!(primary_subdomain_name.is_none(), 2);
 
         // Bump mode
         router::set_mode(router, 1);
 
-        let user = vector::borrow(&users, 1);
+        let user = &users[1];
         let user_addr = address_of(user);
         let domain_name = utf8(b"test1");
 
         router::register_domain(user, domain_name, SECONDS_PER_YEAR, option::none(), option::none());
 
         let (primary_subdomain_name, primary_domain_name) = router::get_primary_name(user_addr);
-        assert!(*option::borrow(&primary_domain_name) == domain_name, 1);
-        assert!(option::is_none(&primary_subdomain_name), 2);
+        assert!(*primary_domain_name.borrow() == domain_name, 1);
+        assert!(primary_subdomain_name.is_none(), 2);
 
         // v1 primary name is cleared
-        assert!(option::is_none(&aptos_names::domains::get_reverse_lookup(address_of(user))), 14);
+        assert!(aptos_names::domains::get_reverse_lookup(address_of(user)).is_none(), 14);
     }
 
     #[test(
@@ -113,7 +113,7 @@ module router::primary_name_tests {
     ) {
         router::init_module_for_test(router);
         let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
         let user_addr = address_of(user);
         let domain_name = utf8(b"test");
         let subdomain_name = utf8(b"test");
@@ -136,24 +136,24 @@ module router::primary_name_tests {
         router::set_primary_name(user, domain_name, option::none());
         {
             let (primary_subdomain_name, primary_domain_name) = router::get_primary_name(user_addr);
-            assert!(*option::borrow(&primary_domain_name) == domain_name, 1);
-            assert!(option::is_none(&primary_subdomain_name), 2);
+            assert!(*primary_domain_name.borrow() == domain_name, 1);
+            assert!(primary_subdomain_name.is_none(), 2);
         };
 
         // Set subdomain as primary
         router::set_primary_name(user, domain_name, subdomain_name_opt);
         {
             let (primary_subdomain_name, primary_domain_name) = router::get_primary_name(user_addr);
-            assert!(*option::borrow(&primary_domain_name) == domain_name, 3);
-            assert!(*option::borrow(&primary_subdomain_name) == subdomain_name, 4);
+            assert!(*primary_domain_name.borrow() == domain_name, 3);
+            assert!(*primary_subdomain_name.borrow() == subdomain_name, 4);
         };
 
         // Clear primary name
         router::clear_primary_name(user);
         {
             let (primary_subdomain_name, primary_domain_name) = router::get_primary_name(user_addr);
-            assert!(option::is_none(&primary_domain_name), 5);
-            assert!(option::is_none(&primary_subdomain_name), 6);
+            assert!(primary_domain_name.is_none(), 5);
+            assert!(primary_subdomain_name.is_none(), 6);
         };
 
         // Bump mode
@@ -162,8 +162,8 @@ module router::primary_name_tests {
         // Primary name should still be cleared after version bump
         {
             let (primary_subdomain_name, primary_domain_name) = router::get_primary_name(user_addr);
-            assert!(option::is_none(&primary_domain_name), 5);
-            assert!(option::is_none(&primary_subdomain_name), 6);
+            assert!(primary_domain_name.is_none(), 5);
+            assert!(primary_subdomain_name.is_none(), 6);
         };
 
         // Migrate domain and subdomain
@@ -174,24 +174,24 @@ module router::primary_name_tests {
         router::set_primary_name(user, domain_name, option::none());
         {
             let (primary_subdomain_name, primary_domain_name) = router::get_primary_name(user_addr);
-            assert!(*option::borrow(&primary_domain_name) == domain_name, 7);
-            assert!(option::is_none(&primary_subdomain_name), 8);
+            assert!(*primary_domain_name.borrow() == domain_name, 7);
+            assert!(primary_subdomain_name.is_none(), 8);
         };
 
         // Set subdomain as primary
         router::set_primary_name(user, domain_name, subdomain_name_opt);
         {
             let (primary_subdomain_name, primary_domain_name) = router::get_primary_name(user_addr);
-            assert!(*option::borrow(&primary_domain_name) == domain_name, 9);
-            assert!(*option::borrow(&primary_subdomain_name) == subdomain_name, 10);
+            assert!(*primary_domain_name.borrow() == domain_name, 9);
+            assert!(*primary_subdomain_name.borrow() == subdomain_name, 10);
         };
 
         // Clear primary name
         router::clear_primary_name(user);
         {
             let (primary_subdomain_name, primary_domain_name) = router::get_primary_name(user_addr);
-            assert!(option::is_none(&primary_domain_name), 11);
-            assert!(option::is_none(&primary_subdomain_name), 12);
+            assert!(primary_domain_name.is_none(), 11);
+            assert!(primary_subdomain_name.is_none(), 12);
         };
     }
 
@@ -216,7 +216,7 @@ module router::primary_name_tests {
     ) {
         router::init_module_for_test(router);
         let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
         let user_addr = address_of(user);
         let domain_name = utf8(b"test");
         let domain_name2 = utf8(b"test2");
@@ -262,11 +262,11 @@ module router::primary_name_tests {
             assert!(!aptos_names_v2_1::v2_1_domains::is_name_expired(domain_name2, option::none()), 3);
             // v1 primary name should be cleared
             let (_, v1_primary_domain_name) = get_v1_primary_name(user_addr);
-            assert!(option::is_none(&v1_primary_domain_name), 2);
+            assert!(v1_primary_domain_name.is_none(), 2);
             // v2 primary name should be properly set to domain2
             let (v2_primary_subdomain_name, v2_primary_domain_name) = get_v2_primary_name(user_addr);
             assert!(v2_primary_domain_name == option::some(domain_name2), 3);
-            assert!(option::is_none(&v2_primary_subdomain_name), 4);
+            assert!(v2_primary_subdomain_name.is_none(), 4);
         };
         // Set primary name to subdomain2
         // This should throw ESUBDOMAIN_NOT_MIGRATED error because we do not auto migrate subdomain and set primary name for v1 name in MODE_V1_AND_V2 is not allowed
@@ -294,7 +294,7 @@ module router::primary_name_tests {
     ) {
         router::init_module_for_test(router);
         let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
         let user_addr = address_of(user);
         let domain_name = utf8(b"test");
         let subdomain_name = utf8(b"test");
@@ -328,12 +328,12 @@ module router::primary_name_tests {
             assert!(!aptos_names_v2_1::v2_1_domains::is_name_expired(domain_name, option::none()), 2);
             // v1 primary name should be cleared
             let (v1_primary_subdomain_name, v1_primary_domain_name) = get_v1_primary_name(user_addr);
-            assert!(option::is_none(&v1_primary_domain_name), 3);
-            assert!(option::is_none(&v1_primary_subdomain_name), 4);
+            assert!(v1_primary_domain_name.is_none(), 3);
+            assert!(v1_primary_subdomain_name.is_none(), 4);
             // v2 primary name should be empty
             let (v2_primary_subdomain_name, v2_primary_domain_name) = get_v2_primary_name(user_addr);
-            assert!(option::is_none(&v2_primary_domain_name), 5);
-            assert!(option::is_none(&v2_primary_subdomain_name), 6);
+            assert!(v2_primary_domain_name.is_none(), 5);
+            assert!(v2_primary_subdomain_name.is_none(), 6);
         };
     }
 
@@ -357,7 +357,7 @@ module router::primary_name_tests {
     ) {
         router::init_module_for_test(router);
         let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
         let user_addr = address_of(user);
         let domain_name = utf8(b"test");
         let subdomain_name = utf8(b"test");
@@ -394,12 +394,12 @@ module router::primary_name_tests {
             assert!(aptos_names_v2_1::v2_1_domains::is_name_expired(domain_name, subdomain_name_opt), 2);
             // v1 primary name should be cleared
             let (v1_primary_subdomain_name, v1_primary_domain_name) = get_v1_primary_name(user_addr);
-            assert!(option::is_none(&v1_primary_domain_name), 2);
-            assert!(option::is_none(&v1_primary_subdomain_name), 3);
+            assert!(v1_primary_domain_name.is_none(), 2);
+            assert!(v1_primary_subdomain_name.is_none(), 3);
             // v2 primary name should be empty
             let (v2_primary_subdomain_name, v2_primary_domain_name) = get_v2_primary_name(user_addr);
-            assert!(option::is_none(&v2_primary_domain_name), 4);
-            assert!(option::is_none(&v2_primary_subdomain_name), 5);
+            assert!(v2_primary_domain_name.is_none(), 4);
+            assert!(v2_primary_subdomain_name.is_none(), 5);
         };
     }
 
@@ -427,8 +427,8 @@ module router::primary_name_tests {
         router::set_mode(router, 1);
 
         let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
-        let user1 = vector::borrow(&users, 0);
-        let user2 = vector::borrow(&users, 1);
+        let user1 = &users[0];
+        let user2 = &users[1];
         let user1_addr = address_of(user1);
         let user2_addr = address_of(user2);
         let domain_name = utf8(b"test");
@@ -465,14 +465,14 @@ module router::primary_name_tests {
         // Check that the primary name is no longer set
         {
             let (user1_primary_subdomain_name, user1_primary_domain_name) = get_v2_primary_name(user1_addr);
-            assert!(option::is_none(&user1_primary_domain_name), 1);
-            assert!(option::is_none(&user1_primary_subdomain_name), 2);
+            assert!(user1_primary_domain_name.is_none(), 1);
+            assert!(user1_primary_subdomain_name.is_none(), 2);
         };
 
         // Check that user1 no longer has a primary name
         let (user1_primary_subdomain_name, user1_primary_domain_name) = get_v1_primary_name(user1_addr);
-        assert!(option::is_none(&user1_primary_domain_name), 1);
-        assert!(option::is_none(&user1_primary_subdomain_name), 2);
+        assert!(user1_primary_domain_name.is_none(), 1);
+        assert!(user1_primary_subdomain_name.is_none(), 2);
 
         // Register with user2
         router::register_domain(user2, domain_name, SECONDS_PER_YEAR, option::none(), option::none());
@@ -494,8 +494,8 @@ module router::primary_name_tests {
         // longer has a primary name
         {
             let (user1_primary_subdomain_name, user1_primary_domain_name) = get_v2_primary_name(user1_addr);
-            assert!(option::is_none(&user1_primary_domain_name), 1);
-            assert!(option::is_none(&user1_primary_subdomain_name), 2);
+            assert!(user1_primary_domain_name.is_none(), 1);
+            assert!(user1_primary_subdomain_name.is_none(), 2);
         };
 
         // Check that user2 has the primary name
@@ -528,7 +528,7 @@ module router::primary_name_tests {
         router::set_mode(router, 1);
 
         let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
         let user_addr = address_of(user);
         let domain_name = utf8(b"test");
         let subdomain_name = utf8(b"subtest");
@@ -551,8 +551,8 @@ module router::primary_name_tests {
         router::set_primary_name(user, domain_name, subdomain_name_opt);
         {
             let (primary_subdomain_name, primary_domain_name) = router::get_primary_name(user_addr);
-            assert!(*option::borrow(&primary_domain_name) == domain_name, 1);
-            assert!(*option::borrow(&primary_subdomain_name) == subdomain_name, 2);
+            assert!(*primary_domain_name.borrow() == domain_name, 1);
+            assert!(*primary_subdomain_name.borrow() == subdomain_name, 2);
         };
 
         // Expire the subdomain name
@@ -562,8 +562,8 @@ module router::primary_name_tests {
         // Check that the reverse record is none
         {
             let (primary_subdomain_name, primary_domain_name) = router::get_primary_name(user_addr);
-            assert!(option::is_none(&primary_domain_name), 1);
-            assert!(option::is_none(&primary_subdomain_name), 2);
+            assert!(primary_domain_name.is_none(), 1);
+            assert!(primary_subdomain_name.is_none(), 2);
         };
 
         // Test for expiration policy 1
@@ -577,8 +577,8 @@ module router::primary_name_tests {
         // Check that the reverse record is still set because the domain is not expired
         {
             let (primary_subdomain_name, primary_domain_name) = router::get_primary_name(user_addr);
-            assert!(*option::borrow(&primary_domain_name) == domain_name, 5);
-            assert!(*option::borrow(&primary_subdomain_name) == subdomain_name, 6);
+            assert!(*primary_domain_name.borrow() == domain_name, 5);
+            assert!(*primary_subdomain_name.borrow() == subdomain_name, 6);
         };
     }
 }

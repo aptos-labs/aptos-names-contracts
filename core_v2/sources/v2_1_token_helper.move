@@ -3,8 +3,8 @@ module aptos_names_v2_1::v2_1_token_helper {
 
     use aptos_names_v2_1::v2_1_string_validator;
     use std::error;
-    use std::option::{Self, Option};
-    use std::string::{Self, String};
+    use std::option::Option;
+    use std::string::String;
 
     const DOMAIN_DELIMITER: vector<u8> = b".";
     const DOMAIN_SUFFIX: vector<u8> = b".apt";
@@ -16,32 +16,32 @@ module aptos_names_v2_1::v2_1_token_helper {
     /// The subdomain name is not a valid name
     const ESUBDOMAIN_NAME_INVALID: u64 = 3;
 
-    public(friend) fun get_fully_qualified_domain_name(subdomain_name: Option<String>, domain_name: String): String {
+    friend fun get_fully_qualified_domain_name(subdomain_name: Option<String>, domain_name: String): String {
         let (domain_is_allowed, _length) = v2_1_string_validator::string_is_allowed(&domain_name);
         assert!(domain_is_allowed, error::invalid_argument(EDOMAIN_NAME_INVALID));
-        let subdomain_is_allowed = if (option::is_some(&subdomain_name)) {
-            let (subdomain_is_allowed, _length) = v2_1_string_validator::string_is_allowed(option::borrow(&subdomain_name));
+        let subdomain_is_allowed = if (subdomain_name.is_some()) {
+            let (subdomain_is_allowed, _length) = v2_1_string_validator::string_is_allowed(subdomain_name.borrow());
             subdomain_is_allowed
         } else {
             true
         };
         assert!(subdomain_is_allowed, error::invalid_argument(ESUBDOMAIN_NAME_INVALID));
         let combined = combine_sub_and_domain_str(subdomain_name, domain_name);
-        string::append_utf8(&mut combined, DOMAIN_SUFFIX);
+        combined.append_utf8(DOMAIN_SUFFIX);
         combined
     }
 
     /// Combines a subdomain and domain into a new string, separated by a `.`
     /// Used for building fully qualified domain names (Ex: `{subdomain_name}.{domain_name}.apt`)
     /// If there is no subdomain, just returns the domain name
-    public(friend) fun combine_sub_and_domain_str(subdomain_name: Option<String>, domain_name: String): String {
-        if (option::is_none(&subdomain_name)) {
+    friend fun combine_sub_and_domain_str(subdomain_name: Option<String>, domain_name: String): String {
+        if (subdomain_name.is_none()) {
             return domain_name
         };
 
-        let combined = option::borrow_mut(&mut subdomain_name);
-        string::append_utf8(combined, DOMAIN_DELIMITER);
-        string::append(combined, domain_name);
+        let combined = subdomain_name.borrow_mut();
+        combined.append_utf8(DOMAIN_DELIMITER);
+        combined.append(domain_name);
         *combined
     }
 

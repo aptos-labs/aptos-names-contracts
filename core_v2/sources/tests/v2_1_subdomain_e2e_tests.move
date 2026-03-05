@@ -29,8 +29,8 @@ module aptos_names_v2_1::v2_1_subdomain_e2e_tests {
         foundation: signer,
     ) {
         let users = v2_1_test_helper::e2e_test_setup(aptos_names_v2_1, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
-        let rando = vector::borrow(&users, 1);
+        let user = &users[0];
+        let rando = &users[1];
 
         let user_addr = signer::address_of(user);
 
@@ -83,7 +83,7 @@ module aptos_names_v2_1::v2_1_subdomain_e2e_tests {
         foundation: signer,
     ) {
         let users = v2_1_test_helper::e2e_test_setup(aptos_names_v2_1, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
 
         // Register the domain
         v2_1_test_helper::register_name(router_signer, user, option::none(), v2_1_test_helper::domain_name(), v2_1_test_helper::one_year_secs(), v2_1_test_helper::fq_domain_name(), 1);
@@ -127,7 +127,7 @@ module aptos_names_v2_1::v2_1_subdomain_e2e_tests {
         foundation: signer,
     ) {
         let users = v2_1_test_helper::e2e_test_setup(aptos_names_v2_1, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
 
         // Register the domain
         v2_1_test_helper::register_name(router_signer, user, option::none(), v2_1_test_helper::domain_name(), v2_1_test_helper::one_year_secs(), v2_1_test_helper::fq_domain_name(), 1);
@@ -154,7 +154,7 @@ module aptos_names_v2_1::v2_1_subdomain_e2e_tests {
         foundation: signer,
     ) {
         let users = v2_1_test_helper::e2e_test_setup(aptos_names_v2_1, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
         // Register the domain
         v2_1_test_helper::register_name(router_signer, user, option::none(), v2_1_test_helper::domain_name(), v2_1_test_helper::one_year_secs(), v2_1_test_helper::fq_domain_name(), 1);
 
@@ -196,7 +196,7 @@ module aptos_names_v2_1::v2_1_subdomain_e2e_tests {
         foundation: signer,
     ) {
         let users = v2_1_test_helper::e2e_test_setup(aptos_names_v2_1, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
         // Register the domain
         v2_1_test_helper::register_name(router_signer, user, option::none(), v2_1_test_helper::domain_name(), v2_1_test_helper::one_year_secs(), v2_1_test_helper::fq_domain_name(), 1);
 
@@ -230,7 +230,7 @@ module aptos_names_v2_1::v2_1_subdomain_e2e_tests {
         foundation: signer,
     ) {
         let users = v2_1_test_helper::e2e_test_setup(aptos_names_v2_1, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
         // Register the domain
         v2_1_test_helper::register_name(router_signer, user, option::none(), v2_1_test_helper::domain_name(), v2_1_test_helper::one_year_secs(), v2_1_test_helper::fq_domain_name(), 1);
 
@@ -270,7 +270,7 @@ module aptos_names_v2_1::v2_1_subdomain_e2e_tests {
         foundation: signer
     ) {
         let users = v2_1_test_helper::e2e_test_setup(aptos_names_v2_1, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
 
         // Register the domain
         v2_1_test_helper::register_name(router_signer, user, option::none(), v2_1_test_helper::domain_name(), v2_1_test_helper::one_year_secs(), v2_1_test_helper::fq_domain_name(), 1);
@@ -304,9 +304,9 @@ module aptos_names_v2_1::v2_1_subdomain_e2e_tests {
         foundation: signer,
     ) {
         let users = v2_1_test_helper::e2e_test_setup(aptos_names_v2_1, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
         let user_addr = signer::address_of(user);
-        let rando = vector::borrow(&users, 1);
+        let rando = &users[1];
         let rando_addr = signer::address_of(rando);
         // create the domain
         v2_1_test_helper::register_name(
@@ -390,9 +390,9 @@ module aptos_names_v2_1::v2_1_subdomain_e2e_tests {
         foundation: signer,
     ) {
         let users = v2_1_test_helper::e2e_test_setup(aptos_names_v2_1, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
         let user_addr = signer::address_of(user);
-        let rando = vector::borrow(&users, 1);
+        let rando = &users[1];
         let rando_addr = signer::address_of(rando);
         // create the domain
         v2_1_test_helper::register_name(router_signer, user, option::none(), v2_1_test_helper::domain_name(), v2_1_test_helper::one_year_secs(), v2_1_test_helper::fq_domain_name(), 1);
@@ -442,7 +442,7 @@ module aptos_names_v2_1::v2_1_subdomain_e2e_tests {
         foundation: signer,
     ) {
         let users = v2_1_test_helper::e2e_test_setup(aptos_names_v2_1, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
         // Register the domain
         v2_1_test_helper::register_name(router_signer, user, option::none(), v2_1_test_helper::domain_name(), v2_1_test_helper::one_year_secs(), v2_1_test_helper::fq_domain_name(), 1);
         // Register a subdomain!
@@ -475,7 +475,7 @@ module aptos_names_v2_1::v2_1_subdomain_e2e_tests {
         foundation: signer,
     ) {
         let users = v2_1_test_helper::e2e_test_setup(aptos_names_v2_1, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
         // Register the domain
         v2_1_test_helper::register_name(router_signer, user, option::none(), v2_1_test_helper::domain_name(), 100, v2_1_test_helper::fq_domain_name(), 1);
     }
@@ -498,7 +498,7 @@ module aptos_names_v2_1::v2_1_subdomain_e2e_tests {
         foundation: signer,
     ) {
         let users = v2_1_test_helper::e2e_test_setup(aptos_names_v2_1, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
         // Register the domain
         v2_1_test_helper::register_name(router_signer, user, option::none(), v2_1_test_helper::domain_name(), v2_1_test_helper::one_year_secs()+5, v2_1_test_helper::fq_domain_name(), 1);
     }
@@ -520,8 +520,8 @@ module aptos_names_v2_1::v2_1_subdomain_e2e_tests {
         foundation: signer,
     ) {
         let users = v2_1_test_helper::e2e_test_setup(aptos_names_v2_1, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
-        let rando = vector::borrow(&users, 1);
+        let user = &users[0];
+        let rando = &users[1];
 
         // Register the domain
         v2_1_test_helper::register_name(router_signer, user, option::none(), v2_1_test_helper::domain_name(), v2_1_test_helper::one_year_secs(), v2_1_test_helper::fq_domain_name(), 1);
@@ -617,7 +617,7 @@ module aptos_names_v2_1::v2_1_subdomain_e2e_tests {
         foundation: signer,
     ) {
         let users = v2_1_test_helper::e2e_test_setup(aptos_names_v2_1, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
 
         // Register the domain
         v2_1_test_helper::register_name(router_signer, user, option::none(), v2_1_test_helper::domain_name(), v2_1_test_helper::one_year_secs(), v2_1_test_helper::fq_domain_name(), 1);
@@ -643,7 +643,7 @@ module aptos_names_v2_1::v2_1_subdomain_e2e_tests {
         foundation: signer,
     ) {
         let users = v2_1_test_helper::e2e_test_setup(aptos_names_v2_1, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
         let user_addr = signer::address_of(user);
 
         // Register the domain
@@ -657,7 +657,7 @@ module aptos_names_v2_1::v2_1_subdomain_e2e_tests {
 
         timestamp::update_global_time_for_test_secs(v2_1_test_helper::one_year_secs() + 5);
         let target_address = v2_1_domains::get_target_address(v2_1_test_helper::domain_name(), option::none());
-        assert!(option::is_none(&target_address), 3);
+        assert!(target_address.is_none(), 3);
     }
 
     #[test(
@@ -677,7 +677,7 @@ module aptos_names_v2_1::v2_1_subdomain_e2e_tests {
         foundation: signer,
     ) {
         let users = v2_1_test_helper::e2e_test_setup(aptos_names_v2_1, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
 
         // Register the domain
         v2_1_test_helper::register_name(router_signer, user, option::none(), v2_1_test_helper::domain_name(), v2_1_test_helper::one_year_secs(), v2_1_test_helper::fq_domain_name(), 1);
@@ -719,8 +719,8 @@ module aptos_names_v2_1::v2_1_subdomain_e2e_tests {
         foundation: signer,
     ) {
         let users = v2_1_test_helper::e2e_test_setup(aptos_names_v2_1, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
-        let rando = vector::borrow(&users, 1);
+        let user = &users[0];
+        let rando = &users[1];
 
         // Register the domain and subdomain
         v2_1_test_helper::register_name(router_signer, user, option::none(), v2_1_test_helper::domain_name(), v2_1_test_helper::one_year_secs(), v2_1_test_helper::fq_domain_name(), 1);
@@ -748,8 +748,8 @@ module aptos_names_v2_1::v2_1_subdomain_e2e_tests {
         foundation: signer,
     ) {
         let users = v2_1_test_helper::e2e_test_setup(aptos_names_v2_1, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
-        let rando = vector::borrow(&users, 1);
+        let user = &users[0];
+        let rando = &users[1];
 
         // Register the domain and subdomain
         v2_1_test_helper::register_name(router_signer, user, option::none(), v2_1_test_helper::domain_name(), v2_1_test_helper::one_year_secs(), v2_1_test_helper::fq_domain_name(), 1);
@@ -778,8 +778,8 @@ module aptos_names_v2_1::v2_1_subdomain_e2e_tests {
         foundation: signer,
     ) {
         let users = v2_1_test_helper::e2e_test_setup(aptos_names_v2_1, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
-        let rando = vector::borrow(&users, 1);
+        let user = &users[0];
+        let rando = &users[1];
 
         let rando_addr = signer::address_of(rando);
 
@@ -812,9 +812,9 @@ module aptos_names_v2_1::v2_1_subdomain_e2e_tests {
         foundation: signer,
     ) {
         let users = v2_1_test_helper::e2e_test_setup(aptos_names_v2_1, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
 
-        let rando = vector::borrow(&users, 1);
+        let rando = &users[1];
 
         let rando_addr = signer::address_of(rando);
 
@@ -844,7 +844,7 @@ module aptos_names_v2_1::v2_1_subdomain_e2e_tests {
         foundation: signer,
     ) {
         let users = v2_1_test_helper::e2e_test_setup(aptos_names_v2_1, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
 
         // Register the domain and subdomain
         v2_1_test_helper::register_name(router_signer, user, option::none(), v2_1_test_helper::domain_name(), v2_1_test_helper::one_year_secs(), v2_1_test_helper::fq_domain_name(), 1);
@@ -887,7 +887,7 @@ module aptos_names_v2_1::v2_1_subdomain_e2e_tests {
         foundation: signer,
     ) {
         let users = v2_1_test_helper::e2e_test_setup(aptos_names_v2_1, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
 
         // No subdomain is registered yet
         v2_1_test_helper::register_name(router_signer, user, option::none(), v2_1_test_helper::domain_name(), v2_1_test_helper::one_year_secs(), v2_1_test_helper::fq_domain_name(), 1);
@@ -927,7 +927,7 @@ module aptos_names_v2_1::v2_1_subdomain_e2e_tests {
         foundation: signer,
     ) {
         let users = v2_1_test_helper::e2e_test_setup(aptos_names_v2_1, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
 
         // No subdomain is registered yet- domain is registered for 1 year
         v2_1_test_helper::register_name(router_signer, user, option::none(), v2_1_test_helper::domain_name(), v2_1_test_helper::one_year_secs(), v2_1_test_helper::fq_domain_name(), 1);
@@ -957,8 +957,8 @@ module aptos_names_v2_1::v2_1_subdomain_e2e_tests {
         foundation: signer,
     ) {
         let users = v2_1_test_helper::e2e_test_setup(aptos_names_v2_1, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
-        let rando = vector::borrow(&users, 1);
+        let user = &users[0];
+        let rando = &users[1];
 
         // Register the domain and subdomain
         v2_1_test_helper::register_name(router_signer, user, option::none(), v2_1_test_helper::domain_name(), v2_1_test_helper::one_year_secs(), v2_1_test_helper::fq_domain_name(), 1);
@@ -992,8 +992,8 @@ module aptos_names_v2_1::v2_1_subdomain_e2e_tests {
         foundation: signer,
     ) {
         let users = v2_1_test_helper::e2e_test_setup(aptos_names_v2_1, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
-        let rando = vector::borrow(&users, 1);
+        let user = &users[0];
+        let rando = &users[1];
 
         // Register a domain, and ensure no subdomain is registered yet
         v2_1_test_helper::register_name(router_signer, user, option::none(), v2_1_test_helper::domain_name(), v2_1_test_helper::one_year_secs(), v2_1_test_helper::fq_domain_name(), 1);
@@ -1022,7 +1022,7 @@ module aptos_names_v2_1::v2_1_subdomain_e2e_tests {
         foundation: signer,
     ) {
         let users = v2_1_test_helper::e2e_test_setup(aptos_names_v2_1, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
         let user_addr = signer::address_of(user);
 
         // Register the domain
@@ -1104,7 +1104,7 @@ module aptos_names_v2_1::v2_1_subdomain_e2e_tests {
                 v2_1_test_helper::domain_name(), option::some(v2_1_test_helper::subdomain_name())), 3);
             let owner_addr = v2_1_domains::get_name_owner_addr(
                 option::some(v2_1_test_helper::subdomain_name()), v2_1_test_helper::domain_name());
-            assert!(*option::borrow(&owner_addr) == user_addr, 4);
+            assert!(*owner_addr.borrow() == user_addr, 4);
         };
     }
 }

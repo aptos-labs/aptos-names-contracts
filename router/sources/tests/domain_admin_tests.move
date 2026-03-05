@@ -29,8 +29,8 @@ module router::domain_admin_tests {
     ) {
         router::init_module_for_test(router);
         let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
-        let user1 = vector::borrow(&users, 0);
-        let user2 = vector::borrow(&users, 1);
+        let user1 = &users[0];
+        let user2 = &users[1];
         let user1_addr = address_of(user1);
         let user2_addr = address_of(user2);
 
@@ -77,7 +77,7 @@ module router::domain_admin_tests {
     ) {
         router::init_module_for_test(router);
         let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
-        let user1 = vector::borrow(&users, 0);
+        let user1 = &users[0];
 
         // Bump mode
         router::set_mode(router, 1);
@@ -137,7 +137,7 @@ module router::domain_admin_tests {
     ) {
         router::init_module_for_test(router);
         let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
-        let user1 = vector::borrow(&users, 0);
+        let user1 = &users[0];
 
         // Bump mode
         router::set_mode(router, 1);
