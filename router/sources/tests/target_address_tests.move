@@ -62,8 +62,8 @@ module router::target_address_tests {
     ) {
         router::init_module_for_test(router);
         let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
-        let user = vector::borrow(&users, 0);
-        let user2 = vector::borrow(&users, 1);
+        let user = &users[0];
+        let user2 = &users[1];
         let user_addr = address_of(user);
         let user2_addr = address_of(user2);
         let domain_name = utf8(b"test");
@@ -86,38 +86,38 @@ module router::target_address_tests {
         // Domain target address should be default to user_addr
         {
             let target_address = get_v1_target_addr(domain_name, option::none());
-            assert!(*option::borrow(&target_address) == user_addr, 1);
+            assert!(*target_address.borrow() == user_addr, 1);
         };
         {
             let target_address = get_v1_target_addr(domain_name, subdomain_name_opt);
-            assert!(*option::borrow(&target_address) == user_addr, 2);
+            assert!(*target_address.borrow() == user_addr, 2);
         };
 
         // Set domain target address to user2_addr
         router::set_target_addr(user, domain_name, option::none(), user2_addr);
         {
             let target_address = get_v1_target_addr(domain_name, option::none());
-            assert!(*option::borrow(&target_address) == user2_addr, 3);
+            assert!(*target_address.borrow() == user2_addr, 3);
         };
         // Set subdomain target address to user2_addr
         router::set_target_addr(user, domain_name, subdomain_name_opt, user2_addr);
         {
             let target_address = get_v1_target_addr(domain_name, subdomain_name_opt);
-            assert!(*option::borrow(&target_address) == user2_addr, 4);
+            assert!(*target_address.borrow() == user2_addr, 4);
         };
 
         // Clear domain target address
         router::clear_target_addr(user, domain_name, option::none());
         {
             let target_address = get_v1_target_addr(domain_name, option::none());
-            assert!(option::is_none(&target_address), 5);
+            assert!(target_address.is_none(), 5);
         };
 
         // Clear subdomain target address
         router::clear_target_addr(user, domain_name, subdomain_name_opt);
         {
             let target_address = get_v1_target_addr(domain_name, subdomain_name_opt);
-            assert!(option::is_none(&target_address), 6);
+            assert!(target_address.is_none(), 6);
         };
 
         // Bump mode
@@ -126,9 +126,9 @@ module router::target_address_tests {
         // Target should still be cleared after version bump
         {
             let target_address = get_v2_target_addr(domain_name, option::none());
-            assert!(option::is_none(&target_address), 7);
+            assert!(target_address.is_none(), 7);
             let target_address = get_v2_target_addr(domain_name, subdomain_name_opt);
-            assert!(option::is_none(&target_address), 8);
+            assert!(target_address.is_none(), 8);
         };
 
         // Migrate domain and subdomain
@@ -139,31 +139,31 @@ module router::target_address_tests {
         router::set_target_addr(user, domain_name, option::none(), user2_addr);
         {
             let target_address = get_v2_target_addr(domain_name, option::none());
-            assert!(*option::borrow(&target_address) == user2_addr, 3);
+            assert!(*target_address.borrow() == user2_addr, 3);
         };
         // Set subdomain target address to user2_addr
         router::set_target_addr(user, domain_name, subdomain_name_opt, user2_addr);
         {
             let target_address = get_v2_target_addr(domain_name, subdomain_name_opt);
-            assert!(*option::borrow(&target_address) == user2_addr, 4);
+            assert!(*target_address.borrow() == user2_addr, 4);
         };
 
         // Clear domain target address
         router::clear_target_addr(user, domain_name, option::none());
         {
             let target_address = get_v2_target_addr(domain_name, option::none());
-            assert!(option::is_none(&target_address), 5);
+            assert!(target_address.is_none(), 5);
         };
 
         // Clear subdomain target address
         router::clear_target_addr(user, domain_name, subdomain_name_opt);
         {
             let target_address = get_v2_target_addr(domain_name, subdomain_name_opt);
-            assert!(option::is_none(&target_address), 6);
+            assert!(target_address.is_none(), 6);
         };
 
         // v1 primary name is cleared
-        assert!(option::is_none(&aptos_names::domains::get_reverse_lookup(user_addr)), 7);
+        assert!(aptos_names::domains::get_reverse_lookup(user_addr).is_none(), 7);
     }
 
     #[test(
@@ -187,9 +187,9 @@ module router::target_address_tests {
     ) {
         router::init_module_for_test(router);
         let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
         let user_addr = address_of(user);
-        let user2 = vector::borrow(&users, 1);
+        let user2 = &users[1];
         let user2_addr = address_of(user2);
         let domain_name = utf8(b"test");
         let subdomain_name = utf8(b"test");
@@ -217,9 +217,9 @@ module router::target_address_tests {
             assert!(aptos_names_v2_1::v2_1_domains::is_token_owner(user_addr, domain_name, option::none()), 1);
             assert!(!aptos_names_v2_1::v2_1_domains::is_name_expired(domain_name, option::none()), 1);
             let v1_target_address = get_v1_target_addr(domain_name, option::none());
-            assert!(option::is_none(&v1_target_address), 2);
+            assert!(v1_target_address.is_none(), 2);
             let v2_target_address = get_v2_target_addr(domain_name, option::none());
-            assert!(*option::borrow(&v2_target_address) == user2_addr, 3);
+            assert!(*v2_target_address.borrow() == user2_addr, 3);
         };
         // Set subdomain target address to user2_addr
         // This should throw ESUBDOMAIN_NOT_MIGRATED error because we do not auto migrate subdomain and set target address for v1 name in MODE_V1_AND_V2 is not allowed
@@ -248,7 +248,7 @@ module router::target_address_tests {
     ) {
         router::init_module_for_test(router);
         let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
         let user_addr = address_of(user);
         let domain_name = utf8(b"test");
         let subdomain_name = utf8(b"test");
@@ -276,9 +276,9 @@ module router::target_address_tests {
             assert!(aptos_names_v2_1::v2_1_domains::is_token_owner(user_addr, domain_name, option::none()), 1);
             assert!(!aptos_names_v2_1::v2_1_domains::is_name_expired(domain_name, option::none()), 1);
             let v1_target_address = get_v1_target_addr(domain_name, option::none());
-            assert!(option::is_none(&v1_target_address), 1);
+            assert!(v1_target_address.is_none(), 1);
             let v2_target_address = get_v2_target_addr(domain_name, option::none());
-            assert!(option::is_none(&v2_target_address), 2);
+            assert!(v2_target_address.is_none(), 2);
         };
         // Clear subdomain target address
         // This should throw error ESUBDOMAIN_NOT_MIGRATED because we do not auto migrate subdomain and set target address for v1 name in MODE_V1_AND_V2 is not allowed

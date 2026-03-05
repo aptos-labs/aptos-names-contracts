@@ -32,7 +32,7 @@ module bulk::bulk_tests {
     ) {
         router::init_module_for_test(router);
         let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
-        let user1 = vector::borrow(&users, 0);
+        let user1 = &users[0];
         let user1_addr = signer::address_of(user1);
         let domain_name1 = utf8(b"test1");
         let domain_name2 = utf8(b"test2");
@@ -153,7 +153,7 @@ module bulk::bulk_tests {
     ) {
         router::init_module_for_test(router);
         let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
-        let user1 = vector::borrow(&users, 0);
+        let user1 = &users[0];
         let domain_name = utf8(b"test");
 
         // Bump mode

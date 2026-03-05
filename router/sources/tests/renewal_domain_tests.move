@@ -53,7 +53,7 @@ module router::renewal_domain_tests {
     ) {
         router::init_module_for_test(router);
         let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
         let domain_name = utf8(b"test");
 
         router::renew_domain(user, domain_name, SECONDS_PER_YEAR);
@@ -79,7 +79,7 @@ module router::renewal_domain_tests {
     ) {
         router::init_module_for_test(router);
         let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
         let domain_name = utf8(b"test");
 
         // Bump mode to v2
@@ -114,7 +114,7 @@ module router::renewal_domain_tests {
     ) {
         router::init_module_for_test(router);
         let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
         let user_addr = signer::address_of(user);
         let domain_name = utf8(b"test");
 
@@ -171,7 +171,7 @@ module router::renewal_domain_tests {
     ) {
         router::init_module_for_test(router);
         let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
         let domain_name = utf8(b"test");
 
         // Do not update system time so domain is eligibal for free 1 year extension
@@ -206,7 +206,7 @@ module router::renewal_domain_tests {
     ) {
         router::init_module_for_test(router);
         let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
         let domain_name = utf8(b"test");
 
         // Bump mode to v2
@@ -244,7 +244,7 @@ module router::renewal_domain_tests {
     ) {
         router::init_module_for_test(router);
         let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
         let domain_name = utf8(b"test");
 
         // Bump mode to v2

@@ -16,7 +16,7 @@ module aptos_names::verify {
 
     const EINVALID_PROOF_OF_KNOWLEDGE: u64 = 1;
 
-    public(friend) fun assert_register_domain_signature_verifies(signature: vector<u8>, account_address: address, domain_name: string::String) {
+    friend fun assert_register_domain_signature_verifies(signature: vector<u8>, account_address: address, domain_name: string::String) {
         let chain_id = chain_id::get();
         let sequence_number = account::get_sequence_number(account_address);
         let register_domain_proof_challenge = RegisterDomainProofChallenge {

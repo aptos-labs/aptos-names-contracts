@@ -69,13 +69,13 @@ module aptos_names::test_helper {
     ) {
         let user_addr = signer::address_of(user);
 
-        let is_subdomain = option::is_some(&subdomain_name);
+        let is_subdomain = subdomain_name.is_some();
 
         let user_balance_before = coin::balance<AptosCoin>(user_addr);
         let user_reverse_lookup_before = domains::get_reverse_lookup(user_addr);
         let maybe_target_address = domains::name_resolved_address(subdomain_name, domain_name);
-        let name_reverse_lookup_before = if (option::is_some(&maybe_target_address)) {
-            domains::get_reverse_lookup(*option::borrow(&maybe_target_address))
+        let name_reverse_lookup_before = if (maybe_target_address.is_some()) {
+            domains::get_reverse_lookup(*maybe_target_address.borrow())
         } else {
             option::none()
         };
@@ -84,15 +84,15 @@ module aptos_names::test_helper {
         let set_name_address_event_v1_event_count_before = domains::get_set_name_address_event_v1_count();
         let set_reverse_lookup_event_v1_event_count_before = domains::get_set_reverse_lookup_event_v1_count();
 
-        let years = (time_helper::seconds_to_years(registration_duration_secs) as u8);
-        if (option::is_none(&subdomain_name)) {
-            if (vector::length(&signature)== 0) {
+        let years = time_helper::seconds_to_years(registration_duration_secs) as u8;
+        if (subdomain_name.is_none()) {
+            if (signature.length()== 0) {
                 domains::register_domain(user, domain_name, years);
             } else {
                 domains::register_domain_with_signature(user, domain_name, years, signature);
             }
         } else {
-            domains::register_subdomain(user, *option::borrow(&subdomain_name), domain_name, registration_duration_secs);
+            domains::register_subdomain(user, *subdomain_name.borrow(), domain_name, registration_duration_secs);
         };
 
         // It should now be: not expired, registered, and not registerable
@@ -121,7 +121,7 @@ module aptos_names::test_helper {
             // If it's a subdomain, we only charge a nomincal fee
             expected_user_balance_after = user_balance_before - price_model::price_for_subdomain_v1(registration_duration_secs);
         } else {
-            let domain_price = price_model::price_for_domain_v1(string::length(&domain_name), years);
+            let domain_price = price_model::price_for_domain_v1(domain_name.length(), years);
             assert!(domain_price / config::octas() == 40, domain_price / config::octas());
             expected_user_balance_after = user_balance_before - domain_price;
         };
@@ -134,7 +134,7 @@ module aptos_names::test_helper {
         assert!(time_helper::seconds_to_days(expiration_time_sec - timestamp::now_seconds()) == 365, 10);
 
         if (is_subdomain) {
-            if (option::is_none(&user_reverse_lookup_before)) {
+            if (user_reverse_lookup_before.is_none()) {
                 // Should automatically point to the users address
                 assert!(target_address == option::some(user_addr), 11);
             } else {
@@ -166,10 +166,10 @@ module aptos_names::test_helper {
         assert!(register_name_event_v1_num_emitted == 1, register_name_event_v1_num_emitted);
 
         // Reverse lookup should be set if user did not have one before
-        if (option::is_none(&user_reverse_lookup_before)) {
+        if (user_reverse_lookup_before.is_none()) {
             let maybe_reverse_lookup_after = domains::get_reverse_lookup(user_addr);
-            if (option::is_some(&maybe_reverse_lookup_after)) {
-                let reverse_lookup_after = option::borrow(&maybe_reverse_lookup_after);
+            if (maybe_reverse_lookup_after.is_some()) {
+                let reverse_lookup_after = maybe_reverse_lookup_after.borrow();
                 assert!(*reverse_lookup_after == domains::create_name_record_key_v1(subdomain_name, domain_name), 36);
             } else {
                 // Reverse lookup is not set, even though user did not have a reverse lookup before.
@@ -177,7 +177,7 @@ module aptos_names::test_helper {
             };
             // If we are registering over a name that is already registered but expired and was a primary name,
             // that name should be removed from being a primary name.
-            if (option::is_some(&name_reverse_lookup_before) && is_expired_before) {
+            if (name_reverse_lookup_before.is_some() && is_expired_before) {
                 assert!(set_reverse_lookup_event_v1_num_emitted == 2, set_reverse_lookup_event_v1_num_emitted);
             } else {
                 assert!(set_reverse_lookup_event_v1_num_emitted == 1, set_reverse_lookup_event_v1_num_emitted);
@@ -185,13 +185,13 @@ module aptos_names::test_helper {
         } else {
             // If we are registering over a name that is already registered but expired and was the user's primary name,
             // that name should be removed from being a primary name and the new one should be set.
-            if (option::is_some(&name_reverse_lookup_before)
-                && option::is_some(&user_reverse_lookup_before)
-                && *option::borrow(&name_reverse_lookup_before) == *option::borrow(&user_reverse_lookup_before)
+            if (name_reverse_lookup_before.is_some()
+                && user_reverse_lookup_before.is_some()
+                && *name_reverse_lookup_before.borrow() == *user_reverse_lookup_before.borrow()
                 && is_expired_before
             ) {
                 assert!(set_reverse_lookup_event_v1_num_emitted == 2, set_reverse_lookup_event_v1_num_emitted);
-            } else if (option::is_some(&name_reverse_lookup_before) && is_expired_before) {
+            } else if (name_reverse_lookup_before.is_some() && is_expired_before) {
                 // If we are registering over a name that is already registered but expired and was a primary name,
                 // that name should be removed from being a primary name.
                 assert!(set_reverse_lookup_event_v1_num_emitted == 1, set_reverse_lookup_event_v1_num_emitted);
@@ -201,7 +201,7 @@ module aptos_names::test_helper {
         };
 
         if (is_subdomain) {
-            if (option::is_none(&user_reverse_lookup_before)) {
+            if (user_reverse_lookup_before.is_none()) {
                 // Should automatically point to the users address
                 test_utils::print_actual_expected(b"set_name_address_event_v1_num_emitted: ", set_name_address_event_v1_num_emitted, 1, false);
                 assert!(set_name_address_event_v1_num_emitted == 1, set_name_address_event_v1_num_emitted);
@@ -234,7 +234,7 @@ module aptos_names::test_helper {
         // When setting the target address to an address that is *not* the owner's, the reverse lookup should also be cleared
         if (signer::address_of(user) != expected_target_address) {
             let maybe_reverse_lookup = domains::get_reverse_lookup(user_addr);
-            assert!(option::is_none(&maybe_reverse_lookup), 33);
+            assert!(maybe_reverse_lookup.is_none(), 33);
         };
 
         // Assert events have been correctly emmitted
@@ -249,8 +249,8 @@ module aptos_names::test_helper {
         assert!(set_name_address_event_v1_num_emitted == 1, set_name_address_event_v1_num_emitted);
 
         // If the signer had a reverse lookup before, and set his reverse lookup name to a different address, it should be cleared
-        if (option::is_some(&maybe_reverse_lookup_before)) {
-            let (maybe_reverse_subdomain, reverse_domain) = domains::get_name_record_key_v1_props(option::borrow(&maybe_reverse_lookup_before));
+        if (maybe_reverse_lookup_before.is_some()) {
+            let (maybe_reverse_subdomain, reverse_domain) = domains::get_name_record_key_v1_props(maybe_reverse_lookup_before.borrow());
             if (maybe_reverse_subdomain == subdomain_name && reverse_domain == domain_name && signer::address_of(user) != expected_target_address) {
                 assert!(set_reverse_lookup_event_v1_num_emitted == 1, set_reverse_lookup_event_v1_num_emitted);
             };
@@ -266,20 +266,20 @@ module aptos_names::test_helper {
         let maybe_reverse_lookup_before = domains::get_reverse_lookup(user_addr);
 
         // And also can clear if is registered address, but not owner
-        if (option::is_none(&subdomain_name)) {
+        if (subdomain_name.is_none()) {
             domains::clear_domain_address(user, domain_name);
         } else {
-            domains::clear_subdomain_address(user, *option::borrow(&subdomain_name), domain_name);
+            domains::clear_subdomain_address(user, *subdomain_name.borrow(), domain_name);
         };
         let (_property_version, _expiration_time_sec, target_address) = domains::get_name_record_v1_props_for_name(subdomain_name, domain_name);
         test_utils::print_actual_expected(b"clear_domain_address: ", target_address, option::none(), false);
         assert!(target_address == option::none(), 32);
 
-        if (option::is_some(&maybe_reverse_lookup_before)) {
-            let reverse_lookup_before = option::borrow(&maybe_reverse_lookup_before);
+        if (maybe_reverse_lookup_before.is_some()) {
+            let reverse_lookup_before = maybe_reverse_lookup_before.borrow();
             if (*reverse_lookup_before == domains::create_name_record_key_v1(subdomain_name, domain_name)) {
                 let reverse_lookup_after = domains::get_reverse_lookup(user_addr);
-                assert!(option::is_none(&reverse_lookup_after), 35);
+                assert!(reverse_lookup_after.is_none(), 35);
 
                 let set_reverse_lookup_event_v1_num_emitted = domains::get_set_reverse_lookup_event_v1_count() - set_reverse_lookup_event_v1_event_count_before;
                 assert!(set_reverse_lookup_event_v1_num_emitted == 1, set_reverse_lookup_event_v1_num_emitted);
@@ -300,16 +300,14 @@ module aptos_names::test_helper {
     public fun setup_and_fund_accounts(aptos: &signer, foundation: &signer, users: vector<signer>): vector<signer> {
         let (burn_cap, mint_cap) = aptos_framework::aptos_coin::initialize_for_test(aptos);
 
-        let len = vector::length(&users);
-        let i = 0;
-        while (i < len) {
-            let user = vector::borrow(&users, i);
+        let len = users.length();
+        for (i in 0..len) {
+            let user = &users[i];
             let user_addr = signer::address_of(user);
             account::create_account_for_test(user_addr);
             coin::register<AptosCoin>(user);
             coin::deposit(user_addr, coin::mint<AptosCoin>(mint_amount(), &mint_cap));
             assert!(coin::balance<AptosCoin>(user_addr) == mint_amount(), 1);
-            i = i + 1;
         };
 
         account::create_account_for_test(signer::address_of(foundation));

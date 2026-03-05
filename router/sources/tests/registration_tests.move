@@ -32,7 +32,7 @@ module router::registration_tests {
     ) {
         router::init_module_for_test(router);
         let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
         let user_addr = address_of(user);
         let domain_name1 = utf8(b"test1");
         let domain_name2 = utf8(b"test2");
@@ -50,10 +50,10 @@ module router::registration_tests {
         assert!(router::is_name_owner(user_addr, domain_name2, option::none()), 3);
 
         // v1 primary name is not cleared. v1 primary name only gets unset for explicit change of primary name.
-        assert!(option::is_some(&aptos_names::domains::get_reverse_lookup(address_of(user))), 4);
+        assert!(aptos_names::domains::get_reverse_lookup(address_of(user)).is_some(), 4);
         // v2 primary name is properly set
         let (primary_subdomain_name, primary_domain_name) = router::router::get_primary_name(address_of(user));
-        assert!(option::is_none(&primary_subdomain_name), 5);
+        assert!(primary_subdomain_name.is_none(), 5);
         assert!(option::some(domain_name1) == primary_domain_name, 6);
     }
 
@@ -78,7 +78,7 @@ module router::registration_tests {
     ) {
         router::init_module_for_test(router);
         let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
         let domain_name = utf8(b"test1");
 
         // Register with v1
@@ -111,7 +111,7 @@ module router::registration_tests {
     ) {
         router::init_module_for_test(router);
         let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
         let user_addr = address_of(user);
         let domain_name1 = utf8(b"test1");
 
@@ -121,7 +121,7 @@ module router::registration_tests {
             // Primary name should be `domain_name1`
             let (primary_subdomain, primary_domain) = router::get_primary_name(user_addr);
             assert!(primary_subdomain == option::none(), 3);
-            assert!(*option::borrow(&primary_domain) == domain_name1, 4);
+            assert!(*primary_domain.borrow() == domain_name1, 4);
         };
 
         // Bump mode and disable v1
@@ -134,7 +134,7 @@ module router::registration_tests {
             // Primary name should still be `domain_name1`
             let (primary_subdomain, primary_domain) = router::get_primary_name(user_addr);
             assert!(primary_subdomain == option::none(), 3);
-            assert!(*option::borrow(&primary_domain) == domain_name1, 4);
+            assert!(*primary_domain.borrow() == domain_name1, 4);
         };
     }
 
@@ -158,8 +158,8 @@ module router::registration_tests {
     ) {
         router::init_module_for_test(router);
         let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
-        let user1 = vector::borrow(&users, 0);
-        let user2 = vector::borrow(&users, 1);
+        let user1 = &users[0];
+        let user2 = &users[1];
         let user1_addr = address_of(user1);
         let user2_addr = address_of(user2);
         let domain_name1 = utf8(b"test1");
@@ -175,7 +175,7 @@ module router::registration_tests {
             option::some(user2_addr)
         );
         assert!(router::is_name_owner(user2_addr, domain_name1, option::none()), 1);
-        assert!(*option::borrow(&router::get_target_addr(domain_name1, option::none())) == user2_addr, 2);
+        assert!(*router::get_target_addr(domain_name1, option::none()).borrow() == user2_addr, 2);
         {
             // Primary name should be unset for user1 now that `target_addr` has been changed.
             let (primary_subdomain, primary_domain) = router::get_primary_name(user1_addr);
@@ -195,7 +195,7 @@ module router::registration_tests {
             option::some(user2_addr)
         );
         assert!(router::is_name_owner(user2_addr, domain_name2, option::none()), 1);
-        assert!(*option::borrow(&router::get_target_addr(domain_name2, option::none())) == user2_addr, 2);
+        assert!(*router::get_target_addr(domain_name2, option::none()).borrow() == user2_addr, 2);
         {
             // Primary name should be unset for user1 now that `target_addr` has been changed.
             let (primary_subdomain, primary_domain) = router::get_primary_name(user1_addr);
@@ -226,7 +226,7 @@ module router::registration_tests {
     ) {
         router::init_module_for_test(router);
         let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
         let user_addr = address_of(user);
 
         // Register with v1
@@ -302,7 +302,7 @@ module router::registration_tests {
     ) {
         router::init_module_for_test(router);
         let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
         let domain_name = utf8(b"test");
         let subdomain_name = utf8(b"sub");
 
@@ -359,7 +359,7 @@ module router::registration_tests {
     ) {
         router::init_module_for_test(router);
         let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
         let domain_name = utf8(b"test");
         let subdomain_name = utf8(b"sub");
 
@@ -412,8 +412,8 @@ module router::registration_tests {
     ) {
         router::init_module_for_test(router);
         let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user1, &aptos, user2, &foundation);
-        let user1 = vector::borrow(&users, 0);
-        let user2 = vector::borrow(&users, 1);
+        let user1 = &users[0];
+        let user2 = &users[1];
         let user1_addr = address_of(user1);
         let user2_addr = address_of(user2);
         let domain_name1 = utf8(b"test1");
@@ -435,7 +435,7 @@ module router::registration_tests {
             option::some(user2_addr),
         );
         assert!(router::is_name_owner(user2_addr, domain_name1, subdomain_name_opt), 1);
-        assert!(*option::borrow(&router::get_target_addr(domain_name1, subdomain_name_opt)) == user2_addr, 2);
+        assert!(*router::get_target_addr(domain_name1, subdomain_name_opt).borrow() == user2_addr, 2);
         {
             // Primary name should be unset for user1 now that `target_addr` has been changed.
             let (primary_subdomain, primary_domain) = router::get_primary_name(user1_addr);
@@ -459,7 +459,7 @@ module router::registration_tests {
             option::some(user2_addr),
         );
         assert!(router::is_name_owner(user2_addr, domain_name2, subdomain_name_opt), 1);
-        assert!(*option::borrow(&router::get_target_addr(domain_name2, subdomain_name_opt)) == user2_addr, 2);
+        assert!(*router::get_target_addr(domain_name2, subdomain_name_opt).borrow() == user2_addr, 2);
         {
             // Primary name should be unset for user1 now that `target_addr` has been changed.
             let (primary_subdomain, primary_domain) = router::get_primary_name(user1_addr);

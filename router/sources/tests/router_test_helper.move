@@ -44,16 +44,14 @@ module router::router_test_helper {
     public fun setup_and_fund_accounts(aptos: &signer, foundation: &signer, users: vector<signer>): vector<signer> {
         let (burn_cap, mint_cap) = aptos_framework::aptos_coin::initialize_for_test(aptos);
 
-        let len = vector::length(&users);
-        let i = 0;
-        while (i < len) {
-            let user = vector::borrow(&users, i);
+        let len = users.length();
+        for (i in 0..len) {
+            let user = &users[i];
             let user_addr = signer::address_of(user);
             account::create_account_for_test(user_addr);
             coin::register<AptosCoin>(user);
             coin::deposit(user_addr, coin::mint<AptosCoin>(mint_amount(), &mint_cap));
             assert!(coin::balance<AptosCoin>(user_addr) == mint_amount(), 1);
-            i = i + 1;
         };
 
         account::create_account_for_test(signer::address_of(foundation));

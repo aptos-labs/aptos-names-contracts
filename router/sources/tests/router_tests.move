@@ -29,7 +29,7 @@ module router::router_tests {
         router::init_module_for_test(router);
         router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user, &aptos, rando, &foundation);
         assert!(router::get_admin_addr() == @router, 0);
-        assert!(option::is_none(&router::get_pending_admin_addr()), 1);
+        assert!(router::get_pending_admin_addr().is_none(), 1);
         assert!(router::get_mode() == 0, 2)
     }
 
@@ -53,7 +53,7 @@ module router::router_tests {
     ) {
         router::init_module_for_test(router);
         let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
         let user_addr = address_of(user);
 
         router::set_pending_admin(router, user_addr);
@@ -62,7 +62,7 @@ module router::router_tests {
 
         router::accept_pending_admin(user);
         assert!(router::get_admin_addr() == user_addr, 0);
-        assert!(option::is_none(&router::get_pending_admin_addr()), 1);
+        assert!(router::get_pending_admin_addr().is_none(), 1);
     }
 
     #[test(
@@ -86,7 +86,7 @@ module router::router_tests {
     ) {
         router::init_module_for_test(router);
         let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
         let user_addr = address_of(user);
 
         router::set_pending_admin(router, user_addr);
@@ -117,7 +117,7 @@ module router::router_tests {
     ) {
         router::init_module_for_test(router);
         let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
 
         router::set_pending_admin(user, address_of(user));
     }
@@ -147,7 +147,7 @@ module router::router_tests {
         while (i <= MAX_MODE) {
             router::set_mode(router, i);
             assert!(router::get_mode() == i, 0);
-            i = i + 1
+            i += 1
         }
     }
 
@@ -172,7 +172,7 @@ module router::router_tests {
     ) {
         router::init_module_for_test(router);
         let users = router_test_helper::e2e_test_setup(aptos_names, aptos_names_v2_1, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
 
         router::set_mode(user, 0);
     }

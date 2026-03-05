@@ -18,7 +18,7 @@ module aptos_names::is_enabled_tests {
         foundation: signer
     ) {
         let users = test_helper::e2e_test_setup(myself, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
 
         // Disable ANS
         config::set_is_enabled(myself, false);
@@ -37,7 +37,7 @@ module aptos_names::is_enabled_tests {
         foundation: signer
     ) {
         let users = test_helper::e2e_test_setup(myself, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
 
         // Disable ANS
         config::set_is_enabled(myself, false);
@@ -62,7 +62,7 @@ module aptos_names::is_enabled_tests {
         foundation: signer
     ) {
         let users = test_helper::e2e_test_setup(myself, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
 
         // Disable ANS
         config::set_is_enabled(myself, false);
@@ -86,8 +86,8 @@ module aptos_names::is_enabled_tests {
         foundation: signer
     ) {
         let users = test_helper::e2e_test_setup(myself, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
-        let user2 = vector::borrow(&users, 1);
+        let user = &users[0];
+        let user2 = &users[1];
 
         // Register the domain succeeds
         domains::register_domain(user, test_helper::domain_name(), 1);
@@ -109,8 +109,8 @@ module aptos_names::is_enabled_tests {
         foundation: signer
     ) {
         let users = test_helper::e2e_test_setup(myself, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
-        let user2 = vector::borrow(&users, 1);
+        let user = &users[0];
+        let user2 = &users[1];
 
         // Register the domain succeeds
         domains::register_domain(user, test_helper::domain_name(), 1);
@@ -143,7 +143,7 @@ module aptos_names::is_enabled_tests {
         foundation: signer
     ) {
         let users = test_helper::e2e_test_setup(myself, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
 
         // Register the domain succeeds
         domains::register_domain(user, test_helper::domain_name(), 1);
@@ -166,7 +166,7 @@ module aptos_names::is_enabled_tests {
         foundation: signer
     ) {
         let users = test_helper::e2e_test_setup(myself, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
 
         // Register the domain succeeds
         domains::register_domain(user, test_helper::domain_name(), 1);
@@ -199,7 +199,7 @@ module aptos_names::is_enabled_tests {
         foundation: signer
     ) {
         let users = test_helper::e2e_test_setup(myself, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
 
         // Register the domain succeeds
         domains::register_domain(user, test_helper::domain_name(), 1);
@@ -222,7 +222,7 @@ module aptos_names::is_enabled_tests {
         foundation: signer
     ) {
         let users = test_helper::e2e_test_setup(myself, user, &aptos, rando, &foundation);
-        let user = vector::borrow(&users, 0);
+        let user = &users[0];
 
         // Register the domain succeeds
         domains::register_domain(user, test_helper::domain_name(), 1);
