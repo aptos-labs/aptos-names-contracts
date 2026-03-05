@@ -9,10 +9,10 @@ aptos_names_funds = "_"
 router_signer = "_"
 
 [dev-addresses]
-aptos_names_v2_1 = "0x2FF"
-aptos_names_admin = "0x3FF"
-aptos_names_funds = "0x4FF"
-router_signer = "0x5FF"
+aptos_names_v2_1 = "0x867ed1f6bf916171b1de3ee92849b8978b7d1b9e0a8cc982a3d19d535dfd9c0c"
+aptos_names_admin = "0x91945b4672607a327019e768dd6045d1254d1102d882df434ca734250bb3581d"
+aptos_names_funds = "0x78ee3915e67ef5d19fa91d1e05e60ae08751efd12ce58e23fc1109de87ea7865"
+router_signer = "0x673edba0e0b864ca3eb458fdd45d55f6eced59bb5bdc3b1f3671fae0f9ea4e4d"
 
 [dependencies.AptosFramework]
 git = 'https://github.com/aptos-labs/aptos-framework.git'
