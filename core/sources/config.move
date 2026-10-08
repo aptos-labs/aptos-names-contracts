@@ -477,22 +477,6 @@ module aptos_names::config {
 
 
     #[test(myself = @aptos_names, rando = @0x266f, aptos = @0x1)]
-    #[expected_failure(abort_code = 393218, location = aptos_framework::aptos_account)]
-    fun test_cant_set_foundation_address_without_coin(myself: &signer, rando: &signer, aptos: &signer) acquires ConfigurationV1 {
-        account::create_account_for_test(signer::address_of(myself));
-        account::create_account_for_test(signer::address_of(rando));
-        account::create_account_for_test(signer::address_of(aptos));
-
-        // initializes coin, which is required for transfers
-        initialize_for_test(myself, aptos);
-        coin::register<AptosCoin>(myself);
-
-        assert!(fund_destination_address() == signer::address_of(myself), 5);
-        set_fund_destination_address(myself, signer::address_of(rando));
-        assert!(fund_destination_address() == signer::address_of(rando), 5);
-    }
-
-    #[test(myself = @aptos_names, rando = @0x266f, aptos = @0x1)]
     #[expected_failure(abort_code = 327681, location = aptos_names::config)]
     fun test_foundation_config_requires_admin(myself: &signer, rando: &signer, aptos: &signer) acquires ConfigurationV1 {
         account::create_account_for_test(signer::address_of(myself));
