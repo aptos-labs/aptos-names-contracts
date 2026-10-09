@@ -223,7 +223,6 @@ module aptos_names_v2_1::v2_1_config {
     public entry fun set_domain_price_for_length(sign: &signer, price: u64, length: u64) acquires Config {
         assert_signer_is_admin(sign);
         assert!(length >= 3, error::invalid_argument(EINVALID_DOMAIN_LENGTH));
-        assert!(length >= 3, length);
         if (length == 3) {
             borrow_global_mut<Config>(@aptos_names_v2_1).domain_price_length_3 = price
         } else if (length == 4) {
